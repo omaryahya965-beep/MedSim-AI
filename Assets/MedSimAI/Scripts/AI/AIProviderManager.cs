@@ -27,6 +27,8 @@ namespace MedSimAI.AI
     {
         /// <summary>Set by automated tests so they never make billable provider calls.</summary>
         public static bool ForceOffline;
+        /// <summary>Test hook: use this config instead of the user config file (e.g. an unreachable endpoint).</summary>
+        public static AIRuntimeConfig ConfigOverride;
         public static AIProviderManager Instance { get; private set; }
         public ConversationOrchestrator Orchestrator { get; private set; }
         public AIRuntimeConfig Config { get; private set; }
@@ -43,9 +45,9 @@ namespace MedSimAI.AI
         void Awake()
         {
             Instance = this;
-            Config = ForceOffline ? new AIRuntimeConfig { preferOnline = false } : LoadConfig();
+            Config = ConfigOverride ?? (ForceOffline ? new AIRuntimeConfig { preferOnline = false } : LoadConfig());
             var session = ClinicalScenarioManager.Instance.Session;
-            Live = new LiveAIClient(ForceOffline ? "" : Config.proxyEndpoint, Config.clientSessionToken, Mathf.CeilToInt(Config.timeoutMs / 1000f)) { Language = Config.language };
+            Live = new LiveAIClient(ForceOffline && ConfigOverride == null ? "" : Config.proxyEndpoint, Config.clientSessionToken, Mathf.CeilToInt(Config.timeoutMs / 1000f)) { Language = Config.language };
             Live.StatusChanged += (s, e) => { LiveStatusChanged?.Invoke(s, e); ModeChanged?.Invoke(Mode); };
             IAIProvider online = Live.Configured ? new LiveProvider(Live, () => ClinicalScenarioManager.Instance.Session) : null;
             Orchestrator = new ConversationOrchestrator(session, new OfflineScriptedProvider(session), online)

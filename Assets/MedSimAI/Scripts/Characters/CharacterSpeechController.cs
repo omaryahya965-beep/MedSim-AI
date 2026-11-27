@@ -55,10 +55,10 @@ namespace MedSimAI.Characters
         IEnumerator SpeakRoutine(string line, AudioClip clip)
         {
             IsSpeaking = true; text = line ?? ""; progress = 0;
-            SubtitleStarted?.Invoke(this, text);
             float duration;
             if (clip != null) { source.clip = clip; source.Play(); duration = clip.length; }
-            else duration = Mathf.Clamp(text.Length * 0.065f, 1.2f, 20f);
+            else { source.clip = null; duration = Mathf.Clamp(text.Length * 0.065f, 1.2f, 20f); }
+            SubtitleStarted?.Invoke(this, text); // after the clip is assigned, so listeners can tell runtime audio from text-only
             float t = 0;
             while (t < duration)
             {

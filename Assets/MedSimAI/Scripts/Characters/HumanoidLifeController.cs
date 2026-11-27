@@ -38,7 +38,7 @@ namespace MedSimAI.Characters
         void Start()
         {
             root = transform;
-            var anim = GetComponentInChildren<Animator>();
+            var anim = GetComponentInChildren<Animator>(); animator = anim;
             if (anim && anim.isHuman)
             {
                 if (!head) head = anim.GetBoneTransform(HumanBodyBones.Head);
@@ -61,8 +61,19 @@ namespace MedSimAI.Characters
 
         public void PointAt(Transform target, float seconds = 2.5f) { pointTarget = target; pointTimer = seconds; }
 
+        Animator animator;
+
         void LateUpdate()
         {
+            // With animation clips playing, the Animator has just written this frame's pose: layer the procedural
+            // breathing/gaze/gesture offsets ON TOP of it (instead of overwriting the clip with the cached rest pose).
+            // Without clips, the cached rest pose is used so offsets never accumulate frame to frame.
+            if (animator && animator.runtimeAnimatorController && animator.isActiveAndEnabled)
+            {
+                if (head) headRest = head.localRotation; if (neck) neckRest = neck.localRotation;
+                if (chest) chestRest = chest.localRotation; if (spine) spineRest = spine.localRotation;
+                if (rightUpperArm) uaRest = rightUpperArm.localRotation; if (rightLowerArm) laRest = rightLowerArm.localRotation;
+            }
             float t = Time.time, dt = Time.deltaTime;
             bool pain = mood == CharacterMood.Discomfort;
             bool talking = speech && speech.IsSpeaking;
