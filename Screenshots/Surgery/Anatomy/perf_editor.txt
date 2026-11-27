@@ -1,0 +1,6 @@
+GPU: NVIDIA GeForce RTX 3050 Laptop GPU (3964 MB), Direct3D11; screen 543x638; QualityLevel PC
+tris (active renderers): patient incl. knee+drape=250,351; knee (intact state)=169,839; drape=35,268; tray+instruments=46,972; implant set=48,360
+distinct materials on the patient prefab: 22
+surgeon view, knee exposed: avg 4.19 ms (239 fps), p50 3.80, p95 5.31, p99 12.47 ms | batches 227, setpass 42, tris rendered 1,207,718, verts 725,373
+surgeon view, implanted: avg 3.49 ms (287 fps), p50 3.42, p95 4.20, p99 4.86 ms | batches 199, setpass 42, tris rendered 941,982, verts 578,749
+room overview (all assets in view): avg 4.21 ms (238 fps), p50 4.09, p95 5.35, p99 5.90 ms | batches 483, setpass 52, tris rendered 1,234,996, verts 768,698
