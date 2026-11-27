@@ -1,3 +1,4 @@
+using MedSimAI.Surgery.Shared;
 using Unity.AI.Navigation;
 using UnityEngine;
 using UnityEngine.AI;
@@ -257,6 +258,7 @@ namespace MedSimAI.Surgery.Environment.Editor
 
             var panel = Node(services, "Wall Status Display", V(3.72f, 1.95f, 1.61f), V(0, -90, 0));
             Screen(panel, Vector3.zero, 1.36f, .85f, "WallStatus");
+            Anchor(panel, AnchorIds.OverheadMonitor, V(0, 0, .056f));
             var returns = Node(services, "Low Return Grilles");
             foreach (float x in new[] { -.63f, 2.75f })
             {
