@@ -26,3 +26,6 @@ Backend/medsim-proxy/node_modules/
 Backend/medsim-proxy/data/
 # Staging downloads (raw third-party sources, imported copies live under Assets)
 /AssetStaging/
+
+# Evidence frame sequences (the assembled GIFs and stills are kept)
+Screenshots/Embodied/*/

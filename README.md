@@ -36,8 +36,17 @@ Run `D:\VRBuilds\MedSim_Desktop\MedSimAI.exe` (start the AI proxy first). Contro
 | Pause menu (tablet on/off, subtitles, language EN/AR, comfort and height, restart) | Left menu button (`Esc` on desktop) |
 | Teleport / snap turn | Thumbstick |
 
+## v0.6: Embodied intelligence
+Give physical instructions in Palestinian Arabic, MSA, English or a mix, several at once if you like: «اقعد شوي وارفع إيدك الشمال», «قرّب إيدك علي», «ريّح إيدك», «دكتورة، تعالي من الجهة الثانية», «ممكن تتركيني أفحص المريض لحالي؟».
+- Every action is validated, queued and tracked (Requested → InProgress → Completed / Interrupted / Rejected …), and the real result goes back to the AI.
+- Poses are held until you say otherwise, and instruments ride on the moving arm.
+- Standing and walking are always declined.
+- The characters look at whoever is speaking.
+
+See **EMBODIED_AI.md** for evidence GIFs, exe performance and limitations. Recovery point: git tag `v0.5-stable`, plus builds in `D:/VRBuilds/Backup_v0.5_c1b73d6`.
+
 ## v0.5: Conversation panel and embodied AI
-The conversation panel never overlaps or overflows: long replies page in step with the speech, and Arabic is right-to-left. Ask the patient to sit up, raise or extend an arm, breathe deeply, open his mouth or show where it hurts, and ask the doctor to come, step back or check the patient. They do it, within the scenario's safety policy. See **EMBODIED_AI_AND_CONVERSATION_UI.md**. Recovery point: git tag `v0.4-stable`, plus builds in `D:VRBuildsBackup_v0.4_9ccc8f6`.
+The conversation panel never overlaps or overflows: long replies page in step with the speech, and Arabic is right-to-left. Ask the patient to sit up, raise or extend an arm, breathe deeply, open his mouth or show where it hurts, and ask the doctor to come, step back or check the patient. They do it, within the scenario's safety policy. See **EMBODIED_AI_AND_CONVERSATION_UI.md**. Recovery point: git tag `v0.4-stable`, plus builds in `D:/VRBuilds/Backup_v0.4_9ccc8f6`.
 
 ## v0.4: Arabic, complete speech, VR movement
 Speak Arabic or English: both characters follow you. Say «احكي عربي» or "speak English" to fix the language for both. Lines now play to the very end. VR: left stick moves, right stick turns or teleports, and the pause menu adjusts height (default +55 cm). See **ARABIC_AUDIO_VR.md**, including the manual checklist.
@@ -47,6 +56,7 @@ Speak naturally: hold **T** on desktop or **A/X** in VR (press **M** for hands-f
 
 ## Documentation
 - **Desktop Mode:** [DESKTOP_MODE](DESKTOP_MODE.md)
+- **Embodied AI (v0.6):** [EMBODIED_AI](EMBODIED_AI.md) · [EMBODIED_AI_AND_CONVERSATION_UI](EMBODIED_AI_AND_CONVERSATION_UI.md)
 - **Design:** [RESEARCH_AND_VISUAL_DIRECTION](RESEARCH_AND_VISUAL_DIRECTION.md) · [ARCHITECTURE](ARCHITECTURE.md) · [INTELLIGENT_SUPERVISOR](INTELLIGENT_SUPERVISOR.md) · [DYNAMIC_PATIENT_STATE](DYNAMIC_PATIENT_STATE.md)
 - **AI and security:** [AI_SETUP](AI_SETUP.md) · [SECURITY_AND_PRIVACY](SECURITY_AND_PRIVACY.md)
 - **Clinical:** [CLINICAL_SCENARIO](CLINICAL_SCENARIO.md) · [CLINICAL_REVIEW](CLINICAL_REVIEW.md) · [MEDICAL_REFERENCES](MEDICAL_REFERENCES.md)
@@ -60,6 +70,7 @@ Run these in order:
 2. *Build Redesign (v0.2)*
 3. *Characters v2*
 4. *Bake Lighting*
+5. *Polish/3. Fabric and skin micro-detail* (v0.6 gown weave and skin pores)
 
 Re-running only *Build ER Scene* restores the old MakeHuman characters.
 

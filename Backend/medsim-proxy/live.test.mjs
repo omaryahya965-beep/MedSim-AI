@@ -256,3 +256,36 @@ test('embodied actions: accepted actions pass through; standing/walking is decli
   r = await eng.instructorTurn(sess, { utterance: 'دكتورة ممكن تبعدي شوي عشان أفحص المريض؟', language: 'ar', context: ctx() });
   assert.equal(r.json.action.status, 'accepted'); assert.equal(r.json.action.type, 'step_back');
 });
+
+test('embodied actions v0.6: several actions in one sentence, "nearest arm", new doctor actions, unsafe step blocks the sentence', async () => {
+  const mk = data => { const ai = fakeAI(data); ai.ledger = { record() { }, guard() { } }; return new LiveEngine({ ai, scenarios }); };
+  let eng = mk({ factIds: [], studentAct: 'physical_request', emotion: 'neutral', actions: [{ type: 'sit_up', side: 'none', instrument: 'none' }, { type: 'raise_arm', side: 'left', instrument: 'none' }], reply: 'حاضر.' });
+  let sess = newSession(eng, 'ar');
+  let r = await eng.patientTurn(sess, { utterance: 'اقعد شوي وارفع إيدك الشمال', language: 'ar', context: ctx() });
+  assert.deepEqual(r.json.actions.map(a => a.type + ':' + a.status), ['sit_up:accepted', 'raise_arm:accepted']);
+  eng = mk({ factIds: [], studentAct: 'physical_request', emotion: 'neutral', actions: [{ type: 'extend_arm', side: 'unspecified', instrument: 'none' }], reply: 'تفضل.' });
+  r = await eng.patientTurn(newSession(eng, 'ar'), { utterance: 'قرب إيدك علي شوي', language: 'ar', context: ctx() });
+  assert.equal(r.json.actions[0].side, 'nearest'); assert.equal(r.json.actions[0].status, 'accepted');
+  eng = mk({ factIds: [], studentAct: 'physical_request', emotion: 'pain', actions: [{ type: 'sit_up', side: 'none', instrument: 'none' }, { type: 'walk', side: 'none', instrument: 'none' }], reply: 'حاضر.' });
+  r = await eng.patientTurn(newSession(eng, 'ar'), { utterance: 'اقعد وبعدين امشي معي', language: 'ar', context: ctx() });
+  assert.equal(r.json.actions.length, 1); assert.equal(r.json.actions[0].status, 'denied', 'an unsafe step declines the request instead of half-doing it');
+  for (const [said, type] of [['تعالي من الجهة الثانية', 'go_other_side'], ['ممكن تتركيني أفحص المريض لحالي؟', 'observe_from_distance']]) {
+    eng = mk({ intent: 'physical_request', investigationId: null, escalationRequested: false, diagnosisNamed: false, isQuestion: false, concepts: [], actions: [{ type: 'other_physical', side: 'none', instrument: 'none' }], reply: 'أكيد.' });
+    r = await eng.instructorTurn(newSession(eng, 'ar'), { utterance: said, language: 'ar', context: ctx() });
+    assert.equal(r.json.actions[0].type, type, said);
+  }
+  // a symptom question never becomes an action through the safety net
+  eng = mk({ factIds: ['H_TIMING'], studentAct: 'history_question', emotion: 'pain', actions: [], reply: 'ما راح أبداً.' });
+  r = await eng.patientTurn(newSession(eng, 'ar'), { utterance: 'رجع الوجع لما ارتحت؟', language: 'ar', context: ctx() });
+  assert.equal(r.json.actions.length, 0);
+});
+
+test('embodied actions v0.6: an unambiguous arm verb corrects a mislabelled arm action, and the reply never describes the other movement', async () => {
+  const mk = data => { const ai = fakeAI(data); ai.ledger = { record() { }, guard() { } }; return new LiveEngine({ ai, scenarios }); };
+  let eng = mk({ factIds: [], studentAct: 'physical_request', emotion: 'neutral', actions: [{ type: 'extend_arm', side: 'left', instrument: 'none' }], reply: 'طيب، رح أمد إيدي الشمال.' });
+  let r = await eng.patientTurn(newSession(eng, 'ar'), { utterance: 'ارفع إيدك شمال لو سمحت', language: 'ar', context: ctx() });
+  assert.equal(r.json.actions[0].type, 'raise_arm'); assert.equal(r.json.actions[0].side, 'left'); assert.equal(r.json.text, 'حاضر.');
+  eng = mk({ factIds: [], studentAct: 'physical_request', emotion: 'neutral', actions: [{ type: 'extend_arm', side: 'right', instrument: 'none' }], reply: 'تفضل.' });
+  r = await eng.patientTurn(newSession(eng, 'ar'), { utterance: 'مد إيدك اليمين', language: 'ar', context: ctx() });
+  assert.equal(r.json.actions[0].type, 'extend_arm'); assert.equal(r.json.text, 'تفضل.', 'a correct action keeps its natural reply');
+});

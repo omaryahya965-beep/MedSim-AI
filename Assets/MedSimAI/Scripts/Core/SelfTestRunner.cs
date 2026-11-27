@@ -125,6 +125,43 @@ namespace MedSimAI.Core
                 }
                 V.SetMicMode(prev); V.autoTargetByGaze = true; Destroy(go);
             }
+            // ---- 6. embodied actions in the built player (validated actions; the AI part is covered by the voice step below)
+            if (S.State == AppState.Paused) S.Pause(false);
+            V.Interrupt(); yield return new WaitForSecondsRealtime(1f);
+            var P = CharacterActionRouter.Patient; var D = CharacterActionRouter.Doctor;
+            var zones = FindObjectsByType<PlacementZone>(FindObjectsSortMode.None); var cuff = FindAnyObjectByType<BloodPressureController>();
+            void Do(Persona w, string type, string side = "none") => CharacterActionRouter.Execute(w, new LiveAction { type = type, side = side, status = "accepted" });
+            var ft = new List<float>(); float animMs = 0; int animN = 0;
+            IEnumerator Run(string label, Persona w, string type, string side, float secs)
+            {
+                Do(w, type, side); float end = Time.realtimeSinceStartup + secs;
+                while (Time.realtimeSinceStartup < end) { ft.Add(Time.unscaledDeltaTime * 1000f); animMs += PatientActionController.AvgMs; animN++; yield return null; }
+                var rec = CharacterActionRouter.History.LastOrDefault(); L("action", $"{label}: {rec}");
+                ScreenCapture.CaptureScreenshot(Path.Combine(outDir, "exe_action_" + label + ".png")); yield return null; yield return null;
+            }
+            if (cuff) cuff.PlaceInZone(zones.First(z => z.zoneId == "ARM_UPPER_L"));
+            yield return Run("sit_up", Persona.Patient, "sit_up", "none", 3f);
+            yield return Run("raise_left_arm", Persona.Patient, "raise_arm", "left", 2.5f);
+            var zl = zones.First(z => z.zoneId == "ARM_UPPER_L"); if (cuff) L("action", $"cuff on the raised arm: {Vector3.Distance(cuff.transform.position, (zl.snapPoint ? zl.snapPoint : zl.transform).position):0.000} m from its snap point");
+            yield return Run("extend_right_arm", Persona.Patient, "extend_arm", "right", 2.5f);
+            yield return Run("deep_breath", Persona.Patient, "deep_breath", "none", 5f);
+            yield return Run("doctor_come_to_student", Persona.Instructor, "come_to_student", "none", 6f);
+            yield return Run("doctor_step_back", Persona.Instructor, "step_back", "none", 5f);
+            Do(Persona.Patient, "rest"); if (cuff) cuff.ResetInstrument();
+            ft.Sort(); L("perf", $"during character actions: {ft.Count} frames, avg {ft.Average():0.00} ms ({1000f / ft.Average():0} fps), p95 {ft[(int)(ft.Count * 0.95f)]:0.00} ms, p99 {ft[(int)(ft.Count * 0.99f)]:0.00} ms; patient action layer {(animN > 0 ? animMs / animN : 0):0.000} ms/frame");
+            // ---- 7. one REAL spoken physical instruction (AUTOMATED synthetic clip through the Realtime path)
+            var act = Path.Combine(wavDir, "student_ar_act_raise.wav");
+            if (V.LiveOn && File.Exists(act))
+            {
+                int before = CharacterActionRouter.History.Count; heard = null; yield return new WaitForSecondsRealtime(2f);
+                L("voice-action", "AUTOMATED: synthetic clip «ارفع إيدك الشمال لو سمحت» → patient");
+                V.SubmitVoice(Persona.Patient, Wav(act)); float t1 = Time.realtimeSinceStartup;
+                while (Time.realtimeSinceStartup - t1 < 20 && !CharacterActionRouter.History.Skip(before).Any(h => h.state == ActionState.Completed)) yield return null;
+                yield return new WaitForSecondsRealtime(0.8f);
+                ScreenCapture.CaptureScreenshot(Path.Combine(outDir, "exe_voice_action.png")); yield return null; yield return null;
+                L("voice-action", $"heard=«{heard}» actions: {string.Join(", ", CharacterActionRouter.History.Skip(before).Select(h => h.ToString()))} after {Time.realtimeSinceStartup - t1:0.0}s");
+                t = 0; while (V.Busy && t < 30) { t += Time.unscaledDeltaTime; yield return null; }
+            }
             L("done", "self-test finished");
             yield return new WaitForSecondsRealtime(1f);
             Application.Quit();
