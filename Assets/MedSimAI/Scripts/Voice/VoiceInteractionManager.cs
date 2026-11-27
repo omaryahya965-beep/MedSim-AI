@@ -30,6 +30,12 @@ namespace MedSimAI.Voice
         public int maxRecordSeconds = 15;
         public Persona Target { get; private set; } = Persona.Instructor;
         public bool autoTargetByGaze = true;
+        /// <summary>
+        /// Optional host hook (integration): called with every understood student utterance (typed, dictated or heard by the
+        /// native voice session). Return true to consume it (e.g. hospital navigation handled by the guide). Null in the
+        /// standalone clinical scene, so nothing changes there.
+        /// </summary>
+        public static Func<Persona, string, bool> UtteranceInterceptor;
         public VoiceState State { get; private set; }
         public event Action<VoiceState> StateChanged;
         public event Action<Persona> TargetChanged;
@@ -157,6 +163,7 @@ namespace MedSimAI.Voice
                 return;
             }
             AI.NoteStudentLanguage(LanguageCommands.DetectLanguage(text));
+            if (UtteranceInterceptor != null && UtteranceInterceptor(target, text)) { if (State == VoiceState.Thinking || State == VoiceState.Transcribing) SetState(VoiceState.Idle); return; }
             if (State == VoiceState.Speaking || State == VoiceState.Thinking) Interrupt();
             SetState(VoiceState.Thinking);
             cts?.Dispose(); cts = new CancellationTokenSource();

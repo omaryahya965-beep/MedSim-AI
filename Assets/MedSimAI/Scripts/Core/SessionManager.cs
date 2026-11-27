@@ -11,8 +11,9 @@ using UnityEngine;
 
 namespace MedSimAI.Core
 {
-    /// <summary>Tutorial = corridor/welcome phase (kept for compatibility); Discussion = doctor-led clinical discussion.</summary>
-    public enum AppState { Loading, MainMenu, Tutorial, Running, Paused, Debrief, Discussion }
+    /// <summary>Tutorial = corridor/welcome phase (kept for compatibility); Discussion = doctor-led clinical discussion;
+    /// Hospital = host-managed hospital scene with no clinical session running (no menu board, no tablet).</summary>
+    public enum AppState { Loading, MainMenu, Tutorial, Running, Paused, Debrief, Discussion, Hospital }
 
     /// <summary>
     /// Owns the learner journey (v0.2):
@@ -29,6 +30,11 @@ namespace MedSimAI.Core
         public event Action<string> SpokenDebriefReady;
         public bool trainingMode = true; // Training: all supervisor coaching. Assessment: only safety-critical interventions.
         [Tooltip("Start the clinical session automatically after loading (no menu board).")] public bool autoStart = true;
+        [Tooltip("Hospital scene: a host coordinator starts and ends the clinical session (Room 01). No menu board, no auto start.")] public bool hostManaged;
+        [Tooltip("Hospital scene: the host suspends the clinical pause menu while another room owns its own pause menu.")] public bool suppressPause;
+        /// <summary>Hospital scene: the student asked (pause menu) to leave the clinical session / restart from the corridor.</summary>
+        public event Action ReturnToHostRequested, HostRestartRequested;
+        public bool ClinicalSessionActive => State == AppState.Tutorial || State == AppState.Running || State == AppState.Discussion || State == AppState.Debrief || (State == AppState.Paused && resumeState != AppState.Hospital);
         public MedicalInstructorController instructor;
         public PatientInteractionController patient;
         public MedicalInstrumentBase[] instruments;
@@ -54,14 +60,14 @@ namespace MedSimAI.Core
         {
             SetState(AppState.Loading);
             yield return new WaitForSeconds(loadingSeconds);
-            SetState(AppState.MainMenu);
+            SetState(hostManaged ? AppState.Hospital : AppState.MainMenu);
             M.Session.Stages.StageChanged += OnStageChanged;
             M.Session.Patient.ConditionChanged += OnConditionChanged;
             M.Director.Intervene += OnIntervention;
             M.Director.CanSpeak = () => V && !V.Busy && (State == AppState.Running || State == AppState.Tutorial);
             AIProviderManager.Instance.Orchestrator.TurnCompleted += OnTurn;
             if (examDoor) examDoor.Opened += OnDoorOpened;
-            if (autoStart && !AIProviderManager.ForceOffline) StartClinicalSession(true);
+            if (autoStart && !hostManaged && !AIProviderManager.ForceOffline) StartClinicalSession(true);
         }
 
         void SetState(AppState s) { State = s; StateChanged?.Invoke(s); }
@@ -86,7 +92,7 @@ namespace MedSimAI.Core
 
         IEnumerator Welcome()
         {
-            if (doctorMovement && doctorCorridorMark) { doctorMovement.transform.SetPositionAndRotation(doctorCorridorMark.position, doctorCorridorMark.rotation); }
+            if (!hostManaged && doctorMovement && doctorCorridorMark) { doctorMovement.transform.SetPositionAndRotation(doctorCorridorMark.position, doctorCorridorMark.rotation); } // hospital: she has walked here with the student
             var live = AIProviderManager.Instance.Live;
             if (live.Configured && string.IsNullOrEmpty(live.SessionId)) { var t = live.StartSession(M.Scenario); yield return new WaitUntil(() => t.IsCompleted); }
             yield return new WaitForSeconds(0.4f);
@@ -290,14 +296,44 @@ namespace MedSimAI.Core
         // ------------------------------------------------------------------ pause / restart
         public void Pause(bool on)
         {
-            if (on && (State == AppState.Running || State == AppState.Discussion || State == AppState.Tutorial)) { resumeState = State; SetState(AppState.Paused); Time.timeScale = 0; V?.Interrupt(); }
+            if (on && suppressPause) return;
+            if (on && (State == AppState.Running || State == AppState.Discussion || State == AppState.Tutorial || State == AppState.Hospital)) { resumeState = State; SetState(AppState.Paused); Time.timeScale = 0; V?.Interrupt(); }
             else if (!on && State == AppState.Paused) { Time.timeScale = 1; SetState(resumeState); }
         }
         AppState resumeState = AppState.Running;
 
-        public void Restart() { Time.timeScale = 1; StartClinicalSession(trainingMode); }
+        public void Restart()
+        {
+            Time.timeScale = 1;
+            if (hostManaged && resumeState == AppState.Hospital && State == AppState.Paused) { SetState(AppState.Hospital); HostRestartRequested?.Invoke(); return; }
+            StartClinicalSession(trainingMode);
+        }
 
-        public void ReturnToMenu() { Time.timeScale = 1; V?.Interrupt(); if (flow != null) StopCoroutine(flow); M.ResetSession(); SetState(AppState.MainMenu); }
+        public void ReturnToMenu()
+        {
+            if (hostManaged) { EndClinicalSession(); ReturnToHostRequested?.Invoke(); return; }
+            Time.timeScale = 1; V?.Interrupt(); if (flow != null) StopCoroutine(flow); M.ResetSession(); SetState(AppState.MainMenu);
+        }
+
+        /// <summary>
+        /// Hospital scene: ends (or abandons) the clinical session cleanly when the student leaves Room 01 or chooses another
+        /// room: stops speech and the flow, clears queued character actions, resets the patient, instruments, ECG and door,
+        /// and closes the live clinical session. The clinical record of a finished case is already saved by FinishRoutine.
+        /// </summary>
+        public void EndClinicalSession()
+        {
+            Time.timeScale = 1;
+            V?.Interrupt();
+            if (flow != null) { StopCoroutine(flow); flow = null; }
+            finishing = false; LiveProvider.DiscussionId = null; discussionIndex = -1; discussionAttempts = 0;
+            MedSimAI.Characters.CharacterActionRouter.Reset();
+            M.ResetSession();
+            foreach (var i in instruments) if (i) i.ResetInstrument();
+            if (ecg) ecg.ResetMachine();
+            if (examDoor) examDoor.ResetDoor();
+            var live = AIProviderManager.Instance ? AIProviderManager.Instance.Live : null; if (live != null && !string.IsNullOrEmpty(live.SessionId)) _ = live.EndSession();
+            SetState(hostManaged ? AppState.Hospital : AppState.MainMenu);
+        }
 
         public void ExitSimulation()
         {

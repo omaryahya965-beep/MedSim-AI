@@ -1,3 +1,4 @@
+using System;
 using MedSimAI.UI;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -32,7 +33,9 @@ namespace MedSimAI.Surgery.UI
             Debug.Log("[MedSim] Loading scene " + scene);
             SceneManager.LoadScene(scene, LoadSceneMode.Single);
         }
-        public static void ToMenu() => Load(MenuScene);
+        /// <summary>Hospital scene: replaces "back to the scenario menu" (F10 / hold menu button / pause menu) with "back to the corridor".</summary>
+        public static Action MenuOverride;
+        public static void ToMenu() { if (MenuOverride != null) { MenuOverride(); return; } Load(MenuScene); }
         public static void StartClinical() => Load(ClinicalScene);
         public static void StartSurgical() => Load(SurgicalScene);
         public static void RestartCurrent() => Load(SceneManager.GetActiveScene().name);
@@ -49,7 +52,7 @@ namespace MedSimAI.Surgery.UI
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void Boot()
         {
-            if (!ScenarioRouter.MenuAvailable || FindAnyObjectByType<ReturnToMenuShortcut>()) return;
+            if ((!ScenarioRouter.MenuAvailable && ScenarioRouter.MenuOverride == null) || FindAnyObjectByType<ReturnToMenuShortcut>()) return;
             var go = new GameObject("[MedSim Return To Menu]"); DontDestroyOnLoad(go); go.AddComponent<ReturnToMenuShortcut>();
         }
         void Update()

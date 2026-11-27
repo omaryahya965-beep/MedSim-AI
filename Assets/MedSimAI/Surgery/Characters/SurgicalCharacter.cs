@@ -25,6 +25,10 @@ namespace MedSimAI.Surgery.Characters
         public bool Busy { get; private set; }
         public Transform Held { get; private set; }
         Animator anim; NavMeshAgent agent; Coroutine current; Transform lookTarget;
+        // Integration: when the body already has the clinical doctor's DoctorMovement (the persistent hospital doctor), all
+        // walking/turning goes through it, so one navigation + animation lifecycle drives her in every room.
+        DoctorMovement mover; bool hasCharacterBase; float nextFace;
+        public bool UsesDoctorMovement => mover;
 
         void Awake()
         {
@@ -33,17 +37,26 @@ namespace MedSimAI.Surgery.Characters
             agent = GetComponent<NavMeshAgent>();
             if (!handSocket && anim && anim.isHuman) handSocket = anim.GetBoneTransform(HumanBodyBones.RightHand);
             if (!handSocket) handSocket = transform;
+            mover = GetComponent<DoctorMovement>();
+            hasCharacterBase = GetComponent<SimCharacterBase>();
         }
 
         void Update()
         {
-            if (lookTarget && !IsMoving)
+            if (mover)
             {
-                var d = lookTarget.position - transform.position; d.y = 0;
-                if (d.sqrMagnitude > 0.01f) transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.LookRotation(d), turnSpeed * Time.deltaTime);
+                if (lookTarget && !IsMoving && Time.time >= nextFace) { mover.Face(lookTarget.position); nextFace = Time.time + 0.4f; }
             }
-            if (Has("Speed")) anim.SetFloat("Speed", IsMoving ? walkSpeed : 0f);
-            if (Has("Speaking")) anim.SetBool("Speaking", Speech && Speech.IsSpeaking);
+            else
+            {
+                if (lookTarget && !IsMoving)
+                {
+                    var d = lookTarget.position - transform.position; d.y = 0;
+                    if (d.sqrMagnitude > 0.01f) transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.LookRotation(d), turnSpeed * Time.deltaTime);
+                }
+                if (Has("Speed")) anim.SetFloat("Speed", IsMoving ? walkSpeed : 0f);
+            }
+            if (!hasCharacterBase && Has("Speaking")) anim.SetBool("Speaking", Speech && Speech.IsSpeaking);
         }
 
         System.Collections.Generic.HashSet<string> parameters;
@@ -55,12 +68,12 @@ namespace MedSimAI.Surgery.Characters
             return parameters.Contains(p);
         }
 
-        bool IsMoving => agent && agent.enabled && agent.isOnNavMesh ? (agent.pathPending || agent.remainingDistance > Mathf.Max(arriveDistance, agent.stoppingDistance)) : gliding;
+        bool IsMoving => mover ? mover.IsMoving : agent && agent.enabled && agent.isOnNavMesh ? (agent.pathPending || agent.remainingDistance > Mathf.Max(arriveDistance, agent.stoppingDistance)) : gliding;
         bool gliding;
 
-        public void Interrupt() { if (current != null) StopCoroutine(current); current = null; Busy = false; gliding = false; if (agent && agent.enabled && agent.isOnNavMesh) agent.ResetPath(); }
+        public void Interrupt() { if (current != null) StopCoroutine(current); current = null; Busy = false; gliding = false; if (mover) mover.Stop(); else if (agent && agent.enabled && agent.isOnNavMesh) agent.ResetPath(); }
 
-        public void LookAt(Transform t) => lookTarget = t;
+        public void LookAt(Transform t) { lookTarget = t; nextFace = 0; if (mover && t) mover.Face(t.position); }
 
         /// <summary>Walk to a world position; calls done(true) on arrival, done(false) on timeout / no path.</summary>
         public void GoTo(Vector3 target, Action<bool> done, Transform faceWhenThere = null)
@@ -78,7 +91,15 @@ namespace MedSimAI.Surgery.Characters
         IEnumerator GoRoutine(Vector3 target, Action<bool> done, Transform face)
         {
             Busy = true; lookTarget = null; float t0 = Time.time; bool ok;
-            if (agent && agent.enabled && agent.isOnNavMesh)
+            if (mover)
+            {
+                mover.GoToPoint(target, face ? face.position : (Vector3?)null);
+                yield return null; yield return null;   // let the path start
+                while (Time.time - t0 < actionTimeout && mover.IsMoving) yield return null;
+                var a = transform.position; a.y = 0; var b = target; b.y = 0;
+                ok = Vector3.Distance(a, b) <= arriveDistance + 0.15f;
+            }
+            else if (agent && agent.enabled && agent.isOnNavMesh)
             {
                 agent.speed = walkSpeed; agent.stoppingDistance = arriveDistance * 0.8f;
                 if (!agent.SetDestination(target)) { Busy = false; done?.Invoke(false); yield break; }
@@ -105,6 +126,8 @@ namespace MedSimAI.Surgery.Characters
         {
             if (!instrument) return false;
             var rb = instrument.GetComponent<Rigidbody>(); if (rb) rb.isKinematic = true;
+            // Integration: XRI would otherwise put the instrument back under the assistant's hand when the student lets go.
+            var grab = instrument.GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>(); if (grab) grab.retainTransformParent = false;
             instrument.SetParent(handSocket, true);
             instrument.localPosition = Vector3.zero; instrument.localRotation = Quaternion.identity;
             Held = instrument; if (Has("Point")) anim.SetTrigger("Point");
@@ -112,7 +135,7 @@ namespace MedSimAI.Surgery.Characters
         }
 
         /// <summary>Called when the player has taken the instrument (verified tool.grabbed): forget it without moving it.</summary>
-        public void ReleaseToPlayer() { Held = null; }
+        public void ReleaseToPlayer() { if (Held && Held.parent == handSocket) Held.SetParent(null, true); Held = null; }
 
         /// <summary>Puts a held instrument back at a slot (hand-over not taken, or reset).</summary>
         public void PutBack(Transform slot)

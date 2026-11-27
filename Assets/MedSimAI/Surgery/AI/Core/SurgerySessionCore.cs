@@ -112,9 +112,12 @@ namespace MedSimAI.Surgery.AI
         public string Restart()
         {
             if (Active) Bus.Publish(new SurgeryEvent(SurgeryEventIds.SessionReset, SurgeryEventSources.Integration));
-            Runtime?.ResetForNewSession();
             Active = false;
-            return Start();
+            var id = Start();
+            // Integration fix: reset the mechanics AFTER the new bus session began, so its objective.started (objective 1)
+            // is part of the new session log (before, BeginSession cleared it and the supervisor had no current objective).
+            Runtime?.ResetForNewSession();
+            return id;
         }
 
         public void End() { Active = false; }

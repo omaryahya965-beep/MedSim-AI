@@ -14,6 +14,20 @@ namespace MedSimAI.Characters
         public DoctorMovement movement; public HumanoidLifeController life; public MedicalInstructorController instructor;
         public Transform student, patientChest, observeMark, distanceMark;
         public event Action<string, string> Completed, Failed; // (type, reason/"")
+        /// <summary>
+        /// Integration extension point: extra validated doctor actions implemented by a host outside the ER assembly
+        /// (hospital navigation: guide_to_room, wait_for_student, ...). Return null when the action is not handled, true when
+        /// it started (the host then calls ReportExternal), false when it is unavailable. Null in the standalone ER scene.
+        /// </summary>
+        public static Func<DoctorActionController, string, string, bool?> ExtensionHandler;
+        bool external;
+        /// <summary>The host reports the real outcome of an extension action (completed or failed with a reason).</summary>
+        public void ReportExternal(string type, bool completed, string reason = "")
+        {
+            if (pendingType != type) return;
+            pendingType = null; external = false;
+            if (completed) Completed?.Invoke(type, ""); else Failed?.Invoke(type, string.IsNullOrEmpty(reason) ? "failed" : reason);
+        }
         Transform mark; string pendingType; float pendingStart, gazeUntil; bool walking; Transform gazeTarget;
 
         void Start() => EnsureInit();
@@ -74,7 +88,7 @@ namespace MedSimAI.Characters
         {
             EnsureInit();
             if (pendingType != null) Failed?.Invoke(pendingType, "interrupted");
-            pendingType = type; pendingStart = Time.time; walking = false;
+            pendingType = type; pendingStart = Time.time; walking = false; external = false;
             Vector3 sf = StudentFloor, fwd = StudentFwd, rightOfStudent = Vector3.Cross(Vector3.up, fwd).normalized;
             Vector3 pat = patientChest ? Floor(patientChest.position) : transform.position;
             switch (type)
@@ -108,7 +122,12 @@ namespace MedSimAI.Characters
                     movement.Face(tool.position); if (life) life.PointAt(tool, 4f); if (instructor) instructor.Gesture(CharacterMood.Explaining, tool); Gaze(tool, 4f);
                     return true;
                 }
-                default: pendingType = null; return false;
+                default:
+                {
+                    var ext = ExtensionHandler?.Invoke(this, type, instrument);
+                    if (ext == true) { external = true; return true; }
+                    pendingType = null; return false;
+                }
             }
         }
 
@@ -125,6 +144,7 @@ namespace MedSimAI.Characters
         {
             if (gazeUntil > 0 && Time.time > gazeUntil) { gazeUntil = 0; if (life && life.gazeOverride == gazeTarget) life.gazeOverride = null; }
             if (pendingType == null) return;
+            if (external) { if (Time.time - pendingStart > 180f) ReportExternal(pendingType, false, "timeout"); return; }   // the host reports the outcome
             bool done = walking ? (Time.time - pendingStart > 0.4f && !movement.IsMoving) : Time.time - pendingStart > 0.6f;
             if (done) { var t = pendingType; pendingType = null; Completed?.Invoke(t, ""); }
             else if (Time.time - pendingStart > 25f) { var t = pendingType; pendingType = null; Failed?.Invoke(t, "timeout"); }

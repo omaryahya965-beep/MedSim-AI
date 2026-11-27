@@ -36,6 +36,11 @@ namespace MedSimAI.Surgery.Mechanics
         private Quaternion targetHoldRotation = Quaternion.identity;
 
         public bool IsHoldingItem => heldObject != null;
+        /// <summary>
+        /// Integration: when set, R asks the host to restart the whole surgical session (mechanics + supervisor + assessment
+        /// together, through SurgerySessionController.Restart) instead of resetting only the mechanics.
+        /// </summary>
+        public static Action ResetRequested;
         public string HeldToolId => heldToolId;
         public string HeldImplantId => heldImplantId;
 
@@ -63,10 +68,10 @@ namespace MedSimAI.Surgery.Mechanics
             if (mouse == null || keyboard == null) return;
 
             // R: Reset simulation
-            if (keyboard.rKey.wasPressedThisFrame && resetController != null)
+            if (keyboard.rKey.wasPressedThisFrame && (resetController != null || ResetRequested != null))
             {
-                resetController.ExecuteReset();
                 DropHeldItem();
+                if (ResetRequested != null) ResetRequested(); else resetController.ExecuteReset();
                 return;
             }
 
@@ -141,6 +146,7 @@ namespace MedSimAI.Surgery.Mechanics
         public void PickupInstrument(SurgeryInstrumentTag tag)
         {
             heldObject = tag.transform;
+            heldObject.SetParent(null, true);   // e.g. taken from the assistant's hand; reset puts it back in its tray slot
             heldToolId = tag.instrumentId;
             heldImplantId = null;
             heldRb = tag.GetComponent<Rigidbody>();

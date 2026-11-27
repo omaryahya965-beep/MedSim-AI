@@ -32,6 +32,12 @@ namespace MedSimAI.Surgery.Integration
         [Tooltip("Use the mock mechanics when no ISurgicalScenarioRuntime is in the scene (test scenes / before feature/surgery-mechanics is merged).")]
         public bool allowMockMechanics = true;
         public float tickSeconds = 0.25f;
+        [Tooltip("Hospital scene: the hospital coordinator owns navigation. 'Return to menu' goes back to the corridor instead of loading the menu scene.")]
+        public bool hostManaged;
+        /// <summary>Hospital scene: the student asked to leave the operating room (pause menu / F10).</summary>
+        public event Action HostReturnRequested;
+        /// <summary>Hospital scene: sees every understood utterance first (navigation such as "take me back to room one"). Return true to consume it.</summary>
+        public static Func<string, bool> UtteranceInterceptor;
 
         public SurgerySessionCore Core { get; private set; }
         public SurgeryLiveClient Live { get; private set; }
@@ -100,7 +106,28 @@ namespace MedSimAI.Surgery.Integration
             while (!startTask.IsCompleted) yield return null;
             RefreshStatus();
             Core.Start(Core.Language);
+            // Integration fix: (re)start the real mechanics inside the new bus session so objective.started (objective 1) is logged.
+            if (!UsingMockMechanics) Core.Runtime?.ResetForNewSession();
             RefreshObjective();
+        }
+
+        /// <summary>
+        /// Hospital scene: the student left the operating room. Stops speech and queued lines, closes the live surgical session
+        /// and marks the core inactive. A later visit calls Restart(), which starts a fresh session (nothing carries over).
+        /// </summary>
+        public void Suspend()
+        {
+            StopAllCoroutines(); InterruptSpeech(); queue.Clear(); speaking = false; voiceTurnBusy = false;
+            hud?.HideDebrief(); hud?.ShowPause(false);
+            Core?.End();
+            _ = Live?.EndSession();
+        }
+
+        /// <summary>Queues a line for a character (hospital guide messages inside the operating room). Approved text, spoken as is.</summary>
+        public void Say(string characterId, string text)
+        {
+            if (string.IsNullOrEmpty(text)) return;
+            queue.Enqueue(new CharacterLine { characterId = characterId, kind = "guide", text = text, lang = Core != null ? Core.Language : "en", approvedOnly = true });
         }
 
         void OnDestroy()
@@ -232,6 +259,10 @@ namespace MedSimAI.Surgery.Integration
             if (meta != null && !meta.noSpeech)
             {
                 if (!string.IsNullOrEmpty(meta.heard)) hud?.AddLine(Core.Language == "ar" ? "إنت" : "You", meta.heard);
+                if (!string.IsNullOrEmpty(meta.heard) && UtteranceInterceptor != null && UtteranceInterceptor(meta.heard))
+                {   // consumed by the hospital (navigation): no surgical reply
+                    stream.Cancel(); try { req.Abort(); } catch { } req.Dispose(); currentReq = null; currentStream = null; voiceTurnBusy = false; yield break;
+                }
                 if (!string.IsNullOrEmpty(meta.lang) && meta.lang != Core.Language && string.IsNullOrEmpty(Live.LangLock)) { /* follow the student's language for this reply only */ }
                 var intent = ToIntent(meta, characterId);
                 if (!string.IsNullOrEmpty(intent.languageCommand)) SetLanguage(intent.languageCommand, lockIt: true);
@@ -292,7 +323,11 @@ namespace MedSimAI.Surgery.Integration
             Core.Restart(); RefreshStatus(); RefreshObjective();
         }
 
-        public void ReturnToMenu() { InterruptSpeech(); _ = Live?.EndSession(); ScenarioRouter.ToMenu(); }
+        public void ReturnToMenu()
+        {
+            if (hostManaged) { InterruptSpeech(); HostReturnRequested?.Invoke(); return; }
+            InterruptSpeech(); _ = Live?.EndSession(); ScenarioRouter.ToMenu();
+        }
 
         // Offline/no-mic shortcuts (also handy in demos): H = help, J = explain current step.
         void LateUpdate()

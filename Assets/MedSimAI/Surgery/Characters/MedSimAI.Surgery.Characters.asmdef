@@ -1,6 +1,6 @@
 {
   "name": "MedSimAI.Surgery.Characters",
   "rootNamespace": "MedSimAI.Surgery.Characters",
-  "references": ["MedSimAI.Surgery.Shared","MedSimAI.Surgery.Shared.Unity","MedSimAI.Surgery.AI.Core","MedSimAI"],
+  "references": ["MedSimAI.Surgery.Shared","MedSimAI.Surgery.Shared.Unity","MedSimAI.Surgery.AI.Core","MedSimAI","Unity.XR.Interaction.Toolkit"],
   "autoReferenced": true
 }

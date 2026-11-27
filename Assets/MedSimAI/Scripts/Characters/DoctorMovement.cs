@@ -39,6 +39,15 @@ namespace MedSimAI.Characters
             if (mark) path.Enqueue(mark.position);
         }
 
+        /// <summary>Walk to a world point and end facing faceTowards (if given) — same easing and NavMesh use as GoTo.</summary>
+        public void GoToPoint(Vector3 point, Vector3? faceTowards = null)
+        {
+            path.Clear(); faceTarget = null; finalFacing = null;
+            if (faceTowards.HasValue) { var f = faceTowards.Value - point; f.y = 0; if (f.sqrMagnitude > 1e-4f) finalFacing = Quaternion.LookRotation(f); }
+            if (UseAgent) { agent.SetDestination(point); return; }
+            path.Enqueue(point);
+        }
+
         /// <summary>Stop where she is (e.g. "wait").</summary>
         public void Stop() { path.Clear(); if (UseAgent) agent.ResetPath(); }
 
