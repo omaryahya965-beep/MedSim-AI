@@ -108,6 +108,31 @@ namespace MedSimAI.Core
             ProfileChanged?.Invoke(p);
         }
 
+        /// <summary>
+        /// Desktop Mode rendering: native resolution (render scale 1.0), HDR, 4x MSAA, longer/sharper realtime shadows,
+        /// bloom, V-Sync. No XR eye-texture scaling, foveation or streaming constraints apply on a monitor.
+        /// </summary>
+        public void ApplyDesktopQuality()
+        {
+            var src = pcvrAsset;
+            if (src)
+            {
+                if (runtimeAsset) Destroy(runtimeAsset);
+                runtimeAsset = Instantiate(src); runtimeAsset.name = src.name + " (runtime Desktop)";
+                runtimeAsset.renderScale = 1.0f; runtimeAsset.msaaSampleCount = 4; runtimeAsset.supportsHDR = true;
+                runtimeAsset.shadowDistance = 25f; runtimeAsset.shadowCascadeCount = 4;
+                runtimeAsset.mainLightShadowmapResolution = 4096; runtimeAsset.additionalLightsShadowmapResolution = 2048;
+                GraphicsSettings.defaultRenderPipeline = runtimeAsset; QualitySettings.renderPipeline = runtimeAsset;
+            }
+            QualitySettings.vSyncCount = 1; QualitySettings.lodBias = 2f; QualitySettings.anisotropicFiltering = AnisotropicFiltering.ForceEnable; QualitySettings.globalTextureMipmapLimit = 0;
+            foreach (var l in FindObjectsByType<Light>(FindObjectsSortMode.None))
+                if (l.shadows != LightShadows.None && l.bakingOutput.lightmapBakeType != LightmapBakeType.Baked) l.shadows = LightShadows.Soft;
+            if (!postVolume) postVolume = FindAnyObjectByType<Volume>();
+            if (postVolume && postVolume.sharedProfile && postVolume.sharedProfile.TryGet<Bloom>(out var bloom)) bloom.active = true;
+            DesktopQualityActive = true;
+        }
+        public bool DesktopQualityActive { get; private set; }
+
         void Update()
         {
             float ms = Time.unscaledDeltaTime * 1000f;

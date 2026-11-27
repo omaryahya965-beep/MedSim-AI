@@ -76,7 +76,7 @@ namespace MedSimAI.Core
             foreach (var i in instruments) if (i) i.ResetInstrument();
             if (ecg) ecg.ResetMachine();
             if (examDoor) examDoor.ResetDoor();
-            discussionIndex = -1; discussionAttempts = 0; LiveProvider.DiscussionId = null; LastSpokenDebrief = null;
+            discussionIndex = -1; discussionAttempts = 0; LiveProvider.DiscussionId = null; LastSpokenDebrief = null; finishing = false;
             M.Director.AllowOrdinary = training;
             M.BeginSession();
             SetState(AppState.Tutorial);
@@ -174,8 +174,10 @@ namespace MedSimAI.Core
             flow = StartCoroutine(AskNext(true));
         }
 
+        bool finishing;
         IEnumerator AskNext(bool intro)
         {
+            if (State != AppState.Discussion) yield break;
             var qs = M.Scenario.discussion;
             float t = 0; while (V.Busy && t < 20) { t += Time.deltaTime; yield return null; }
             discussionIndex++; discussionAttempts = 0;
@@ -241,6 +243,8 @@ namespace MedSimAI.Core
         // ------------------------------------------------------------------ Step 7: personalised spoken debrief
         public void FinishCase()
         {
+            if (State == AppState.Debrief || finishing) return; // idempotent: the last answer and the last question can both end the case
+            finishing = true;
             if (flow != null) StopCoroutine(flow);
             flow = StartCoroutine(FinishRoutine());
         }

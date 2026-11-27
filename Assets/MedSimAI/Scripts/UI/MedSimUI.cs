@@ -125,6 +125,7 @@ namespace MedSimAI.UI
             UIFactory.Button(pc, "Subtitles on / off", () => { SubtitlesEnabled = !SubtitlesEnabled; }, Brand.NavyLight, 24, 64);
             UIFactory.Button(pc, "Language: English / العربية", () => { AIProviderManager.Instance.SetLanguage(AIProviderManager.Instance.Config.language == "ar" ? "en" : "ar"); RefreshMode(); RefreshPause(); }, Brand.NavyLight, 24, 64);
             UIFactory.Button(pc, "Comfort & Graphics", () => { comfortReturn = pausePanel; Show(comfortPanel); }, Brand.NavyLight, 24, 64);
+            displayModeButtonText = UIFactory.Button(pc, DisplayModeLabel(), () => { MedSimAI.XR.DisplayModeManager.CyclePreference(); if (displayModeButtonText) displayModeButtonText.text = DisplayModeLabel(); }, Brand.NavyLight, 22, 60).GetComponentInChildren<TMP_Text>();
             UIFactory.Button(pc, "Restart Scenario", () => S.Restart(), Brand.NavyLight, 24, 64);
             UIFactory.Button(pc, "Exit Simulation", () => S.ExitSimulation(), Brand.NavyLight, 24, 64);
 
@@ -196,10 +197,40 @@ namespace MedSimAI.UI
             var rt = (RectTransform)go.transform; rt.anchorMin = rt.anchorMax = anchor; rt.sizeDelta = Vector2.one * size;
         }
 
+        /// <summary>
+        /// Desktop Mode: the menu/pause/debrief board and the subtitles become screen-space overlays (crisp at native
+        /// resolution, clickable with the mouse). VR keeps them as world-space panels.
+        /// </summary>
+        public void SetDesktopMode()
+        {
+            foreach (var c in new[] { menuCanvas, subtitleCanvas })
+            {
+                if (!c) continue;
+                var size = ((RectTransform)c.transform).sizeDelta;
+                c.renderMode = RenderMode.ScreenSpaceOverlay; c.sortingOrder = c == menuCanvas ? 20 : 10;
+                var scaler = c.GetComponent<CanvasScaler>() ?? c.gameObject.AddComponent<CanvasScaler>();
+                scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize; scaler.referenceResolution = new Vector2(1920, 1080); scaler.matchWidthOrHeight = 0.5f;
+                if (!c.GetComponent<GraphicRaycaster>()) c.gameObject.AddComponent<GraphicRaycaster>();
+                foreach (Transform ch in c.transform)
+                {
+                    if (!(ch is RectTransform rt)) continue;
+                    if (c == subtitleCanvas && rt.name != "Bar") continue;
+                    rt.anchorMin = rt.anchorMax = c == subtitleCanvas ? new Vector2(0.5f, 0f) : new Vector2(0.5f, 0.5f);
+                    rt.pivot = c == subtitleCanvas ? new Vector2(0.5f, 0f) : new Vector2(0.5f, 0.5f);
+                    rt.sizeDelta = c == subtitleCanvas ? new Vector2(1100, 190) : size; rt.anchoredPosition = c == subtitleCanvas ? new Vector2(0, 40) : Vector2.zero;
+                    rt.localScale = Vector3.one; rt.localRotation = Quaternion.identity;
+                }
+            }
+            desktopUI = true;
+        }
+        bool desktopUI;
+        public bool MenuVisible => menuCanvas && menuCanvas.gameObject.activeInHierarchy;
+
         /// <summary>The clinical tablet is an optional secondary interface (voice and physical actions are primary).</summary>
         public static bool TabletEnabled;
         public static bool SubtitlesEnabled = true;
-        TMP_Text pauseStatusText;
+        TMP_Text pauseStatusText, displayModeButtonText;
+        static string DisplayModeLabel() => $"Display: now {MedSimAI.XR.DisplayModeManager.Mode} · next launch {MedSimAI.XR.DisplayModeManager.SavedPreference}";
         void RefreshPause()
         {
             if (!pauseStatusText) return;
@@ -347,7 +378,7 @@ namespace MedSimAI.UI
                 case VoiceState.Transcribing: voiceDot.color = Brand.Warn; voiceText.text = "Transcribing…"; break;
                 case VoiceState.Thinking: voiceDot.color = Brand.Blue; break;
                 case VoiceState.Speaking: voiceDot.color = Brand.Teal; break;
-                default: voiceDot.color = Brand.Muted; if (string.IsNullOrEmpty(voiceText.text) || voiceText.text.StartsWith("•") || voiceText.text.StartsWith("Trans")) voiceText.text = $"Hold A/X to talk to the <b>{who}</b> · {AIProviderManager.Instance.ModeLabel}"; break;
+                default: voiceDot.color = Brand.Muted; if (string.IsNullOrEmpty(voiceText.text) || voiceText.text.StartsWith("•") || voiceText.text.StartsWith("Trans")) voiceText.text = $"Hold {(MedSimAI.XR.DesktopPlayerController.Active ? "T" : "A/X")} to talk to the <b>{who}</b> · {AIProviderManager.Instance.ModeLabel}"; break;
             }
         }
 
@@ -360,7 +391,7 @@ namespace MedSimAI.UI
             if (Time.frameCount % 30 == 0) RefreshProgress();
             if (perfText && Time.frameCount % 45 == 0 && MedSimAI.Core.PerformanceManager.Instance) { var pm = MedSimAI.Core.PerformanceManager.Instance; perfText.text = $"<color=#8892B0>Measured now: {pm.AverageFrameMs:0.0} ms/frame (≈{1000f / Mathf.Max(1, pm.AverageFrameMs):0} fps), GPU {pm.GpuFrameMs:0.0} ms. Headset target: 11.1 ms (90 Hz).</color>"; }
             // Lazy-follow subtitle bar: ~1.4 m ahead, 0.45 m below eye line; only re-centres when far off-axis (comfort).
-            if (playerHead && subtitleCanvas)
+            if (playerHead && subtitleCanvas && !desktopUI)
             {
                 var fwd = Vector3.ProjectOnPlane(playerHead.forward, Vector3.up).normalized; if (fwd.sqrMagnitude < 0.01f) fwd = Vector3.forward;
                 var target = playerHead.position + fwd * 1.4f + Vector3.down * 0.42f;

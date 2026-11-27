@@ -63,6 +63,17 @@ namespace MedSimAI.XR
 
         void OnDestroy() { pauseAction?.Dispose(); recenterAction?.Dispose(); }
 
+        /// <summary>Called by DisplayModeManager after XR was started manually (headset found).</summary>
+        public void OnXRStarted()
+        {
+            var subsystems = new List<XRInputSubsystem>();
+            SubsystemManager.GetSubsystems(subsystems);
+            foreach (var s in subsystems) s.TrySetTrackingOriginMode(TrackingOriginModeFlags.Floor);
+            if (origin) origin.RequestedTrackingOriginMode = XROrigin.TrackingOriginMode.Floor;
+            desktop = false;
+            Recenter();
+        }
+
         // ---------------- Height (runs every frame after XR Origin; survives teleport, recentre and origin resets) ----------------
         void LateUpdate()
         {
@@ -123,7 +134,7 @@ namespace MedSimAI.XR
 
         void DesktopFallback()
         {
-            if (!origin) return;
+            if (!origin || DesktopPlayerController.Active) return; // the full desktop controller owns the camera
             if (XRSettings.isDeviceActive) { desktop = false; return; }
             var cam = origin.Camera.transform;
             if (!desktop) { desktop = true; yaw = cam.eulerAngles.y; pitch = 12f; }
@@ -142,7 +153,7 @@ namespace MedSimAI.XR
         void TogglePause()
         {
             var s = SessionManager.Instance; if (!s) return;
-            if (s.State == AppState.Running) s.Pause(true); else if (s.State == AppState.Paused) s.Pause(false);
+            if (s.State == AppState.Running || s.State == AppState.Tutorial || s.State == AppState.Discussion) s.Pause(true); else if (s.State == AppState.Paused) s.Pause(false);
         }
 
         public void SetSmoothMovement(bool on) { if (smoothMoveProvider) smoothMoveProvider.SetActive(on); }

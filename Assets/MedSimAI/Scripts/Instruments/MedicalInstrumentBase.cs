@@ -29,7 +29,9 @@ namespace MedSimAI.Instruments
         protected Vector3 homePos; protected Quaternion homeRot; Transform homeParent;
         readonly Collider[] hits = new Collider[8];
 
-        public bool IsHeld => holder != null;
+        /// <summary>Held by the desktop (keyboard + mouse) player instead of an XR interactor.</summary>
+        public bool DesktopHeld { get; private set; }
+        public bool IsHeld => holder != null || DesktopHeld;
         protected ClinicalSession Session => ClinicalScenarioManager.Instance.Session;
 
         protected virtual void Awake()
@@ -57,6 +59,37 @@ namespace MedSimAI.Instruments
         protected virtual void OnRelease(SelectExitEventArgs a)
         {
             holder = null;
+            ReleaseCore();
+        }
+
+        // ---------------- Desktop mode: same pickup/placement flow, driven by mouse instead of an XR hand ----------------
+        public void DesktopGrab()
+        {
+            if (DesktopHeld) return;
+            DesktopHeld = true;
+            RecordEvent(ClinicalEvents.InstrumentPicked, InstrumentId);
+            Detach();
+            if (body) { body.isKinematic = true; body.useGravity = false; }
+            ShowGuidance(true);
+            Play(pickupClip);
+        }
+
+        /// <summary>Releases at the current pose: snaps into an accepting zone (same as letting go in VR), otherwise records wrong placement when on the patient.</summary>
+        public void DesktopRelease()
+        {
+            if (!DesktopHeld) return;
+            DesktopHeld = false;
+            ReleaseCore();
+        }
+
+        /// <summary>Desktop: the student tried to apply the instrument at a site that does not accept it.</summary>
+        public void DesktopRejectedPlacement() => RecordEvent(ClinicalEvents.ZoneRejected, InstrumentId);
+
+        public PlacementZone HoverZone => hoverZone;
+        public bool Attached => attachedZone != null;
+
+        protected virtual void ReleaseCore()
+        {
             ShowGuidance(false);
             if (hoverZone) hoverZone.SetHighlight(false, false);
             if (hoverZone && hoverZone.Accepts(InstrumentId) && SupportsSnap) { RecordEvent(ClinicalEvents.InstrumentOnPatient, InstrumentId + "@" + hoverZone.zoneId); SnapTo(hoverZone); OnPlaced(hoverZone); }

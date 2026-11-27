@@ -23,7 +23,10 @@ The experience runs as one continuous scene with no loading screens:
 
 Without the proxy the app still runs, **text-only** (subtitles), and says so. It never plays pre-recorded dialogue.
 
-## Controls
+## Desktop Mode (no headset)
+Run `D:\VRBuilds\MedSim_Desktop\MedSimAI.exe` (start the AI proxy first). Controls: WASD + mouse, E to interact, left click to grab/apply, right click to put back, hold T to talk, Esc to pause. See [DESKTOP_MODE](DESKTOP_MODE.md).
+
+## Controls (VR)
 | Action | Input |
 |---|---|
 | Talk to the person you are looking at | Hold A / X, speak, release (keyboard `T` on desktop) |
@@ -34,6 +37,7 @@ Without the proxy the app still runs, **text-only** (subtitles), and says so. It
 | Teleport / snap turn | Thumbstick |
 
 ## Documentation
+- **Desktop Mode:** [DESKTOP_MODE](DESKTOP_MODE.md)
 - **Design:** [RESEARCH_AND_VISUAL_DIRECTION](RESEARCH_AND_VISUAL_DIRECTION.md) · [ARCHITECTURE](ARCHITECTURE.md) · [INTELLIGENT_SUPERVISOR](INTELLIGENT_SUPERVISOR.md) · [DYNAMIC_PATIENT_STATE](DYNAMIC_PATIENT_STATE.md)
 - **AI and security:** [AI_SETUP](AI_SETUP.md) · [SECURITY_AND_PRIVACY](SECURITY_AND_PRIVACY.md)
 - **Clinical:** [CLINICAL_SCENARIO](CLINICAL_SCENARIO.md) · [CLINICAL_REVIEW](CLINICAL_REVIEW.md) · [MEDICAL_REFERENCES](MEDICAL_REFERENCES.md)

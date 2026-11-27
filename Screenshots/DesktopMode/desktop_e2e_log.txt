@@ -1,0 +1,41 @@
+0.0s [mode] display=Desktop (no OpenXR runtime/headset (loader failed)) desktop=True AI=LIVE AI renderScale=1 eye=1.65m
+1.9s [speech] Dr. Hassan (supervisor) [live audio]: Welcome. I’m Dr. Sara Hassan, your supervising physician. Mr. Adam Reyes, fifty-eight, has come in with chest pain. Assess him as you would a real patient, then tell me what you think and what you would do. Open the door when you’re ready.
+16.2s [shot] D01_corridor_start
+16.5s [walk] moved 0.80 m with W toward the door
+17.0s [shot] D02_door_prompt
+17.3s [door] E opened door: angle=60 event=True
+18.3s [shot] D03_door_open
+18.5s [walk] waypoint (1.89, 0.00, -3.05) reached at (1.62, 0.02, -3.16)
+19.1s [walk] waypoint (1.89, 0.00, -1.55) reached at (1.89, 0.02, -1.83)
+19.6s [walk] waypoint (2.00, 0.01, -0.25) reached at (1.98, 0.02, -0.54)
+19.7s [walk] waypoint (1.90, 0.01, 0.00) reached at (1.94, 0.02, -0.29)
+19.8s [walk] waypoint (1.70, 0.01, 0.20) reached at (1.86, 0.02, -0.04)
+20.0s [walk] waypoint (1.15, 0.02, 0.55) reached at (1.39, 0.02, 0.38)
+20.0s [walk] in room at (1.39, 0.02, 0.38) entered=True
+20.9s [shot] D04_patient_view
+24.1s [speech] Mr. Reyes (patient) [live audio]: Hello, doctor. Thank you for coming. This pain is really worrying me. Yes, of course. Please do whatever you need to.
+36.3s [speech] Mr. Reyes (patient) [live audio]: Right here, in the middle of my chest.
+39.6s [grab] cuff held=True desktopHeld=True
+41.9s [wrong] ZONE_REJECTED=2
+42.7s [shot] D05_cuff_aim_arm
+42.9s [apply] cuff attached=True
+44.7s [speech] Dr. Hassan (supervisor) [live audio]: Take a moment. Where on the body does that instrument need to go?
+49.5s [exam] EX_BP=True
+50.7s [shot] D06_after_cuff
+53.5s [ausc] EX_AUSC_HEART=True
+53.7s [shot] D07_stethoscope
+53.9s [drop] stethoscope back on trolley held=False
+56.7s [ecg] recorded=True reviewed=True
+57.0s [shot] D08_ecg
+62.0s [speech] Mr. Reyes (patient) [live audio]: I'm allergic to penicillin. It gave me a rash.
+64.6s [speech] Dr. Hassan (supervisor) [live audio]: What does this ECG pattern suggest, and why is it important not to delay urgent escalation? The senior team has already been alerted and is on the way.
+74.0s [flow] state=Discussion condition=S_HANDOVER
+74.3s [shot] D09_doctor_discussion
+76.8s [speech] Dr. Hassan (supervisor) [live audio]: Let’s step back for a moment. Talk me through your assessment—what did you find when you assessed Mr. Reyes?
+86.6s [speech] Dr. Hassan (supervisor) [live audio]: Good—crushing central pain radiating to the arm and jaw, plus smoking and high cholesterol, are important clues. What did you find on the ECG?
+99.5s [speech] Dr. Hassan (supervisor) [live audio]: You’ve identified the inferior ST elevation with reciprocal changes. What do you think this pattern means, and what should happen next?
+110.3s [speech] Dr. Hassan (supervisor) [live audio]: What should happen next, and should anyone wait for a troponin result before escalating?
+119.1s [speech] Dr. Hassan (supervisor) [live audio]: Exactly—urgent reperfusion should not be delayed for the troponin result. The senior team has already been alerted and is on the way.
+130.8s [debrief] You introduced yourself, asked permission, and got the ECG promptly; you also recognised the inferior STEMI pattern and escalated appropriately. The central chest pain story needed fuller assessment: ask about onset, character, radiation, severity, and associated symptoms, and check their risk factors, because these help build the picture without delaying action on a diagnostic ECG. You also missed oxygen saturation and lung auscultation, which are important parts of assessing the patient alongside the ECG. Next time, use a brief chest-pain checklist while someone obtains the ECG, and keep the urgent reperfusion pathway moving. Let’s look at the detailed report together.
+130.8s [cursor] lock=None (debrief report should be clickable)
+131.0s [shot] D10_debrief_report

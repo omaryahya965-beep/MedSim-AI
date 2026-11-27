@@ -17,7 +17,7 @@ namespace MedSimAI.Tests
     {
         [UnitySetUp] public IEnumerator Load()
         {
-            AIProviderManager.ForceOffline = true;
+            AIProviderManager.ForceOffline = true; MedSimAI.XR.DisplayModeManager.DisableAutoDesktop = true;
             AIProviderManager.ConfigOverride = new AIRuntimeConfig { proxyEndpoint = "http://127.0.0.1:9", clientSessionToken = "test", preferOnline = true, timeoutMs = 3000 };
             yield return SceneManager.LoadSceneAsync("MedSim_ER");
             float t = 0; while ((SessionManager.Instance == null || SessionManager.Instance.State != AppState.MainMenu) && t < 10) { t += Time.unscaledDeltaTime; yield return null; }

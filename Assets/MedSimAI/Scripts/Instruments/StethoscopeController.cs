@@ -68,7 +68,7 @@ namespace MedSimAI.Instruments
             earpiece.loop = true; earpiece.Play();
         }
         void StopSound() { playingKey = null; if (earpiece && earpiece.isPlaying) earpiece.Stop(); }
-        protected override void OnRelease(SelectExitEventArgs a) { base.OnRelease(a); StopSound(); dwellZone = null; }
+        protected override void ReleaseCore() { base.ReleaseCore(); StopSound(); dwellZone = null; }
         public override void ResetInstrument() { base.ResetInstrument(); cache.Clear(); StopSound(); }
     }
 }

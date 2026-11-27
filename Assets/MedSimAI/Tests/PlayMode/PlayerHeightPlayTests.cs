@@ -17,7 +17,7 @@ namespace MedSimAI.PlayTests
         [UnitySetUp] public IEnumerator Load()
         {
             PlayerPrefs.DeleteKey(XRPlayerController.PrefExtraHeight); PlayerPrefs.DeleteKey(XRPlayerController.PrefSeated);
-            MedSimAI.AI.AIProviderManager.ForceOffline = true; // automated tests never make billable AI calls
+            MedSimAI.AI.AIProviderManager.ForceOffline = true; MedSimAI.XR.DisplayModeManager.DisableAutoDesktop = true; // automated tests never make billable AI calls
             yield return SceneManager.LoadSceneAsync("MedSim_ER");
             float t = 0; while ((SessionManager.Instance == null || SessionManager.Instance.State != AppState.MainMenu) && t < 10) { t += Time.unscaledDeltaTime; yield return null; }
             rig = Object.FindAnyObjectByType<XRPlayerController>();

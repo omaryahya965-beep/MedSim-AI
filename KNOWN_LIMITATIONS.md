@@ -44,3 +44,10 @@
 16. **Hands:** XRI controllers with instrument snap zones. Hand-tracking and physics hands (Auto Hand / Hurricane VR) were not added.
 17. **ECG:** the cart's RECORD button records it; electrodes are not placed one by one.
 18. **Room entry:** the room-entry event requires walking through the doorway. Teleporting past the trigger skips it, which does not affect the flow.
+
+## Desktop Mode
+19. **PCVR build without a headset.** If SteamVR is the active OpenXR runtime and no headset is connected, the PCVR build blocks at start-up inside SteamVR. Use the Desktop build (OpenXR excluded) or close SteamVR.
+20. **VR start-up path untested on hardware.** VR Mode now starts XR manually instead of "Initialize XR on Startup", and this has not been verified on the VIVE Focus 3. If it fails, re-enable that checkbox (Windows) and rebuild.
+21. **Desktop interaction is simplified to point-and-click.** Pick up, aim and apply; there are no hand poses.
+22. **Laptop microphone** push-to-talk with a real human voice has not been tested (STT was tested with recorded speech).
+23. **Blanket artifacts:** small dark patches (the patient's legs) show through the blanket near the feet.

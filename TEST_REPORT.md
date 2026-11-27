@@ -158,3 +158,15 @@ All were reviewed. The environment and character agents each did review→fix pa
 - +0.40 m height (unchanged and still unit-tested)
 
 **APK:** not built, as instructed.
+
+---
+# Desktop Mode (2026-11-27)
+| Suite | Result |
+|---|---|
+| Unity EditMode | **72 / 72** |
+| Unity PlayMode | **18 / 18**, including 3 new `DesktopModePlayTests`; the existing tests keep the legacy rig via `DisableAutoDesktop` |
+| Desktop end-to-end with simulated keyboard/mouse input and real Live AI | Pass — see DESKTOP_MODE.md and `Screenshots/DesktopMode/desktop_e2e_log.txt` |
+| Standalone desktop build `D:/VRBuilds/MedSim_Desktop/MedSimAI.exe` | Built with 0 errors; launches full screen at native 1920x1080 in Desktop Mode with Live AI, even with SteamVR running; secret scan clean |
+| PCVR build (manual XR start-up + automatic fallback) | Built with 0 errors; secret scan clean. **Not run with the headset.** |
+
+**Root cause of the earlier "player stalls without headset":** SteamVR, registered as the active OpenXR runtime, blocks the OpenXR plugin's start-up queries when no headset is connected. This was verified by launching the build with no OpenXR runtime available (`XR_RUNTIME_JSON` pointed at a missing file), which started normally.
