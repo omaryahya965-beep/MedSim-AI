@@ -1,0 +1,8 @@
+{
+  "name": "MedSimAI.Surgery.Integration.Tests",
+  "references": ["MedSimAI.Surgery.Shared","MedSimAI.Surgery.AI.Core","MedSimAI.Surgery.Shared.Tests","UnityEngine.TestRunner","UnityEditor.TestRunner"],
+  "includePlatforms": ["Editor"],
+  "overrideReferences": true,
+  "precompiledReferences": ["nunit.framework.dll"],
+  "defineConstraints": ["UNITY_INCLUDE_TESTS"]
+}
