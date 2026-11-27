@@ -19,6 +19,8 @@ namespace MedSimAI.Tests
             try
             {
                 if (DisplayModeManager.Instance) Object.DestroyImmediate(DisplayModeManager.Instance.gameObject);
+                var xm = UnityEngine.XR.Management.XRGeneralSettings.Instance ? UnityEngine.XR.Management.XRGeneralSettings.Instance.Manager : null;
+                if (xm != null && xm.isInitializationComplete) { xm.StopSubsystems(); xm.DeinitializeLoader(); } // this check is about the NEXT launch, without XR running
                 var go = new GameObject("[test display mode]"); var dm = go.AddComponent<DisplayModeManager>();
                 float t = 0; while (DisplayModeManager.Mode == DisplayMode.Detecting && t < 5) { t += Time.unscaledDeltaTime; yield return null; }
                 Assert.AreEqual(DisplayMode.Desktop, DisplayModeManager.Mode, dm.Detail);

@@ -39,6 +39,8 @@ namespace MedSimAI.Voice
         readonly Queue<float[]> nvPreroll = new Queue<float[]>();
         float[] nvRead = new float[Rate]; readonly float[] nvFrame = new float[Frame]; int nvFill;
         UnityWebRequest nvReq;
+        readonly HashSet<UnityWebRequest> nvSayReqs = new HashSet<UnityWebRequest>();
+        bool nvBargeIn; int nvEpoch; // epoch: incremented by every interruption (stale director lines are dropped)
         float nvEcho = 0.6f; readonly float[] nvOut = new float[512]; // estimated speaker→microphone echo gain (laptop speakers)
 
         bool AnyCharacterSpeaking => (patientSpeech && patientSpeech.IsSpeaking) || (instructorSpeech && instructorSpeech.IsSpeaking);
@@ -136,7 +138,10 @@ namespace MedSimAI.Voice
 
         void NativeBeginCapture()
         {
-            if (AnyCharacterSpeaking || nvReq != null) Interrupt(); // natural interruption
+            // Push-to-talk is deliberate: interrupt at once. Hands-free: only DUCK the character until the Realtime session
+            // confirms real words (noise, breathing or the character's own voice in the mic must never cut speech off).
+            if (nvPtt) { if (AnyCharacterSpeaking || nvReq != null) Interrupt(); }
+            else if (AnyCharacterSpeaking) { nvBargeIn = true; DuckSpeech(true); }
             nvCapturing = true; nvSilence = 0; nvSpeechFrames = 0; nvCapPeak = 0;
             nvCapture.Clear(); foreach (var f in nvPreroll) nvCapture.AddRange(f); nvPreroll.Clear();
             listenStart = Time.time;
@@ -148,7 +153,7 @@ namespace MedSimAI.Voice
             nvCapturing = false; nvPtt = false;
             int trim = (int)(Mathf.Clamp(nvSilence - 0.15f, 0f, 0.6f) * Rate);
             int len = Mathf.Max(0, nvCapture.Count - trim);
-            if (len < Rate * 0.35f) { SetState(VoiceState.Idle); return; } // too short: ignore clicks/coughs
+            if (len < Rate * 0.35f) { if (nvBargeIn) { nvBargeIn = false; DuckSpeech(false); } SetState(VoiceState.Idle); return; } // too short: ignore clicks/coughs
             var samples = nvCapture.GetRange(0, len).ToArray();
             UtteranceCaptured?.Invoke(samples);
             SubmitVoice(Target, samples);
@@ -178,11 +183,15 @@ namespace MedSimAI.Voice
         {
             var bytes = new byte[samples.Length * 2];
             for (int i = 0; i < samples.Length; i++) { short v = (short)(Mathf.Clamp(samples[i], -1f, 1f) * 32767f); bytes[2 * i] = (byte)v; bytes[2 * i + 1] = (byte)(v >> 8); }
-            StartCoroutine(VoiceRoutine(target, bytes, Time.realtimeSinceStartup));
+            bool barge = nvBargeIn; nvBargeIn = false;
+            StartCoroutine(VoiceRoutine(target, bytes, Time.realtimeSinceStartup, barge));
         }
 
-        IEnumerator VoiceRoutine(Persona target, byte[] pcm, float tEnd)
+        void DuckSpeech(bool on) { if (patientSpeech) patientSpeech.Duck(on); if (instructorSpeech) instructorSpeech.Duck(on); }
+
+        IEnumerator VoiceRoutine(Persona target, byte[] pcm, float tEnd, bool bargeIn = false)
         {
+            var prevReq = nvReq;
             SetState(VoiceState.Thinking);
             LastUnderstoodMs = LastFirstAudioMs = -1;
             var session = ClinicalScenarioManager.Instance.Session;
@@ -195,7 +204,9 @@ namespace MedSimAI.Voice
             while (meta == null && !op.isDone) yield return null;
             if (meta != null && meta.noSpeech) // the Realtime session heard no intelligible student speech (noise, echo): stay silent
             {
-                if (nvReq == www) nvReq = null; www.Dispose(); AI.Live.ReportOnline();
+                if (nvReq == www) nvReq = prevReq != null && !prevReq.isDone ? prevReq : null;
+                www.Dispose(); AI.Live.ReportOnline();
+                if (bargeIn) DuckSpeech(false); // false alarm: the character simply continues
                 Debug.Log("[MedSim] Native voice: no intelligible speech in the captured audio, ignored");
                 if (State == VoiceState.Thinking) SetState(VoiceState.Idle); yield break;
             }
@@ -206,7 +217,28 @@ namespace MedSimAI.Voice
             }
             AI.Live.ReportOnline();
             LastUnderstoodMs = (Time.realtimeSinceStartup - tEnd) * 1000f;
+            if (bargeIn) // confirmed: the student really spoke over the character → now interrupt
+            {
+                if (patientSpeech) patientSpeech.Stop(); if (instructorSpeech) instructorSpeech.Stop(); DuckSpeech(false);
+                if (prevReq != null && prevReq != www) { try { prevReq.Abort(); } catch { } }
+                AbortSayRequests(); nvEpoch++;
+            }
             TranscriptReady?.Invoke(meta.heard);
+            var speaker = target == Persona.Patient ? patientSpeech : instructorSpeech;
+            if (!string.IsNullOrEmpty(meta.languageCommand))
+            {
+                // Language switch ("احكي عربي", "speak English"…): application-wide, both characters; never scored.
+                AI.SetLanguageMode(meta.languageCommand == "ar" ? LanguageMode.Arabic : LanguageMode.English);
+                Debug.Log("[MedSim] Language command → " + meta.languageCommand + " (both characters)");
+                bool fin = false; void FinCmd() { speaker.SpeechFinished -= FinCmd; fin = true; }
+                speaker.SpeechFinished += FinCmd; SetState(VoiceState.Speaking);
+                speaker.SpeakStreaming(meta.text, stream);
+                while (!fin) yield return null;
+                if (nvReq == www) nvReq = null; www.Dispose();
+                if (State == VoiceState.Speaking) SetState(VoiceState.Idle);
+                yield break;
+            }
+            AI.NoteStudentLanguage(LanguageCommands.DetectLanguage(meta.heard) ?? meta.lang);
             var resp = new AIResponse
             {
                 live = true, providerName = "Live AI (native voice)", speech = meta.text, usedFactIds = meta.factIds ?? new string[0], intent = meta.intent,
@@ -215,7 +247,9 @@ namespace MedSimAI.Voice
             };
             var turn = AI.Orchestrator.ApplyVoiceTurn(target, meta.heard, resp);
             TurnReady?.Invoke(turn);
-            var speaker = target == Persona.Patient ? patientSpeech : instructorSpeech;
+            // Never cut the same character off mid-line: if they are still finishing another line, wait for it.
+            float busyUntil = Time.realtimeSinceStartup + 25f;
+            while (speaker.IsSpeaking && Time.realtimeSinceStartup < busyUntil) yield return null;
             bool done = false; void Done() { speaker.SpeechFinished -= Done; done = true; }
             speaker.SpeechFinished += Done;
             SetState(VoiceState.Speaking);
@@ -239,26 +273,33 @@ namespace MedSimAI.Voice
             var stream = new StreamingVoice("live_say");
             LiveSayResponse meta = null;
             var www = AI.Live.SayStream(who, kind, baseText, LiveAIClient.ContextOf(session, LiveProvider.DiscussionId), stream, m => meta = m, severity, result);
+            int epoch = nvEpoch; nvSayReqs.Add(www);
             var op = www.SendWebRequest();
             while (meta == null && !op.isDone) await Task.Yield();
-            if (meta == null || string.IsNullOrEmpty(meta.text)) { AI.Live.ReportError(www.responseCode, www.downloadHandler?.text); www.Dispose(); return null; }
+            if (epoch != nvEpoch) { nvSayReqs.Remove(www); www.Dispose(); return meta?.text ?? ""; } // interrupted meanwhile: drop the line
+            if (meta == null || string.IsNullOrEmpty(meta.text)) { nvSayReqs.Remove(www); AI.Live.ReportError(www.responseCode, www.downloadHandler?.text); www.Dispose(); return null; }
             AI.Live.ReportOnline();
-            float waitUntil = Time.realtimeSinceStartup + 8f;
-            while ((State == VoiceState.Listening || State == VoiceState.Transcribing || nvCapturing) && Time.realtimeSinceStartup < waitUntil) await Task.Yield(); // don't talk over the student (bounded)
             var speaker = who == Persona.Patient ? patientSpeech : instructorSpeech;
+            float waitUntil = Time.realtimeSinceStartup + 30f;
+            // don't talk over the student, and never cut this character off mid-line: wait (bounded) until both are free
+            while ((State == VoiceState.Listening || State == VoiceState.Transcribing || State == VoiceState.Thinking || nvCapturing || speaker.IsSpeaking) && Time.realtimeSinceStartup < waitUntil && epoch == nvEpoch) await Task.Yield();
+            if (epoch != nvEpoch) { stream.Cancel(); nvSayReqs.Remove(www); www.Dispose(); return meta.text; }
             var tcs = new TaskCompletionSource<bool>();
             void Done() { speaker.SpeechFinished -= Done; if (State == VoiceState.Speaking) SetState(VoiceState.Idle); tcs.TrySetResult(true); }
             speaker.SpeechFinished += Done;
             SetState(VoiceState.Speaking);
             speaker.SpeakStreaming(meta.text, stream);
             await tcs.Task;
-            www.Dispose();
+            nvSayReqs.Remove(www); www.Dispose();
             return meta.text;
         }
 
         void NativeAbort()
         {
+            nvEpoch++;
             if (nvReq != null) { try { nvReq.Abort(); } catch { } nvReq = null; }
+            AbortSayRequests(); DuckSpeech(false); nvBargeIn = false;
         }
+        void AbortSayRequests() { foreach (var r in nvSayReqs) { try { r.Abort(); } catch { } } nvSayReqs.Clear(); }
     }
 }

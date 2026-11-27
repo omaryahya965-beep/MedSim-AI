@@ -263,7 +263,7 @@ export function createServer() {
         const onAudio = chunk => { if (!res.writableEnded && !ac.signal.aborted) res.write(chunk); };
         try {
           const out = isVoice
-            ? await live.voiceTurn(sess, url.searchParams.get('persona') === 'Patient' ? 'Patient' : 'Instructor', body, { language: url.searchParams.get('lang') || undefined, context: opts }, { onMeta, onAudio, signal: ac.signal })
+            ? await live.voiceTurn(sess, url.searchParams.get('persona') === 'Patient' ? 'Patient' : 'Instructor', body, { language: url.searchParams.get('lang') || undefined, langLock: url.searchParams.get('langLock') || '', context: opts }, { onMeta, onAudio, signal: ac.signal })
             : await live.sayStream(sess, opts, { onMeta, onAudio, signal: ac.signal });
           if (out) console.log(`  ${route} firstAudio=${out.firstAudioMs}ms total=${out.totalMs}ms fidelity=${out.fidelity == null ? '-' : out.fidelity.toFixed(2)}${out.cancelled ? ' (interrupted)' : ''} ${out.persona || ''} source=${out.source || '-'}${out.understandMs != null ? ' understand=' + out.understandMs + 'ms' : ''}${out.rejected ? ' rejected=' + out.rejected : ''}`);
         } catch (e) {

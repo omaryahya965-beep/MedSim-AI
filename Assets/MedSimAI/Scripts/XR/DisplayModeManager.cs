@@ -92,14 +92,14 @@ namespace MedSimAI.XR
             PlayerPrefs.SetInt(XrPendingKey, 1); PlayerPrefs.Save();
             var watchdog = StartWatchdog();
 
-            if (mgr.activeLoader == null) yield return mgr.InitializeLoader();
+            if (mgr.activeLoader == null) { yield return mgr.InitializeLoader(); startedXr = mgr.activeLoader != null; }
             if (mgr.activeLoader == null) { EndWatchdog(watchdog); Set(DisplayMode.Desktop, "no OpenXR runtime/headset (loader failed)"); yield break; }
             mgr.StartSubsystems();
             float until = Time.realtimeSinceStartup + (req == DisplayModePreference.VR ? forcedVrSeconds : autoDetectSeconds);
             while (Time.realtimeSinceStartup < until && !DisplayRunning()) yield return null;
             EndWatchdog(watchdog);
             if (DisplayRunning()) { Set(DisplayMode.VR, "headset display running"); yield break; }
-            mgr.StopSubsystems(); mgr.DeinitializeLoader();
+            mgr.StopSubsystems(); mgr.DeinitializeLoader(); startedXr = false;
             Set(DisplayMode.Desktop, "XR started but no headset display");
         }
 
@@ -134,6 +134,17 @@ namespace MedSimAI.XR
             return w;
         }
         static void EndWatchdog(Watchdog w) { if (w != null) w.done = true; PlayerPrefs.SetInt(XrPendingKey, 0); PlayerPrefs.Save(); }
+
+        bool startedXr;
+        /// <summary>XR was started manually here, so it is also stopped here (otherwise it stays running in the Editor after Play mode).</summary>
+        void OnApplicationQuit() { StopXrIfStartedHere(); }
+        void OnDestroy() { StopXrIfStartedHere(); }
+        void StopXrIfStartedHere()
+        {
+            if (!startedXr) return; startedXr = false;
+            var mgr = XRGeneralSettings.Instance ? XRGeneralSettings.Instance.Manager : null;
+            if (mgr != null && mgr.isInitializationComplete) { mgr.StopSubsystems(); mgr.DeinitializeLoader(); }
+        }
 
         static bool DisplayRunning()
         {

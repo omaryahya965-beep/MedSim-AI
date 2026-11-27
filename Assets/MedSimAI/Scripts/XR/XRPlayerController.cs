@@ -20,8 +20,11 @@ namespace MedSimAI.XR
     [DefaultExecutionOrder(1000)]
     public class XRPlayerController : MonoBehaviour
     {
-        public const string PrefExtraHeight = "medsim.extraHeight", PrefSeated = "medsim.seated";
-        public const float DefaultExtraHeight = 0.40f, MinExtra = 0f, MaxExtra = 1f;
+        // v0.4: VR default raised to +0.55 m (new key, so the old +0.40 m default does not stick); adjustable in the pause menu.
+        public const string PrefExtraHeight = "medsim.vrExtraHeight", PrefSeated = "medsim.seated";
+        public const float DefaultExtraHeight = 0.55f, MinExtra = 0f, MaxExtra = 1f;
+        /// <summary>Desktop Mode eye lift — unchanged (+0.40 m); the VR height setting does not affect Desktop Mode.</summary>
+        public const float DesktopLift = 0.40f;
 
         public XROrigin origin;
         public Transform spawnPoint;
@@ -35,13 +38,14 @@ namespace MedSimAI.XR
         InputAction pauseAction, recenterAction;
 
         /// <summary>Total Camera Offset height currently applied on top of XR Origin's own base height.</summary>
-        public float AppliedLift => Mathf.Clamp(extraHeight, MinExtra, MaxExtra) + (Seated ? seatedLift : 0f);
+        public float AppliedLift => DesktopPlayerController.Active ? DesktopLift : Mathf.Clamp(extraHeight, MinExtra, MaxExtra) + (Seated ? seatedLift : 0f);
 
         void Awake()
         {
             if (!origin) origin = FindAnyObjectByType<XROrigin>();
             UIFactory.RaycasterFactory = c => c.gameObject.AddComponent<TrackedDeviceGraphicRaycaster>();
             extraHeight = Mathf.Clamp(PlayerPrefs.GetFloat(PrefExtraHeight, DefaultExtraHeight), MinExtra, MaxExtra);
+            if (!GetComponent<VRLocomotion>()) gameObject.AddComponent<VRLocomotion>();
             Seated = PlayerPrefs.GetInt(PrefSeated, 0) == 1;
         }
 
@@ -51,7 +55,7 @@ namespace MedSimAI.XR
             SubsystemManager.GetSubsystems(subsystems);
             foreach (var s in subsystems) s.TrySetTrackingOriginMode(TrackingOriginModeFlags.Floor);
             if (origin) origin.RequestedTrackingOriginMode = XROrigin.TrackingOriginMode.Floor;
-            if (smoothMoveProvider) smoothMoveProvider.SetActive(false); // teleport + snap turn by default (comfort)
+            // locomotion (left-stick smooth move, right-stick turn + teleport) is configured by VRLocomotion
             Recenter();
 
             pauseAction = new InputAction("Pause", InputActionType.Button);
@@ -71,6 +75,7 @@ namespace MedSimAI.XR
             foreach (var s in subsystems) s.TrySetTrackingOriginMode(TrackingOriginModeFlags.Floor);
             if (origin) origin.RequestedTrackingOriginMode = XROrigin.TrackingOriginMode.Floor;
             desktop = false;
+            GetComponent<VRLocomotion>()?.Apply();
             Recenter();
         }
 

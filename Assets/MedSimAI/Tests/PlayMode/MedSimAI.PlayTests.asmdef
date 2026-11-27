@@ -1,6 +1,6 @@
 {
   "name": "MedSimAI.PlayTests",
-  "references": ["MedSimAI","UnityEngine.TestRunner","UnityEditor.TestRunner","Unity.XR.Interaction.Toolkit","Unity.TextMeshPro","Unity.RenderPipelines.Universal.Runtime","Unity.RenderPipelines.Core.Runtime","Unity.XR.CoreUtils"],
+  "references": ["MedSimAI","UnityEngine.TestRunner","UnityEditor.TestRunner","Unity.XR.Interaction.Toolkit","Unity.TextMeshPro","Unity.RenderPipelines.Universal.Runtime","Unity.RenderPipelines.Core.Runtime","Unity.XR.CoreUtils","Unity.InputSystem","Unity.XR.Interaction.Toolkit.Samples.StarterAssets","Unity.XR.Management"],
   "overrideReferences": true,
   "precompiledReferences": ["nunit.framework.dll"],
   "defineConstraints": ["UNITY_INCLUDE_TESTS"]

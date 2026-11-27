@@ -62,7 +62,8 @@ namespace MedSimAI.UI
             ClinicalFeedbackBus.Finding += (title, text) => { findings.Insert(0, $"<b>{title}</b>\n{text}"); RefreshFindings(); Toast($"<b>{title}</b>  {text}"); };
             var v = VoiceInteractionManager.Instance;
             v.StateChanged += _ => RefreshVoice(); v.TargetChanged += _ => RefreshVoice();
-            v.TranscriptReady += t => { voiceText.text = $"<color=#8892B0>You:</color> {t}"; };
+            v.TranscriptReady += ShowTranscript;
+            AIProviderManager.Instance.LanguageChanged += _ => { voiceHint = true; RefreshVoice(); RefreshLang(); if (languageButtonText) languageButtonText.text = LanguageButtonLabel(); };
             v.Error += e => Toast("<color=#FFB74D>" + e + "</color>");
             v.TurnReady += OnTurn;
             v.MicModeChanged += _ => { if (micButtonText) micButtonText.text = MicLabel(); RefreshVoice(); };
@@ -119,19 +120,29 @@ namespace MedSimAI.UI
             UIFactory.Button(sc, "Back", () => Show(mainPanel), Brand.Teal, 26, 66);
 
             pausePanel = Section(root, "Pause");
-            var pc = UIFactory.VStack(pausePanel, "Pause", 12, 0); UIFactory.Place(pc, new Vector2(0.27f, 0.06f), new Vector2(0.73f, 0.94f));
-            UIFactory.Text(pc, "<b>Paused</b>", 50, Brand.White, TextAlignmentOptions.Center);
+            var pTitle = UIFactory.Text(pausePanel, "<b>Paused</b>", 44, Brand.White, TextAlignmentOptions.Center); UIFactory.Place(pTitle.rectTransform, new Vector2(0.2f, 0.89f), new Vector2(0.8f, 0.99f));
+            var pc = UIFactory.VStack(pausePanel, "Pause", 7, 0); UIFactory.Place(pc, new Vector2(0.22f, 0.03f), new Vector2(0.78f, 0.89f));
             pauseStatusText = UIFactory.Text(pc, "", 22, Brand.TealLight, TextAlignmentOptions.Center);
-            UIFactory.Button(pc, "Resume", () => S.Pause(false), Brand.Teal, 28, 74);
-            UIFactory.Button(pc, "Show / hide clinical tablet", () => { TabletEnabled = !TabletEnabled; OnAppState(S.State); }, Brand.NavyLight, 24, 64);
-            UIFactory.Button(pc, "Subtitles on / off", () => { SubtitlesEnabled = !SubtitlesEnabled; }, Brand.NavyLight, 24, 64);
-            UIFactory.Button(pc, "Language: English / العربية", () => { AIProviderManager.Instance.SetLanguage(AIProviderManager.Instance.Config.language == "ar" ? "en" : "ar"); RefreshMode(); RefreshPause(); }, Brand.NavyLight, 24, 64);
-            UIFactory.Button(pc, "Comfort & Graphics", () => { comfortReturn = pausePanel; Show(comfortPanel); }, Brand.NavyLight, 24, 64);
-            micButtonText = UIFactory.Button(pc, MicLabel(), () => { VoiceInteractionManager.Instance.CycleMicMode(); if (micButtonText) micButtonText.text = MicLabel(); RefreshVoice(); }, Brand.NavyLight, 22, 60).GetComponentInChildren<TMP_Text>();
-            micDeviceButtonText = UIFactory.Button(pc, MicDeviceLabel(), () => { CycleMicDevice(); if (micDeviceButtonText) micDeviceButtonText.text = MicDeviceLabel(); }, Brand.NavyLight, 20, 54).GetComponentInChildren<TMP_Text>();
-            displayModeButtonText = UIFactory.Button(pc, DisplayModeLabel(), () => { MedSimAI.XR.DisplayModeManager.CyclePreference(); if (displayModeButtonText) displayModeButtonText.text = DisplayModeLabel(); }, Brand.NavyLight, 22, 60).GetComponentInChildren<TMP_Text>();
-            UIFactory.Button(pc, "Restart Scenario", () => S.Restart(), Brand.NavyLight, 24, 64);
-            UIFactory.Button(pc, "Exit Simulation", () => S.ExitSimulation(), Brand.NavyLight, 24, 64);
+            UIFactory.Button(pc, "Resume", () => S.Pause(false), Brand.Teal, 26, 58);
+            UIFactory.Button(pc, "Show / hide clinical tablet", () => { TabletEnabled = !TabletEnabled; OnAppState(S.State); }, Brand.NavyLight, 22, 50);
+            UIFactory.Button(pc, "Subtitles on / off", () => { SubtitlesEnabled = !SubtitlesEnabled; }, Brand.NavyLight, 22, 50);
+            languageButtonText = UIFactory.Button(pc, LanguageButtonLabel(), () => { var ai = AIProviderManager.Instance; ai.SetLanguageMode((LanguageMode)(((int)ai.LangMode + 1) % 3)); if (languageButtonText) languageButtonText.text = LanguageButtonLabel(); RefreshMode(); RefreshPause(); }, Brand.NavyLight, 20, 50).GetComponentInChildren<TMP_Text>();
+            {
+                // VR height directly in the pause menu (saved; applies immediately; Desktop Mode height is unchanged)
+                var pl = FindAnyObjectByType<MedSimAI.XR.XRPlayerController>();
+                var hrow = new GameObject("HeightRow", typeof(RectTransform)).GetComponent<RectTransform>(); hrow.SetParent(pc, false);
+                var hl = hrow.gameObject.AddComponent<HorizontalLayoutGroup>(); hl.spacing = 8; hl.childControlWidth = true; hl.childControlHeight = true; hl.childForceExpandWidth = true;
+                hrow.gameObject.AddComponent<LayoutElement>().preferredHeight = 48;
+                UIFactory.Button(hrow, "Lower −5", () => pl?.AdjustHeight(-0.05f), Brand.NavyLight, 20, 48);
+                pauseHeightText = UIFactory.Button(hrow, pl ? $"VR height +{pl.extraHeight * 100:0} cm" : "VR height", () => pl?.ResetHeight(), Brand.NavyLight, 20, 48).GetComponentInChildren<TMP_Text>();
+                UIFactory.Button(hrow, "Higher +5", () => pl?.AdjustHeight(0.05f), Brand.NavyLight, 20, 48);
+            }
+            UIFactory.Button(pc, "Comfort, movement & graphics", () => { comfortReturn = pausePanel; Show(comfortPanel); }, Brand.NavyLight, 22, 50);
+            micButtonText = UIFactory.Button(pc, MicLabel(), () => { VoiceInteractionManager.Instance.CycleMicMode(); if (micButtonText) micButtonText.text = MicLabel(); RefreshVoice(); }, Brand.NavyLight, 20, 48).GetComponentInChildren<TMP_Text>();
+            micDeviceButtonText = UIFactory.Button(pc, MicDeviceLabel(), () => { CycleMicDevice(); if (micDeviceButtonText) micDeviceButtonText.text = MicDeviceLabel(); }, Brand.NavyLight, 18, 46).GetComponentInChildren<TMP_Text>();
+            displayModeButtonText = UIFactory.Button(pc, DisplayModeLabel(), () => { MedSimAI.XR.DisplayModeManager.CyclePreference(); if (displayModeButtonText) displayModeButtonText.text = DisplayModeLabel(); }, Brand.NavyLight, 20, 48).GetComponentInChildren<TMP_Text>();
+            UIFactory.Button(pc, "Restart Scenario", () => S.Restart(), Brand.NavyLight, 22, 50);
+            UIFactory.Button(pc, "Exit Simulation", () => S.ExitSimulation(), Brand.NavyLight, 22, 50);
 
             debriefPanel = Section(root, "Debrief");
             debriefHeader = UIFactory.Text(debriefPanel, "", 40, Brand.White); UIFactory.Place(debriefHeader.rectTransform, new Vector2(0.03f, 0.86f), new Vector2(0.97f, 0.98f));
@@ -160,7 +171,18 @@ namespace MedSimAI.UI
             UIFactory.Button(row, "Higher  +5 cm", () => player?.AdjustHeight(0.05f), Brand.NavyLight, 24, 76);
             UIFactory.Button(left, "Standing mode", () => player?.SetSeated(false), Brand.NavyLight, 24, 68);
             UIFactory.Button(left, "Seated mode (+45 cm eye lift)", () => player?.SetSeated(true), Brand.NavyLight, 24, 68);
-            UIFactory.Button(left, "Reset to default (+40 cm)", () => player?.ResetHeight(), Brand.NavyLight, 24, 68);
+            UIFactory.Button(left, "Reset to default (+55 cm)", () => player?.ResetHeight(), Brand.NavyLight, 24, 68);
+            var loco = player ? player.GetComponent<MedSimAI.XR.VRLocomotion>() : null;
+            if (loco)
+            {
+                UIFactory.Text(left, "<b>Movement (VR)</b>", 30, Brand.White);
+                moveText = UIFactory.Button(left, loco.MoveLabel, () => loco.CycleSpeed(), Brand.NavyLight, 22, 56).GetComponentInChildren<TMP_Text>();
+                UIFactory.Button(left, "Smooth move on / off (teleport only)", () => loco.ToggleSmoothMove(), Brand.NavyLight, 22, 56);
+                turnText = UIFactory.Button(left, loco.TurnLabel, () => loco.ToggleSmoothTurn(), Brand.NavyLight, 22, 56).GetComponentInChildren<TMP_Text>();
+                UIFactory.Button(left, "Snap angle / turn speed", () => { if (loco.SmoothTurn) loco.CycleTurnSpeed(); else loco.CycleSnapAngle(); }, Brand.NavyLight, 22, 56);
+                deadText = UIFactory.Button(left, loco.DeadZoneLabel, () => loco.CycleDeadZone(), Brand.NavyLight, 22, 56).GetComponentInChildren<TMP_Text>();
+                loco.Changed += () => { if (moveText) moveText.text = loco.MoveLabel; if (turnText) turnText.text = loco.TurnLabel; if (deadText) deadText.text = loco.DeadZoneLabel; };
+            }
             UIFactory.Text(left, "<color=#8892B0>Raises the headset and both controllers together. Saved on this device. The hospital is never rescaled.</color>", 20, Brand.Muted);
 
             var right = UIFactory.VStack(comfortPanel, "Graphics", 12, 0); UIFactory.Place(right, new Vector2(0.52f, 0.14f), new Vector2(0.96f, 0.95f));
@@ -178,8 +200,10 @@ namespace MedSimAI.UI
             RefreshComfort();
         }
 
+        TMP_Text moveText, turnText, deadText, pauseHeightText;
         void RefreshComfort()
         {
+            { var pl = FindAnyObjectByType<MedSimAI.XR.XRPlayerController>(); if (pauseHeightText && pl) pauseHeightText.text = $"VR height +{pl.extraHeight * 100:0} cm"; }
             var player = FindAnyObjectByType<MedSimAI.XR.XRPlayerController>();
             if (heightText && player) heightText.text = $"Extra height: <b>+{player.extraHeight * 100:0} cm</b> · {(player.Seated ? "Seated" : "Standing")}";
             var pm = MedSimAI.Core.PerformanceManager.Instance;
@@ -383,22 +407,36 @@ namespace MedSimAI.UI
 
         void Toast(string msg) { if (!toastText) return; toastText.text = msg; toastUntil = Time.unscaledTime + 6f; }
 
+        TMP_Text languageButtonText; bool voiceHint = true;
+        static string LanguageButtonLabel() => "Language: " + AIProviderManager.Instance.LanguageModeLabel;
+        bool ArabicUi => AIProviderManager.Instance && AIProviderManager.Instance.ConversationLanguage == "ar";
+
+        /// <summary>The student's own words (what the Realtime session heard): Arabic is shaped and shown right-to-left.</summary>
+        void ShowTranscript(string t)
+        {
+            voiceHint = false;
+            if (ArabicShaper.ContainsArabic(t)) ArabicShaper.Apply(voiceText, "أنت: " + t);
+            else ArabicShaper.Apply(voiceText, $"<color=#8892B0>You:</color> {t}");
+        }
+        void SetVoiceLine(string en, string ar) { if (ArabicUi && ar != null) ArabicShaper.Apply(voiceText, ar); else ArabicShaper.Apply(voiceText, en); }
+
         void RefreshVoice()
         {
             var v = VoiceInteractionManager.Instance; if (!voiceDot || v == null) return;
             string who = v.Target == Persona.Patient ? "Patient" : "Supervisor";
             switch (v.State)
             {
-                case VoiceState.Listening: voiceDot.color = Brand.Danger; voiceText.text = $"• Listening… (talking to {who}) — {(v.Mic == MicMode.HandsFree ? "pause to send" : "release to send")}"; break;
-                case VoiceState.Transcribing: voiceDot.color = Brand.Warn; voiceText.text = "Transcribing…"; break;
+                case VoiceState.Listening: voiceDot.color = Brand.Danger; voiceHint = true; SetVoiceLine($"• Listening… (talking to {who}) — {(v.Mic == MicMode.HandsFree ? "pause to send" : "release to send")}", "• أستمع إليك… " + (v.Target == Persona.Patient ? "(للمريض)" : "(للطبيبة)")); break;
+                case VoiceState.Transcribing: voiceDot.color = Brand.Warn; voiceHint = true; SetVoiceLine("Transcribing…", "…"); break;
                 case VoiceState.Thinking: voiceDot.color = Brand.Blue; break;
                 case VoiceState.Speaking: voiceDot.color = Brand.Teal; break;
-                default: voiceDot.color = Brand.Muted; if (string.IsNullOrEmpty(voiceText.text) || voiceText.text.StartsWith("•") || voiceText.text.StartsWith("Trans")) voiceText.text = (v.LiveOn && v.Mic == MicMode.HandsFree ? $"Just speak to the <b>{who}</b> (or hold {(MedSimAI.XR.DesktopPlayerController.Active ? "T" : "A/X")})" : v.LiveOn && v.Mic == MicMode.Muted ? $"Microphone muted · type, or unmute in the pause menu" : $"Hold {(MedSimAI.XR.DesktopPlayerController.Active ? "T" : "A/X")} to talk to the <b>{who}</b>") + $" · {AIProviderManager.Instance.ModeLabel}"; break;
+                default: voiceDot.color = Brand.Muted; if (voiceHint || string.IsNullOrEmpty(voiceText.text)) SetVoiceLine((v.LiveOn && v.Mic == MicMode.HandsFree ? $"Just speak to the <b>{who}</b> (or hold {(MedSimAI.XR.DesktopPlayerController.Active ? "T" : "A/X")})" : v.LiveOn && v.Mic == MicMode.Muted ? $"Microphone muted · type, or unmute in the pause menu" : $"Hold {(MedSimAI.XR.DesktopPlayerController.Active ? "T" : "A/X")} to talk to the <b>{who}</b>") + $" · {AIProviderManager.Instance.ModeLabel}",
+                    (v.LiveOn && v.Mic == MicMode.HandsFree ? "تحدّث مباشرةً مع " : "اضغط مطوّلاً على " + (MedSimAI.XR.DesktopPlayerController.Active ? "T" : "A/X") + " للتحدث مع ") + (v.Target == Persona.Patient ? "المريض" : "الطبيبة")); break;
             }
         }
 
         void RefreshMode() { if (modeText) modeText.text = "Current mode: " + AIProviderManager.Instance.ModeLabel + (AIProviderManager.Instance.OnlineAvailable ? "" : "\n<color=#8892B0>(No AI proxy configured)</color>"); RefreshVoice(); }
-        void RefreshLang() { var lp = AIProviderManager.Instance.Language; if (langText) langText.text = lp == null || lp.Language == "en" ? "Language: English (source text)" : $"Language: Arabic — <color=#FFB74D>{lp.Status}</color>. Offline voices are English-only; Arabic speech needs Live AI."; }
+        void RefreshLang() { var ai = AIProviderManager.Instance; var lp = ai.Language; if (langText) langText.text = (lp == null || lp.Language == "en" ? "Language: English (source text)" : $"Language: Arabic — <color=#FFB74D>{lp.Status}</color>. Offline voices are English-only; Arabic speech needs Live AI.") + $"\n<size=85%>Mode: {ai.LangMode} — say «احكي عربي» or \"speak English\" to switch both characters.</size>"; }
 
         void LateUpdate()
         {

@@ -1,0 +1,53 @@
+64.4s [student-audio] A1 first question in Arabic (app was English): SYNTHETIC clip student_ar_onset.wav → Patient
+66.4s [subtitle] Mr. Reyes (patient): بلّش من شي خمسة وأربعين دقيقة. كنت طالع الدرج وحامل أغراض من السوق.
+73.8s [played] Mr. Reyes (patient): audio received 5.80s, heard for 7.49s
+73.8s [RESULT] A1 first question in Arabic (app was English): heard="مابحد عمو. أنا طالبة طب. من امتى بلّش معك الوجع؟" → Mr. Reyes (patient): "بلّش من شي خمسة وأربعين دقيقة. كنت طالع الدرج وحامل أغراض من السوق." | conversation=ar mode=Auto | firstAudio=2999ms | transcript RTL=True
+73.9s [shot] A1_arabic_transcript_and_reply
+73.9s [RESULT] A1 check: transcript text shaped (presentation forms)=True , starts with label «أنت»=True
+73.9s [student-audio] A2 Palestinian follow-up: SYNTHETIC clip student_ar_where.wav → Patient
+75.4s [subtitle] Mr. Reyes (patient): بيمشي على إيدي الشمال، وحاسس فكّي مشدود كمان. الأماكن اللي قلتها رايحة لهوّة، بس الوجع نفسه محله هون بنص صدري.
+85.9s [played] Mr. Reyes (patient): audio received 9.15s, heard for 10.42s
+85.9s [RESULT] A2 Palestinian follow-up: heard="طيب وين بتصفد الوجع، بيمتد لمحل تاني؟" → Mr. Reyes (patient): "بيمشي على إيدي الشمال، وحاسس فكّي مشدود كمان. الأماكن اللي قلتها رايحة لهوّة، بس الوجع نفسه محله هون بنص صدري." | conversation=ar mode=Auto | firstAudio=2317ms | transcript RTL=True
+85.9s [student-audio] A3 mixed Arabic + English term: SYNTHETIC clip student_ar_mixed_allergy.wav → Patient
+87.0s [subtitle] Mr. Reyes (patient): ايه، عندي حساسية من البنسلين. تجعلي طفح.
+92.5s [played] Mr. Reyes (patient): audio received 3.80s, heard for 5.48s
+92.5s [RESULT] A3 mixed Arabic + English term: heard="عندك أي أرجية لأي دواء؟" → Mr. Reyes (patient): "ايه، عندي حساسية من البنسلين. تجعلي طفح." | conversation=ar mode=Auto | firstAudio=2222ms | transcript RTL=True
+92.5s [shot] A3_mixed_transcript
+92.5s [student-audio] A4 «خلينا نحكي بالعربي» to the doctor: SYNTHETIC clip student_ar_cmd.wav → Instructor
+94.2s [subtitle] Dr. Hassan (supervisor): تمام، بنكمّل بالعربي.
+97.5s [played] Dr. Hassan (supervisor): audio received 2.00s, heard for 3.27s
+97.5s [RESULT] A4 «خلينا نحكي بالعربي» to the doctor: heard="دكتورة، خلينا نحكي بالعربي لو سمحت." → Dr. Hassan (supervisor): "تمام، بنكمّل بالعربي." | conversation=ar mode=Arabic | firstAudio=-1ms | transcript RTL=True
+97.5s [RESULT] A4 check: mode=Arabic (expect Arabic), conversation=ar
+97.5s [student-audio] A5 English question to the PATIENT while Arabic is chosen: SYNTHETIC clip student_en_allergy.wav → Patient
+98.7s [subtitle] Mr. Reyes (patient): ايه، عندي حساسية من البنسلين. وقتها بطلع لي طفح في الجلد.
+106.7s [played] Mr. Reyes (patient): audio received 6.30s, heard for 7.97s
+106.7s [RESULT] A5 English question to the PATIENT while Arabic is chosen: heard="Are you allergic to any medications?" → Mr. Reyes (patient): "ايه، عندي حساسية من البنسلين. وقتها بطلع لي طفح في الجلد." | conversation=ar mode=Arabic | firstAudio=2102ms | transcript RTL=False
+106.7s [student-audio] A6 doctor, Arabic + ECG: SYNTHETIC clip student_ar_dr_ecg.wav → Instructor
+108.6s [subtitle] Dr. Hassan (supervisor): طيب، طلبك واضح وأنا جاهزة بترتيبه. هل ممكن تذكر اللي حابب تراقبه بسرعة من المؤشرات والمشكلات اللي ممكن تطلع على ECG؟
+120.1s [played] Dr. Hassan (supervisor): audio received 9.80s, heard for 11.48s
+120.1s [RESULT] A6 doctor, Arabic + ECG: heard="دكتورة، بدي أعمل ECG للمريضة هاللحظة." → Dr. Hassan (supervisor): "طيب، طلبك واضح وأنا جاهزة بترتيبه. هل ممكن تذكر اللي حابب تراقبه بسرعة من المؤشرات والمشكلات اللي ممكن تطلع على ECG؟" | conversation=ar mode=Arabic | firstAudio=2837ms | transcript RTL=True
+121.2s [subtitle] Dr. Hassan (supervisor): ما الفحص الوحيد اللي لازم نعمله خلال دقائق لكل مريض بنشتبه إن ألم صدره قلبي؟
+128.1s [played] Dr. Hassan (supervisor): audio received 5.60s, heard for 6.87s
+128.1s [RESULT] A7 supervisor hint (director line): "ما الفحص الوحيد اللي لازم نعمله خلال دقائق لكل مريض بنشتبه إن ألم صدره قلبي؟" arabic=True
+131.5s [subtitle] Dr. Hassan (supervisor): ما الفحص الوحيد اللي لازم نعمله خلال دقائق لكل مريض بنشتبه إن ألم صدره قلبي؟
+133.6s [played] Dr. Hassan (supervisor): audio received 0.00s, heard for 2.13s
+133.6s [subtitle] Dr. Hassan (supervisor): ممتاز، كلميني عن أي شيء أنت شايلة في بالك الآن: هل في شيء عن ECG، أو الأعراض، أو طمئنينة المريضة؟
+142.0s [played] Dr. Hassan (supervisor): audio received 7.10s, heard for 8.42s
+142.0s [RESULT] A8 hands-free false alarm (noise over the doctor): doctor kept talking=True, volume restored=True
+143.7s [subtitle] Dr. Hassan (supervisor): ما الفحص الوحيد اللي لازم نعمله خلال دقائق لكل مريض بنشتبه إن ألم صدره قلبي؟
+145.9s [played] Dr. Hassan (supervisor): audio received 0.00s, heard for 2.17s
+145.9s [subtitle] Mr. Reyes (patient): الله يعطيكم العافية. أنا خايف شوي، بس حسّيت إنكم معي. المهم الوجع يتوقف، وأنا جاهز لأي شي بيحتاجوه.
+156.0s [played] Mr. Reyes (patient): audio received 8.40s, heard for 10.08s
+156.0s [RESULT] A9 real barge-in (Arabic question over the doctor): doctor stopped=True; patient replied "الله يعطيكم العافية. أنا خايف شوي، بس حسّيت إنكم معي. المهم الوجع يتوقف، وأنا جاهز لأي شي بيحتاجوه."
+158.9s [subtitle] Dr. Hassan (supervisor): أحسنت في عدة نقاط أساسية بالتقييم. بس في إشي مهم كتير للسلامة فاتك، ولازم تنتبهله المرة الجاية. اطّلع على التقرير المفصّل لتشوف كل التفاصيل.
+172.7s [played] Dr. Hassan (supervisor): audio received 12.10s, heard for 13.77s
+172.7s [RESULT] A10 long Arabic debrief: 24 words, audio received 12.1s, heard 13.8s → complete=True
+172.7s [shot] A10_debrief
+172.7s [RESULT] Playback completeness: 10 streamed lines, 0 ended before their audio ()
+174.6s [subtitle] Dr. Hassan (supervisor): أهلاً بك في قسم الطوارئ. أنا الدكتورة سارة حسن، المشرفة عليك اليوم. السيد رييس جاء يشكو من ألم في الصدر. قيّم حالته كما تفعل مع مريض حقيقي: عرّف بنفسك، خذ قصة مرضية مركّزة، افحصه، وأخبرني بما تريد فعله.
+192.4s [played] Dr. Hassan (supervisor): audio received 16.60s, heard for 17.87s
+192.4s [student-audio] A11 "switch back to English": SYNTHETIC clip student_en_cmd.wav → Instructor
+194.1s [subtitle] Dr. Hassan (supervisor): Of course, let's continue in English.
+197.9s [played] Dr. Hassan (supervisor): audio received 2.55s, heard for 3.81s
+197.9s [RESULT] A11 "switch back to English": heard="Can we switch back to English please?" → Dr. Hassan (supervisor): "Of course, let's continue in English." | conversation=en mode=English | firstAudio=-1ms | transcript RTL=False
+197.9s [RESULT] A11 check: mode=English conversation=en

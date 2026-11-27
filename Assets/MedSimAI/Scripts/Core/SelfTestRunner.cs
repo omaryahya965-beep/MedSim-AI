@@ -107,6 +107,22 @@ namespace MedSimAI.Core
                     ? $"captured={captures} heard=\"{heard}\" reply started {Time.realtimeSinceStartup - tPlayEnd:0.00}s after the clip ended; understood={V.LastUnderstoodMs:0}ms firstAudio={V.LastFirstAudioMs:0}ms (after VAD end-of-speech)"
                     : $"NO reply: captures={captures} heard=\"{heard}\" — speakers/mic volume may be too low for an acoustic loopback (use the manual microphone checklist)");
                 t = 0; while (V.Busy && t < 40) { t += Time.unscaledDeltaTime; yield return null; }
+                // Arabic through the real microphone: transcript must be Arabic (RTL), reply Arabic, conversation switches to Arabic
+                var arClip = Path.Combine(wavDir, "student_ar_where.wav");
+                if (File.Exists(arClip))
+                {
+                    V.SetTarget(Persona.Patient); heard = null; captures = 0; before = subs.Count;
+                    var wa = Wav(arClip); var ca = AudioClip.Create("loopback_ar", wa.Length, 1, 24000, false); ca.SetData(wa, 0); src.clip = ca;
+                    L("loopback-ar", "AUTOMATED AUDIO (not a human): synthetic Palestinian Arabic clip «طيب وين بالزبط الوجع؟ بيمتد لمحل تاني؟» through the PC speakers → patient");
+                    src.Play(); float endAr = Time.realtimeSinceStartup + ca.length;
+                    t = 0; while (subs.Count == before && t < 25) { t += Time.unscaledDeltaTime; yield return null; }
+                    yield return new WaitForSecondsRealtime(1.5f);
+                    ScreenCapture.CaptureScreenshot(Path.Combine(outDir, "exe_arabic_transcript.png")); yield return null; yield return null;
+                    var reply = subs.Count > before ? subs[subs.Count - 1] : "(none)";
+                    L("loopback-ar", $"captured={captures} heard=\"{heard}\" heardArabic={MedSimAI.UI.ArabicShaper.ContainsArabic(heard)} reply={reply} replyArabic={MedSimAI.UI.ArabicShaper.ContainsArabic(reply)} conversation={AI.ConversationLanguage} reply started {Time.realtimeSinceStartup - endAr:0.00}s after the clip ended");
+                    t = 0; while (V.Busy && t < 40) { t += Time.unscaledDeltaTime; yield return null; }
+                    AI.SetLanguageMode(LanguageMode.Auto); AI.SetLanguage("en");
+                }
                 V.SetMicMode(prev); V.autoTargetByGaze = true; Destroy(go);
             }
             L("done", "self-test finished");

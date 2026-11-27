@@ -1,4 +1,10 @@
-# Known Limitations (v0.3, 2026-11-27)
+# Known Limitations (v0.4, 2026-11-27)
+
+**v0.4 notes.**
+- **Arabic quality:** the default understanding model (`gpt-realtime-2.1-mini`) still makes occasional slips in the doctor's Arabic and small transcription errors. `MEDSIM_VOICE_UNDERSTAND_MODEL=gpt-realtime-2.1` is better but slower (+0.6–1 s) and about 9× the cost per turn.
+- **Debrief rubric items stay English.** In an Arabic session the rubric item names are English, so the written report lists them in English.
+- **VR thumbstick movement, the new +0.55 m height and the headset microphone in Arabic** are not yet tested in the VIVE Focus 3.
+- **Language-command detection uses phrase patterns** (Arabic and English) on short utterances. Unusual phrasings may be treated as a normal turn; say «احكي عربي» or "speak English" plainly.
 
 ## Not yet verified
 1. **No headset test of v0.3.** Everything was verified on desktop, in Editor Play mode, or in the standalone Desktop exe. With SteamVR and VIVE Streaming running, the PCVR exe started OpenXR and chose VR ("headset display running"). Whether the image and controls work in the VIVE Focus 3 has **not** been checked by a person.

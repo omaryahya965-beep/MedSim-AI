@@ -299,6 +299,7 @@ namespace MedSimAI.Core
 
         public void ExitSimulation()
         {
+            Debug.Log("[MedSim] Exit Simulation requested by: " + System.Environment.StackTrace);
 #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;
 #else

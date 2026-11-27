@@ -26,11 +26,11 @@ namespace MedSimAI.PlayTests
 
         float Offset => rig.origin.CameraFloorOffsetObject.transform.localPosition.y;
 
-        [UnityTest] public IEnumerator DefaultLift_Is40cm_OnCameraOffset_RootStaysOnFloor()
+        [UnityTest] public IEnumerator DefaultVrLift_Is55cm_OnCameraOffset_RootStaysOnFloor()
         {
             yield return null;
-            Assert.AreEqual(0.40f, rig.extraHeight, 1e-4f);
-            Assert.AreEqual(0.40f, Offset, 1e-3f, "Camera Offset raised by 0.40 m (Floor mode base = 0)");
+            Assert.AreEqual(0.55f, rig.extraHeight, 1e-4f);
+            Assert.AreEqual(0.55f, Offset, 1e-3f, "Camera Offset raised by 0.55 m (Floor mode base = 0)");
             Assert.Less(Mathf.Abs(rig.origin.transform.position.y), 0.05f, "rig root stays on the floor (within the starter rig's character-controller skin)");
         }
 
@@ -53,7 +53,7 @@ namespace MedSimAI.PlayTests
             rig.SetExtraHeight(-1f); yield return null; Assert.AreEqual(0f, rig.extraHeight, 1e-4f);
             rig.SetSeated(true); rig.SetExtraHeight(0.4f); yield return null;
             Assert.AreEqual(0.4f + rig.seatedLift, Offset, 1e-3f);
-            rig.ResetHeight(); yield return null; Assert.AreEqual(0.40f, Offset, 1e-3f); Assert.IsFalse(rig.Seated);
+            rig.ResetHeight(); yield return null; Assert.AreEqual(0.55f, Offset, 1e-3f); Assert.IsFalse(rig.Seated);
         }
 
         [UnityTest] public IEnumerator Lift_SurvivesTeleport_Recenter_AndOriginReset()

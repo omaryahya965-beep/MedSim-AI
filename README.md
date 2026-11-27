@@ -36,6 +36,9 @@ Run `D:\VRBuilds\MedSim_Desktop\MedSimAI.exe` (start the AI proxy first). Contro
 | Pause menu (tablet on/off, subtitles, language EN/AR, comfort and height, restart) | Left menu button (`Esc` on desktop) |
 | Teleport / snap turn | Thumbstick |
 
+## v0.4: Arabic, complete speech, VR movement
+Speak Arabic or English: both characters follow you. Say «احكي عربي» or "speak English" to fix the language for both. Lines now play to the very end. VR: left stick moves, right stick turns or teleports, and the pause menu adjusts height (default +55 cm). See **ARABIC_AUDIO_VR.md**, including the manual checklist.
+
 ## Native voice (v0.3)
 Speak naturally: hold **T** on desktop or **A/X** in VR (press **M** for hands-free). Replies stream back in about 2 s, and you can interrupt. Subtitles and transcripts are unchanged. See **NATIVE_VOICE.md**, including the microphone checklist.
 

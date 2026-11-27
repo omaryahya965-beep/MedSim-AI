@@ -57,6 +57,8 @@ Realtime voice actor (persistent, pooled) speaks the validated text → PCM stre
 
 ## Measured latency (end of student speech → first reply audio)
 
+> **v0.4 correction.** Unity pre-reads 0.8 s of silence when a streaming clip is created, so every streamed line used to start with 0.8 s of dead air. The figures below measured when audio *arrived*, so what you actually *heard* was about 0.8 s later. v0.4 starts playback at the first real sample. Measured again in the Unity client (Arabic and English, v0.4): first audio **2.1–3.0 s** after the end of speech, and that is now what you hear. See ARABIC_AUDIO_VR.md.
+
 These figures come from the Unity client with the real proxy and API. The utterances are synthetic, **automated audio** clips, not a human voice. VAD time is not included except where noted.
 
 | Turn | Understood | First audio |

@@ -138,3 +138,81 @@ test('native voice: replies are cleaned of stray JSON debris before validation',
   assert.equal(cleanReply('"Okay."'), 'Okay.');
   assert.ok(isNoSpeech('[inaudible]') && isNoSpeech('') && !isNoSpeech('Hello doctor'));
 });
+
+test('voice actor: a cancelled line\'s late events never end or pollute the next line; long lines are not timed out', async () => {
+  const { RealtimeVoice } = await import('./lib/openai.mjs');
+  const sockets = [];
+  class FakeWS { constructor() { this.sent = []; sockets.push(this); setTimeout(() => this.onopen?.(), 0); }
+    send(s) { const m = JSON.parse(s); this.sent.push(m); if (m.type === 'session.update') setTimeout(() => this.emit({ type: 'session.updated' }), 0); }
+    emit(m) { this.onmessage?.({ data: JSON.stringify(m) }); } close() { } }
+  const orig = globalThis.WebSocket; globalThis.WebSocket = FakeWS;
+  try {
+    const ledger = { record() { }, guard() { } };
+    const rv = new RealtimeVoice({ apiKey: 'k', model: 'm', voice: 'v', ledger, timeoutMs: 200 });
+    const ac = new AbortController();
+    const pA = rv.say('line A', { signal: ac.signal });
+    await new Promise(r => setTimeout(r, 20));
+    const ws = sockets[0]; const createA = ws.sent.find(m => m.type === 'response.create');
+    ws.emit({ type: 'response.created', response: { id: 'rA', metadata: createA.response.metadata } });
+    ws.emit({ type: 'response.output_audio.delta', response_id: 'rA', delta: Buffer.alloc(100).toString('base64') });
+    ac.abort();                                   // student interrupts A
+    const a = await pA; assert.equal(a.cancelled, true);
+    assert.ok(ws.sent.some(m => m.type === 'response.cancel' && m.response_id === 'rA'));
+    const pB = rv.say('line B');
+    ws.emit({ type: 'error', error: { code: 'response_cancel_not_active' } });             // harmless late error
+    ws.emit({ type: 'response.output_audio.delta', response_id: 'rA', delta: Buffer.alloc(50).toString('base64') }); // stale audio
+    ws.emit({ type: 'response.done', response: { id: 'rA', status: 'cancelled' } });       // stale done (settles A)
+    await new Promise(r => setTimeout(r, 20));
+    const createB = ws.sent.filter(m => m.type === 'response.create')[1];
+    ws.emit({ type: 'response.created', response: { id: 'rB', metadata: createB.response.metadata } });
+    for (let i = 0; i < 6; i++) { ws.emit({ type: 'response.output_audio.delta', response_id: 'rB', delta: Buffer.alloc(480).toString('base64') }); await new Promise(r => setTimeout(r, 60)); } // 360 ms > first-audio timeout
+    ws.emit({ type: 'response.done', response: { id: 'rB', status: 'completed', usage: {} } });
+    const b = await pB;
+    assert.equal(b.pcm.length, 6 * 480, 'line B has exactly its own audio, complete');
+  } finally { globalThis.WebSocket = orig; }
+});
+
+test('Arabic: an Arabic question gets an Arabic reply even when the app language is English; wrong-language replies are regenerated, then fall back to approved Arabic', async () => {
+  let n = 0;
+  const eng = new LiveEngine({ ai: fakeAI(() => { n++; return { factIds: ['H_ONSET'], studentAct: 'history_question', emotion: 'pain', reply: 'It started about forty-five minutes ago.' }; }), scenarios });
+  const sess = newSession(eng, 'en');
+  const r = await eng.patientTurn(sess, { utterance: 'من إيمتى بلش الوجع؟', language: 'en', context: ctx() });
+  assert.equal(n, 2, 'English reply to an Arabic question → one regeneration with the language fixed');
+  assert.equal(r.json.lang, 'ar');
+  assert.equal(r.json.source, 'approved-fallback');
+  assert.match(r.json.text, /[؀-ۿ]/, 'approved Arabic wording, never English');
+});
+
+test('Arabic: explicit language commands are acknowledged without any AI call and are not clinical turns', async () => {
+  let n = 0;
+  const eng = new LiveEngine({ ai: fakeAI(() => { n++; return {}; }), scenarios });
+  const sess = newSession(eng, 'en');
+  for (const [said, lang] of [['احكي عربي', 'ar'], ['خلينا نحكي بالعربي', 'ar'], ['Speak English please', 'en']]) {
+    const r = await eng.instructorTurn(sess, { utterance: said, language: 'en', context: ctx() });
+    assert.equal(r.json.languageCommand, lang); assert.equal(r.json.source, 'language-command');
+    assert.equal(r.json.escalationRequested, false); assert.equal(r.json.investigationId, null);
+  }
+  assert.equal(n, 0);
+});
+
+test('Arabic: locked Arabic answers English input in Arabic; voice turns trust the spoken language over a translated transcript', async () => {
+  const ai = fakeAI({ factIds: ['H_ALLERGY'], studentAct: 'history_question', emotion: 'neutral', reply: 'عندي حساسية من البنسلين، طلعلي منه طفح.' }); ai.ledger = { record() { }, guard() { } };
+  const eng = new LiveEngine({ ai, scenarios });
+  const sess = newSession(eng, 'en');
+  const r = await eng.patientTurn(sess, { utterance: 'Are you allergic to anything?', language: 'ar', langLock: 'ar', context: ctx() });
+  assert.equal(r.json.lang, 'ar'); assert.equal(r.json.source, 'ai');
+  // voice: the Realtime model translated Arabic speech into an English transcript, but identified the language as Arabic
+  eng.understandingFor = () => ({ understand: async () => ({ data: { spokenLanguage: 'arabic', heard: "Don't worry, we are with you.", factIds: [], studentAct: 'reassurance', emotion: 'relieved', reply: 'الله يعطيك العافية يا دكتور.' }, callId: 'c', ms: 5 }), noteSpoken() { } });
+  let meta = null;
+  await eng.voiceTurn(sess, 'Patient', Buffer.alloc(9600), { language: 'en', context: ctx() }, { onMeta: m => meta = m, onAudio() { } });
+  assert.equal(meta.lang, 'ar', 'reply in Arabic because the student SPOKE Arabic');
+});
+
+test('Arabic: director lines use the approved Arabic wording and fall back to it (never to English) when the AI line fails grounding', async () => {
+  const eng = new LiveEngine({ ai: fakeAI({ speech: 'لازم تعطيه أسبرين وتطلب تروبونين هلّق.' }), scenarios });
+  const sess = newSession(eng, 'ar');
+  const line = S.interventions.find(i => i.id === 'I_ALLERGY_CHECK').lines[0];
+  const r = await eng.say(sess, { persona: 'Instructor', kind: 'intervention', baseText: line, language: 'ar', speak: false, context: ctx() });
+  assert.equal(r.json.source, 'approved-fallback');
+  assert.match(r.json.text, /الحساسية/, 'approved Arabic intervention');
+});

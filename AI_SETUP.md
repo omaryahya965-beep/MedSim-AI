@@ -96,6 +96,8 @@ If the proxy is down, the key is invalid, the budget is exhausted, or a call tim
 ## 8. Tests
 - Offline, no key, no cost: `node --test server.test.mjs live.test.mjs`
 - Live, billed against the budget: `node tools/live-harness.mjs patient instructor arabic states speech failure`, with the proxy running.
+- Arabic conversation, billed: `node tools/arabic-harness.mjs` (Auto → Arabic lock → English lock; checks reply language and complete audio).
+- Understanding-model A/B, billed: `node tools/ab-understand.mjs <label>` (run with `MEDSIM_VOICE_UNDERSTAND_MODEL` set as needed).
 - Native voice, billed: `node tools/voice-harness.mjs` (EN, AR, interruption) and `node tools/doctor-replay.mjs` (doctor turns with the grounding verdict).
 - Unity Play mode, native voice end to end: `AgentScripts/NativeVoiceE2E.cs`.
 - Standalone exe: `MedSimAI.exe -medsimSelfTest "<…>/data/student-audio"`.

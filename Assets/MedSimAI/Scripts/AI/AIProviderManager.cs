@@ -37,6 +37,14 @@ namespace MedSimAI.AI
         public ConversationMode Mode => Orchestrator.UseOnline ? ConversationMode.OnlineAI : ConversationMode.OfflineScripted;
         public event Action<ConversationMode> ModeChanged;
         public event Action<LiveStatus, string> LiveStatusChanged;
+        /// <summary>Raised when the conversation language changes (explicitly or because the student switched language).</summary>
+        public event Action<string> LanguageChanged;
+        public const string PrefLangMode = "medsim.langMode", PrefConvLang = "medsim.convLang";
+        /// <summary>Auto (follow the student) or an explicit Arabic/English choice shared by both characters.</summary>
+        public LanguageMode LangMode { get; private set; } = LanguageMode.Auto;
+        /// <summary>"ar"/"en" when the student chose a language explicitly, otherwise null.</summary>
+        public string LangLock => LangMode == LanguageMode.Arabic ? "ar" : LangMode == LanguageMode.English ? "en" : null;
+        public string ConversationLanguage => Config.language == "ar" ? "ar" : "en";
 
         public string ModeLabel => Mode == ConversationMode.OnlineAI
             ? (Live.Status == LiveStatus.Offline ? "AI CONNECTION PROBLEM — " + Live.LastError : "LIVE AI")
@@ -47,7 +55,12 @@ namespace MedSimAI.AI
             Instance = this;
             Config = ConfigOverride ?? (ForceOffline ? new AIRuntimeConfig { preferOnline = false } : LoadConfig());
             var session = ClinicalScenarioManager.Instance.Session;
-            Live = new LiveAIClient(ForceOffline && ConfigOverride == null ? "" : Config.proxyEndpoint, Config.clientSessionToken, Mathf.CeilToInt(Config.timeoutMs / 1000f)) { Language = Config.language };
+            if (!ForceOffline && ConfigOverride == null)
+            {
+                LangMode = (LanguageMode)PlayerPrefs.GetInt(PrefLangMode, (int)LanguageMode.Auto);
+                Config.language = LangLock ?? PlayerPrefs.GetString(PrefConvLang, Config.language == "ar" ? "ar" : "en");
+            }
+            Live = new LiveAIClient(ForceOffline && ConfigOverride == null ? "" : Config.proxyEndpoint, Config.clientSessionToken, Mathf.CeilToInt(Config.timeoutMs / 1000f)) { Language = Config.language, LangLock = LangLock };
             Live.StatusChanged += (s, e) => { LiveStatusChanged?.Invoke(s, e); ModeChanged?.Invoke(Mode); };
             IAIProvider online = Live.Configured ? new LiveProvider(Live, () => ClinicalScenarioManager.Instance.Session) : null;
             Orchestrator = new ConversationOrchestrator(session, new OfflineScriptedProvider(session), online)
@@ -67,9 +80,32 @@ namespace MedSimAI.AI
 
         public void SetLanguage(string lang)
         {
-            Config.language = lang; Orchestrator.Language = lang; Live.Language = lang;
-            Language = MedSimAI.Clinical.LanguagePack.Load(ClinicalScenarioManager.Instance.Scenario, lang); ModeChanged?.Invoke(Mode);
+            lang = lang == "ar" ? "ar" : "en";
+            bool changed = Config.language != lang;
+            Config.language = lang; Orchestrator.Language = lang; Live.Language = lang; Live.LangLock = LangLock;
+            Language = MedSimAI.Clinical.LanguagePack.Load(ClinicalScenarioManager.Instance.Scenario, lang);
+            if (!ForceOffline) { PlayerPrefs.SetString(PrefConvLang, lang); PlayerPrefs.Save(); }
+            ModeChanged?.Invoke(Mode);
+            if (changed) { Debug.Log("[MedSim] Conversation language → " + lang + " (" + LangMode + ")"); LanguageChanged?.Invoke(lang); }
         }
+
+        /// <summary>Explicit choice (voice command or menu): persistent for both characters until changed again.</summary>
+        public void SetLanguageMode(LanguageMode m)
+        {
+            LangMode = m; if (!ForceOffline) { PlayerPrefs.SetInt(PrefLangMode, (int)m); PlayerPrefs.Save(); }
+            Live.LangLock = LangLock;
+            SetLanguage(LangLock ?? Config.language);
+            ModeChanged?.Invoke(Mode);
+        }
+
+        /// <summary>Auto mode: the conversation follows the language the student just spoke or typed.</summary>
+        public void NoteStudentLanguage(string lang)
+        {
+            if (LangMode != LanguageMode.Auto || (lang != "ar" && lang != "en")) return;
+            if (lang != Config.language) SetLanguage(lang);
+        }
+
+        public string LanguageModeLabel => LangMode == LanguageMode.Arabic ? "العربية (fixed)" : LangMode == LanguageMode.English ? "English (fixed)" : "Automatic — follows your speech (now " + (Config.language == "ar" ? "العربية" : "English") + ")";
 
         public static string ConfigPath => Path.Combine(Application.persistentDataPath, "medsim_ai_config.json");
 

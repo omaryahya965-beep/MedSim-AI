@@ -12,6 +12,7 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const PRICES = {
   'gpt-6-luna': { textIn: 0.10, cachedIn: 0.01, textOut: 0.50 },
   'gpt-6.2-sol': { textIn: 2.00, cachedIn: 0.10, textOut: 10.00 },
+  'gpt-realtime-2.1': { textIn: 4.00, cachedIn: 0.40, textOut: 24.00, audioIn: 32.00, audioOut: 64.00 }, // developers.openai.com pricing, 2026-11
   'gpt-realtime-2.1-mini': { textIn: 0.60, cachedIn: 0.06, textOut: 2.40, audioIn: 10.00, audioOut: 20.00 },
   'gpt-4o-mini-tts': { textIn: 0.60, audioOut: 12.00, perMinuteEstimate: 0.015 },
   'gpt-transcribe': { perMinute: 0.0045 },

@@ -1,6 +1,6 @@
 {
   "name": "MedSimAI",
   "rootNamespace": "MedSimAI",
-  "references": ["uLipSync.Runtime","Unity.XR.Interaction.Toolkit","Unity.InputSystem","Unity.TextMeshPro","UnityEngine.UI","Unity.XR.CoreUtils","Unity.RenderPipelines.Universal.Runtime","Unity.RenderPipelines.Core.Runtime","Unity.XR.Management"],
+  "references": ["uLipSync.Runtime","Unity.XR.Interaction.Toolkit","Unity.InputSystem","Unity.TextMeshPro","UnityEngine.UI","Unity.XR.CoreUtils","Unity.RenderPipelines.Universal.Runtime","Unity.RenderPipelines.Core.Runtime","Unity.XR.Management","Unity.XR.Interaction.Toolkit.Samples.StarterAssets"],
   "autoReferenced": true
 }

@@ -14,7 +14,7 @@ namespace MedSimAI.Voice
         public const int Rate = 24000;
         readonly float[] ring = new float[Rate * 40];
         readonly object gate = new object();
-        long written, consumed, playedAudible;
+        long written, consumed, playedAudible, outPos, lastDataOutPos, firstDataOutPos = -1;
         int carry = -1;
         public AudioClip Clip { get; }
         public bool Completed { get; private set; }
@@ -55,11 +55,35 @@ namespace MedSimAI.Voice
             {
                 for (int i = 0; i < data.Length; i++)
                 {
-                    if (consumed < written) { data[i] = ring[consumed % ring.Length]; consumed++; playedAudible = consumed; }
+                    if (consumed < written) { data[i] = ring[consumed % ring.Length]; consumed++; playedAudible = consumed; lastDataOutPos = outPos + 1; if (firstDataOutPos < 0) firstDataOutPos = outPos; }
                     else data[i] = 0f; // waiting for more audio (or finished)
+                    outPos++;
                 }
             }
         }
+
+        /// <summary>
+        /// True when the stream has ended and the AudioSource playhead (timeSamples of this clip) has passed the clip
+        /// position of the last real sample. Silence inserted while waiting for data is accounted for.
+        /// </summary>
+        public bool PlayedOut(int timeSamples)
+        {
+            lock (gate)
+            {
+                if (Cancelled) return true;
+                if (!Completed || consumed < written) return false;
+                return timeSamples >= lastDataOutPos || written == 0;
+            }
+        }
+        /// <summary>
+        /// Where playback must start: Unity pre-reads 0.8 s from a streamed clip when it is CREATED (before any speech has
+        /// arrived), so the real audio begins after that silence. Starting the playhead here removes 0.8 s of dead air per line.
+        /// </summary>
+        public int StartClipPosition { get { lock (gate) return (int)(firstDataOutPos >= 0 ? firstDataOutPos : outPos); } }
+        /// <summary>Samples handed to Unity so far (its read-ahead position in the clip).</summary>
+        public long ReadPosition { get { lock (gate) return outPos; } }
+        /// <summary>Clip position just after the last real sample handed to Unity (test/diagnostics).</summary>
+        public long LastDataClipPosition { get { lock (gate) return lastDataOutPos; } }
 
         public void Complete() => Completed = true;
         public void Cancel() { Cancelled = true; lock (gate) { consumed = written; playedAudible = written; } }

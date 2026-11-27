@@ -22,8 +22,32 @@ export const CLINICAL_LEXICON = [
   // tests / procedures / results
   'ecg', 'ekg', 'troponin', 'x-ray', 'xray', 'echo', 'glucose', 'sugar', 'scan', 'ct', 'mri', 'blood test', 'st elevation', 'st depression', 'saturation', 'spo2', 'pulse', 'heart rate', 'murmur', 'crackles', 'wheeze', 'cath', 'pci', 'stent', 'angioplasty', 'surgery', 'operation', 'thromboly',
   // Arabic
-  'ألم', 'وجع', 'صدر', 'ذراع', 'إيد', 'فك', 'رقبة', 'ظهر', 'تعرق', 'عرق', 'غثيان', 'دوخة', 'ضيق', 'قلب', 'سكري', 'كوليسترول', 'دهون', 'حساسية', 'بنسلين', 'دخان', 'تدخين', 'سجائر', 'سيجارة', 'جلطة', 'احتشاء', 'ذبحة', 'أملوديبين', 'أتورفاستاتين', 'أسبرين', 'دواء', 'حبوب', 'تخطيط', 'تروبونين', 'أبوي', 'أبوه', 'أبي', 'والدي'
+  'ألم', 'وجع', 'صدر', 'ذراع', 'إيد', 'فك', 'رقبة', 'تعرق', 'عرق', 'غثيان', 'دوخة', 'ضيق', 'قلب', 'سكري', 'كوليسترول', 'دهون', 'حساسية', 'بنسلين', 'دخان', 'تدخين', 'سجائر', 'سيجارة', 'جلطة', 'احتشاء', 'ذبحة', 'أملوديبين', 'أتورفاستاتين', 'أسبرين', 'دواء', 'حبوب', 'تخطيط', 'تروبونين', 'أبوي', 'أبوه', 'أبي', 'والدي',
+  'ضغط', 'نبض', 'أكسجين', 'اكسجين', 'تشبع', 'قسطرة', 'دعامة', 'كتف', 'حرارة', 'سخونة', 'كحة', 'سعلة', 'إيكو', 'ايكو', 'أشعة', 'سكر', 'استفراغ', 'ترجيع', 'تنميل', 'خدر', 'لهاث'
 ];
+
+/**
+ * Bilingual glossary: groups of equivalent clinical terms (English + Arabic). Grounding is language-agnostic: a term in
+ * the reply is allowed when ANY member of its group appears in the approved text, so a faithful Arabic rendering of an
+ * approved English line (or the reverse) passes, while a genuinely new clinical detail in either language does not.
+ */
+export const GLOSSARY = [
+  ['chest', 'صدر'], ['pain', 'ache', 'hurt', 'ألم', 'وجع'], ['arm', 'ذراع', 'إيد', 'ايد'], ['jaw', 'فك'], ['neck', 'رقبة'], ['shoulder', 'كتف'],
+  ['sweat', 'clammy', 'تعرق', 'عرق'], ['nause', 'vomit', 'sick', 'غثيان', 'استفراغ', 'ترجيع'], ['dizzy', 'faint', 'دوخة'], ['breathless', 'short of breath', 'ضيق', 'لهاث'],
+  ['numb', 'tingl', 'تنميل', 'خدر'], ['fever', 'حرارة', 'سخونة'], ['cough', 'كحة', 'سعلة'], ['heart', 'cardiology', 'قلب'],
+  ['blood pressure', 'hypertension', 'pressure', 'ضغط'], ['pulse', 'heart rate', 'نبض'], ['oxygen', 'saturation', 'spo2', 'أكسجين', 'اكسجين', 'تشبع'],
+  ['diabetes', 'sugar', 'glucose', 'سكري', 'سكر'], ['cholesterol', 'كوليسترول', 'دهون'], ['allerg', 'حساسية'], ['penicillin', 'بنسلين'],
+  ['smok', 'cigarette', 'دخان', 'تدخين', 'سجائر', 'سيجارة'], ['aspirin', 'أسبرين'], ['amlodipine', 'أملوديبين'], ['atorvastatin', 'statin', 'أتورفاستاتين'],
+  ['medication', 'tablet', 'pill', 'دواء', 'حبوب'], ['ecg', 'ekg', 'تخطيط'], ['troponin', 'تروبونين'], ['x-ray', 'xray', 'أشعة'], ['echo', 'إيكو', 'ايكو'],
+  ['cath', 'pci', 'stent', 'angioplasty', 'قسطرة', 'دعامة'], ['father', 'أبوي', 'أبوه', 'أبي', 'والدي'],
+  ['heart attack', 'infarction', 'جلطة', 'احتشاء', 'جلطة بالقلب', 'جلطة قلبية', 'نوبة قلبية'], ['tight', 'ضيق', 'مشدود', 'شد'], ['angina', 'ذبحة'],
+];
+/** Adds the equivalents of every glossary term present in the (normalised) approved text. */
+export function expandBilingual(allowedNorm) {
+  const add = [];
+  for (const g of GLOSSARY) if (g.some(t => termIn(t, allowedNorm))) add.push(...g.map(norm));
+  return add.length ? allowedNorm + ' \n ' + add.join(' \n ') : allowedNorm;
+}
 
 const DIAGNOSIS = ['stemi', 'nstemi', 'myocardial infarction', 'heart attack', 'acute coronary', 'angina', 'pericarditis', 'dissection', 'embolism', 'احتشاء', 'جلطة قلبية', 'نوبة قلبية', 'جلطة بالقلب', 'ذبحة'];
 const DOSING = [/\b\d+(\.\d+)?\s?(mg|mcg|µg|ml|units?|iu|g)\b/i, /\bdose\b/i, /\bdosage\b/i, /\bprescrib/i, /جرعة/];
@@ -51,7 +75,14 @@ export function extractNumbers(text) {
     }
     const aw = w.replace(/^و/, '');
     const arKey = Object.keys(AR_NUM).find(k => norm(k) === aw);
-    if (arKey) out.add(AR_NUM[arKey]);
+    if (arKey) {
+      // compound "خمس وأربعين" / "خمس و أربعين" = 45 (units first): one number, not 5 and 40
+      const val = AR_NUM[arKey];
+      const nxt = words[i + 1] === 'و' ? words[i + 2] : words[i + 1];
+      const tensKey = nxt && nxt.startsWith('و') || words[i + 1] === 'و' ? Object.keys(AR_NUM).find(k => norm(k) === String(nxt).replace(/^و/, '')) : null;
+      if (val < 10 && tensKey && AR_NUM[tensKey] >= 20 && AR_NUM[tensKey] < 100) { out.add(val + AR_NUM[tensKey]); i += words[i + 1] === 'و' ? 2 : 1; continue; }
+      out.add(val);
+    }
   }
   // Arabic "five and forty" = 45
   const arr = [...t.matchAll(/(\S+)\s+و\s?(\S+)/g)];
@@ -77,12 +108,12 @@ export function validateGrounded(reply, { corpus = [], studentText = '', allowDi
   if (!r) return { ok: false, reason: 'empty' };
   const words = r.split(/\s+/).length;
   if (words > maxWords) return { ok: false, reason: 'too_long', detail: String(words) };
-  const allowed = norm([...corpus, studentText].join(' \n '));
+  const allowed = expandBilingual(norm([...corpus, studentText].join(' \n ')));
   const rn = norm(r);
   for (const re of DOSING) if (re.test(r)) return { ok: false, reason: 'dosing' };
   if (!allowMeta) for (const re of META) if (re.test(r)) return { ok: false, reason: 'meta_reference' };
   if (/https?:|doi:|et al/i.test(r)) return { ok: false, reason: 'citation' };
-  if (!allowDiagnosis) for (const d of DIAGNOSIS) if (termIn(d, rn) && !termIn(d, norm(corpus.join(' ')))) return { ok: false, reason: 'diagnosis_disclosure', detail: d };
+  if (!allowDiagnosis) { const dc = expandBilingual(norm(corpus.join(' \n '))); for (const d of DIAGNOSIS) if (termIn(d, rn) && !termIn(d, dc)) return { ok: false, reason: 'diagnosis_disclosure', detail: d }; }
   const nums = extractNumbers(r);
   if (nums.size) {
     if (!allowNumbers) return { ok: false, reason: 'numbers_not_allowed' };

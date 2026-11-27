@@ -78,7 +78,45 @@ namespace MedSimAI.UI
         {
             bool ar = ContainsArabic(text);
             t.isRightToLeftText = ar;
-            t.text = ar ? Shape(text) : text;
+            t.text = ar ? PrepareRtl(text) : text;
+            // Arabic lines start at the right edge; English lines get their original alignment back
+            if (!OriginalAlign.TryGetValue(t, out var orig)) { orig = t.horizontalAlignment; OriginalAlign[t] = orig; }
+            t.horizontalAlignment = ar ? (orig == TMPro.HorizontalAlignmentOptions.Center ? orig : TMPro.HorizontalAlignmentOptions.Right) : orig;
+        }
+        static readonly Dictionary<TMPro.TMP_Text, TMPro.HorizontalAlignmentOptions> OriginalAlign = new Dictionary<TMPro.TMP_Text, TMPro.HorizontalAlignmentOptions>();
+
+        static bool IsLtr(char c) => c < 0x0590 && char.IsLetterOrDigit(c);
+        static bool IsInnerNeutral(char c) => c == ' ' || c == '.' || c == ',' || c == '-' || c == '/' || c == ':' || c == '%' || c == '+' || c == '\'';
+
+        /// <summary>
+        /// Text for a TMP component in right-to-left mode. TMP reverses the whole character sequence, which is right for
+        /// Arabic but turns embedded English words and numbers ("ECG", "12-lead", "45") backwards — so every left-to-right
+        /// run is pre-reversed here (it comes out the right way round), Arabic is shaped (joined letters), and paired
+        /// brackets are mirrored. Logical order in, nothing reversed twice.
+        /// </summary>
+        public static string PrepareRtl(string text)
+        {
+            var s = Shape(text ?? ""); var sb = new StringBuilder(s.Length); int n = s.Length;
+            for (int i = 0; i < n;)
+            {
+                if (IsLtr(s[i]))
+                {
+                    int j = i + 1;
+                    while (j < n)
+                    {
+                        if (IsLtr(s[j])) { j++; continue; }
+                        int k = j; while (k < n && IsInnerNeutral(s[k])) k++;
+                        if (k < n && k > j && IsLtr(s[k])) { j = k; continue; } // "chest pain", "12-lead": neutrals between LTR chars stay in the run
+                        break;
+                    }
+                    for (int k = j - 1; k >= i; k--) sb.Append(s[k]);
+                    i = j; continue;
+                }
+                char c = s[i];
+                sb.Append(c == '(' ? ')' : c == ')' ? '(' : c == '[' ? ']' : c == ']' ? '[' : c == '«' ? '»' : c == '»' ? '«' : c);
+                i++;
+            }
+            return sb.ToString();
         }
     }
 }

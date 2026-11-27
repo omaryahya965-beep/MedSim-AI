@@ -15,14 +15,14 @@ namespace MedSimAI.AI
 
     [Serializable] public class LiveTurnResponse
     {
-        public string persona, heard, text, studentAct, emotion, intent, investigationId, source, rejected, audioId, error, model;
+        public string persona, heard, text, lang, languageCommand, studentAct, emotion, intent, investigationId, source, rejected, audioId, error, model;
         public bool noSpeech;
         public string[] factIds, concepts, deterministicConcepts;
         public bool escalationRequested, diagnosisNamed, isQuestion;
         public int llmMs;
     }
 
-    [Serializable] public class LiveSayResponse { public string persona, kind, text, source, rejected, audioId, error; public int llmMs; }
+    [Serializable] public class LiveSayResponse { public string persona, kind, text, lang, source, rejected, audioId, error; public int llmMs; }
 
     [Serializable] public class DebriefPayload
     {
@@ -42,6 +42,8 @@ namespace MedSimAI.AI
         public string LastError { get; private set; }
         public event Action<LiveStatus, string> StatusChanged;
         public string Language = "en";
+        /// <summary>"ar"/"en" when the student fixed the language explicitly; null = follow the student's language.</summary>
+        public string LangLock;
 
         public LiveAIClient(string endpoint, string token, int timeoutSeconds = 25)
         {
@@ -90,8 +92,8 @@ namespace MedSimAI.AI
 
         [Serializable] class StartReq { public string scenarioId, scenarioVersion, language; }
         [Serializable] class StartResp { public string sessionId, scenarioVersion, error; }
-        [Serializable] class TurnReq { public string sessionId, persona, utterance, language; public LiveContext context; public bool speak = true; }
-        [Serializable] class SayReq { public string sessionId, persona, kind, baseText, severity, language; public LiveContext context; public DebriefPayload result; public bool speak = true; }
+        [Serializable] class TurnReq { public string sessionId, persona, utterance, language, langLock; public LiveContext context; public bool speak = true; }
+        [Serializable] class SayReq { public string sessionId, persona, kind, baseText, severity, language, langLock; public LiveContext context; public DebriefPayload result; public bool speak = true; }
         [Serializable] class EndReq { public string sessionId; }
 
         public async Task<bool> StartSession(ScenarioData s, CancellationToken ct = default)
@@ -122,13 +124,13 @@ namespace MedSimAI.AI
 
         public async Task<LiveTurnResponse> Turn(Persona p, string utterance, LiveContext ctx, CancellationToken ct)
         {
-            var json = await PostJson("/v1/turn", new TurnReq { sessionId = SessionId, persona = p.ToString(), utterance = utterance, language = Language, context = ctx }, ct);
+            var json = await PostJson("/v1/turn", new TurnReq { sessionId = SessionId, persona = p.ToString(), utterance = utterance, language = Language, langLock = LangLock ?? "", context = ctx }, ct);
             return JsonUtility.FromJson<LiveTurnResponse>(json);
         }
 
         public async Task<LiveSayResponse> Say(Persona p, string kind, string baseText, LiveContext ctx, CancellationToken ct, string severity = null, DebriefPayload result = null)
         {
-            var json = await PostJson("/v1/say", new SayReq { sessionId = SessionId, persona = p.ToString(), kind = kind, baseText = baseText ?? "", severity = severity ?? "", language = Language, context = ctx, result = result }, ct);
+            var json = await PostJson("/v1/say", new SayReq { sessionId = SessionId, persona = p.ToString(), kind = kind, baseText = baseText ?? "", severity = severity ?? "", language = Language, langLock = LangLock ?? "", context = ctx, result = result }, ct);
             return JsonUtility.FromJson<LiveSayResponse>(json);
         }
 
@@ -156,7 +158,7 @@ namespace MedSimAI.AI
         public UnityWebRequest VoiceTurn(Persona p, byte[] pcm24k, LiveContext ctx, MedSimAI.Voice.StreamingVoice voice, Action<LiveTurnResponse> onMeta)
         {
             var ctxB64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonUtility.ToJson(ctx))).TrimEnd('=').Replace('+', '-').Replace('/', '_');
-            var url = $"{endpoint}/v1/voice?sessionId={UnityWebRequest.EscapeURL(SessionId)}&persona={p}&lang={Language}&ctx={ctxB64}";
+            var url = $"{endpoint}/v1/voice?sessionId={UnityWebRequest.EscapeURL(SessionId)}&persona={p}&lang={Language}&langLock={LangLock ?? ""}&ctx={ctxB64}";
             var www = new UnityWebRequest(url, "POST") { uploadHandler = new UploadHandlerRaw(pcm24k), downloadHandler = new MedSimAI.Voice.VoiceStreamHandler(voice, json => onMeta?.Invoke(JsonUtility.FromJson<LiveTurnResponse>(json))), timeout = timeoutSeconds + 30 };
             www.SetRequestHeader("Content-Type", "application/octet-stream");
             if (!string.IsNullOrEmpty(token)) www.SetRequestHeader("X-MedSim-Client", token);
@@ -166,7 +168,7 @@ namespace MedSimAI.AI
         /// <summary>Character-initiated line (welcome, intervention, discussion, debrief) with streamed speech.</summary>
         public UnityWebRequest SayStream(Persona p, string kind, string baseText, LiveContext ctx, MedSimAI.Voice.StreamingVoice voice, Action<LiveSayResponse> onMeta, string severity = null, DebriefPayload result = null)
         {
-            var body = JsonUtility.ToJson(new SayReq { sessionId = SessionId, persona = p.ToString(), kind = kind, baseText = baseText ?? "", severity = severity ?? "", language = Language, context = ctx, result = result });
+            var body = JsonUtility.ToJson(new SayReq { sessionId = SessionId, persona = p.ToString(), kind = kind, baseText = baseText ?? "", severity = severity ?? "", language = Language, langLock = LangLock ?? "", context = ctx, result = result });
             var www = new UnityWebRequest(endpoint + "/v1/say-stream", "POST") { uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(body)), downloadHandler = new MedSimAI.Voice.VoiceStreamHandler(voice, json => onMeta?.Invoke(JsonUtility.FromJson<LiveSayResponse>(json))), timeout = timeoutSeconds + 30 };
             www.SetRequestHeader("Content-Type", "application/json");
             if (!string.IsNullOrEmpty(token)) www.SetRequestHeader("X-MedSim-Client", token);

@@ -149,6 +149,14 @@ namespace MedSimAI.Voice
         /// <summary>Entry point for voice, typed or tablet questions.</summary>
         public async Task Submit(Persona target, string text)
         {
+            var cmd = LanguageCommands.DetectCommand(text);
+            if (cmd != null) // typed language switch: application-wide, not a clinical question
+            {
+                AI.SetLanguageMode(cmd == "ar" ? LanguageMode.Arabic : LanguageMode.English);
+                await SayLive(target, "ack", LanguageCommands.Ack(target, cmd));
+                return;
+            }
+            AI.NoteStudentLanguage(LanguageCommands.DetectLanguage(text));
             if (State == VoiceState.Speaking || State == VoiceState.Thinking) Interrupt();
             SetState(VoiceState.Thinking);
             cts?.Dispose(); cts = new CancellationTokenSource();

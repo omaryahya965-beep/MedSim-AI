@@ -70,6 +70,14 @@ This uses the same method as VR Target Arena's `PlayerHeightOffset`. XR Origin's
 - **Unchanged:** the rig, the +0.40 m height lift and the VIVE Focus 3 profile.
 - **Verified without wearing the headset:** with SteamVR 2.18.4 and VIVE Streaming running, the PCVR exe reached "Display mode: VR (headset display running)" with no hang. The image and controls in the headset are **not yet verified by a person**.
 
+## 4c. v0.4: height and thumbstick movement
+- **Height:** the default VR lift is now **+0.55 m**. Adjust it from the pause menu row (*Lower −5 / VR height / Higher +5*); it is saved and applies immediately. Desktop Mode stays at +0.40 m.
+- **Left stick:** smooth movement where you look (strafe, diagonals).
+- **Right stick:** snap turn 45° or smooth turn; push forward to teleport.
+- **Collision:** the CharacterController has a 0.2 m radius.
+- **Settings:** *Pause → Comfort, movement & graphics*: speed, smooth/teleport-only, turn type, snap angle or turn speed, stick dead zone.
+- Bindings come from the XRI starter actions (OpenXR primary2DAxis = VIVE Focus 3 thumbstick). **Not yet tested in the headset.**
+
 ## 5. How to test (PCVR)
 **Run the built player, not the Editor:** `D:\VRBuilds\MedSim_PCVR\MedSimAI.exe`, with SteamVR and VBS running. The Comfort & Graphics panel shows live frame time. The target is ≤ 11.1 ms (90 Hz).
 

@@ -189,3 +189,26 @@ All utterances were synthetic student clips: **automated audio, not a human voic
 - Unity used the first listed microphone (the laptop array) even in VR. It now uses the headset microphone in VR and the Windows default on desktop. This likely explains the three approved-fallback doctor turns in the earlier in-headset session.
 
 **Cost:** about $0.0025 per voice turn. Ledger total $0.84 of $2.00 after v0.3, so **$1.16 remains**.
+
+---
+## v0.4: Arabic conversation and speech completeness (2026-11-27)
+
+Automated audio (synthetic clips), real API. Full root-cause analysis and results: **ARABIC_AUDIO_VR.md**.
+
+**Before the fixes** (first run of `tools/arabic-harness.mjs` after the language plumbing):
+- One turn of 13 came back in the wrong language. The Realtime model had transcribed Arabic speech as English.
+- The English acknowledgement "Of course, let's continue in English." was voiced with fidelity 0.00: the voice actor took the line as an instruction.
+
+**After the fixes:** 13/13 correct language, 13/13 complete audio, fidelity 0.92–1.00.
+
+Patient examples (Palestinian colloquial):
+- «بلّش من شي خمسة وأربعين دقيقة، كنت طالع الدرج وحامل أغراض من السوق.»
+- «آه، عندي حساسية من البنسلين، وطلعلي منه طفح.» (asked in English while Arabic was locked)
+
+**Arabic debrief:** 92 words, 45.6 s of audio received completely, grounded (`source: ai`).
+
+**Real human voice (incidental, exe self-test):**
+- "Hey, how are you? Are you good?" → English reply.
+- «سمعني مني» → Arabic reply «حاضرة، راح أسمعك…».
+
+**Cost:** ledger total **$1.38 of $2.00** after v0.4 testing (≈ $0.62 remaining).

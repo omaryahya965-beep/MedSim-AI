@@ -196,3 +196,16 @@ Lip sync is calibrated on the runtime voices.
 - the VIVE Focus 3 in the headset;
 - Arabic pronunciation by a native speaker;
 - clinical review.
+
+---
+# v0.4: Arabic, complete speech, Arabic transcripts, VR movement (2026-11-27)
+| Suite | Result |
+|---|---|
+| Unity EditMode | **98 / 98**. New `ArabicAndAudioTests`: 12 language commands, 4 non-commands, mixed-language detection, right-to-left preparation (English and numbers survive TMP reversal), playhead-based completion with the creation pre-read, Arabic intervention and discussion localisation |
+| Unity PlayMode | **21 / 21**. New `VRLocomotionPlayTests`: left stick moves, right stick turns and teleports, settings persist, collision radius; Desktop height unchanged by the VR height. Height tests updated to +0.55 m |
+| Proxy | **30 / 30**. New: Arabic reply to an Arabic question with the app in English (regeneration, then approved Arabic fallback); commands without any AI call; Arabic lock; translated-transcript case; Arabic director-line fallback; stale cancelled-response events never end the next line |
+| Arabic live harness (real API, automated audio) | **13/13 correct language, 13/13 complete audio**, including a 92-word Arabic debrief |
+| Arabic in the Unity client (`AgentScripts/ArabicE2E.cs`) | Pass; **0/10 lines cut short**; hands-free false alarm does not cut speech; a real barge-in does |
+| Builds | Desktop and PCVR rebuilt at the same paths, 0 errors; secret scans clean |
+
+Details and the manual checklist: ARABIC_AUDIO_VR.md.

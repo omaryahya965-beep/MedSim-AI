@@ -33,6 +33,11 @@ namespace MedSimAI.Clinical
             var il = D("instructorLines"); var L = s.instructorLines;
             foreach (var (k, en) in new[] { ("welcome", L.welcome), ("tutorial", L.tutorial), ("historyDone", L.historyDone), ("examDone", L.examDone), ("ecgShown", L.ecgShown), ("reasoningPrompt", L.reasoningPrompt), ("escalationAck", L.escalationAck), ("debriefIntro", L.debriefIntro), ("outOfScope", L.outOfScope), ("noHintAvailable", L.noHintAvailable), ("onboardingRole", L.onboardingRole), ("onboardingInstruments", L.onboardingInstruments) })
                 if (il.TryGetValue(k, out var t) && !string.IsNullOrEmpty(en)) pack.Add(en, t as string);
+            var ints = D("interventions");
+            if (s.interventions != null) foreach (var iv in s.interventions) for (int k = 0; k < (iv.lines?.Length ?? 0); k++) if (ints.TryGetValue(iv.id + "|" + k, out var t)) pack.Add(iv.lines[k], t as string);
+            var dqs = D("discussion");
+            if (s.discussion != null) foreach (var d in s.discussion) if (dqs.TryGetValue(d.id, out var t)) pack.Add(d.question, t as string);
+            if (il.TryGetValue("discussionIntro", out var di)) pack.Add(L.discussionIntro, di as string);
             var hints = D("hints"); foreach (var h in s.hints) if (hints.TryGetValue($"{h.stage}|{h.order}", out var t)) pack.Add(h.text, t as string);
             var scripted = D("scripted");
             if (scripted.TryGetValue("InstructorReasoningFollowUp", out var a)) pack.Add(AI.ScriptedLines.InstructorReasoningFollowUp, a as string);
