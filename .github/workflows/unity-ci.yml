@@ -45,9 +45,16 @@ jobs:
         id: img
         run: |
           MOD="$MODULE"
-          tags=$(curl -s "https://hub.docker.com/v2/repositories/unityci/editor/tags?page_size=100&name=ubuntu-6000.3." | jq -r '.results[].name' | grep -E "^ubuntu-6000\.3\.[0-9]+f1-${MOD}-3$" || true)
+          url="https://hub.docker.com/v2/repositories/unityci/editor/tags?page_size=100&name=6000.3."; tags=""
+          for i in $(seq 1 30); do
+            [ -z "$url" ] || [ "$url" = "null" ] && break
+            page=$(curl -s "$url"); tags="$tags"$'\n'"$(echo "$page" | jq -r '.results[].name')"; url=$(echo "$page" | jq -r '.next')
+          done
+          tags=$(echo "$tags" | grep -E "^ubuntu-6000\.3\.[0-9]+f1-${MOD}-3$" | sort -u || true)
+          echo "Available 6000.3 ${MOD} tags:"; echo "$tags" | tail -5
           exact="ubuntu-6000.3.29f1-${MOD}-3"
-          if echo "$tags" | grep -qx "$exact"; then t="$exact"; else t=$(echo "$tags" | sort -t. -k3,3n | tail -1); fi
+          if echo "$tags" | grep -qx "$exact"; then t="$exact"; else t=$(echo "$tags" | sed -E 's/ubuntu-6000\.3\.([0-9]+)f1.*/\1 &/' | sort -n | tail -1 | cut -d' ' -f2); fi
+          [ -n "$t" ] || { echo "::error::No unityci/editor 6000.3.x ${MOD} image found"; exit 1; }
           echo "Using unityci/editor:$t (project is 6000.3.29f1)"; echo "image=unityci/editor:$t" >> "$GITHUB_OUTPUT"
           echo "version=$(echo $t | sed -E 's/ubuntu-([^-]+)-.*/\1/')" >> "$GITHUB_OUTPUT"
         env:
@@ -86,7 +93,8 @@ jobs:
           MOD="$MODULE"
           tags=$(curl -s "https://hub.docker.com/v2/repositories/unityci/editor/tags?page_size=100&name=ubuntu-6000.3." | jq -r '.results[].name' | grep -E "^ubuntu-6000\.3\.[0-9]+f1-${MOD}-3$" || true)
           exact="ubuntu-6000.3.29f1-${MOD}-3"
-          if echo "$tags" | grep -qx "$exact"; then t="$exact"; else t=$(echo "$tags" | sort -t. -k3,3n | tail -1); fi
+          if echo "$tags" | grep -qx "$exact"; then t="$exact"; else t=$(echo "$tags" | sed -E 's/ubuntu-6000\.3\.([0-9]+)f1.*/\1 &/' | sort -n | tail -1 | cut -d' ' -f2); fi
+          [ -n "$t" ] || { echo "::error::No unityci/editor 6000.3.x ${MOD} image found"; exit 1; }
           echo "Using unityci/editor:$t (project is 6000.3.29f1)"; echo "image=unityci/editor:$t" >> "$GITHUB_OUTPUT"
           echo "version=$(echo $t | sed -E 's/ubuntu-([^-]+)-.*/\1/')" >> "$GITHUB_OUTPUT"
         env:
