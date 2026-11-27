@@ -77,41 +77,39 @@ jobs:
 
   desktop-build:
     name: Surgery scenes + Windows desktop build
-    runs-on: ubuntu-latest
+    # Windows runner + the project's exact editor (6000.3.29f1) from Unity, activated with the Personal account.
+    runs-on: windows-latest
     needs: unity-tests
+    timeout-minutes: 120
     steps:
-      - uses: jlumbroso/free-disk-space@v1.3.1
-        with: { tool-cache: false, android: true, dotnet: false, haskell: true, large-packages: false, docker-images: false, swap-storage: true }
       - uses: actions/checkout@v4
         with: { lfs: true }
       - uses: actions/cache@v4
         with:
           path: Library
-          key: Library-win-${{ hashFiles('Packages/packages-lock.json', 'Packages/manifest.json', 'ProjectSettings/ProjectVersion.txt') }}
-          restore-keys: Library-win-
-      - name: Pick Unity image (exact 6000.3.29f1 if published, else newest 6000.3.x)
-        id: img
-        run: |
-          MOD="$MODULE"
-          tags=$(curl -s "https://hub.docker.com/v2/repositories/unityci/editor/tags?page_size=100&name=ubuntu-6000.3." | jq -r '.results[].name' | grep -E "^ubuntu-6000\.3\.[0-9]+f1-${MOD}-3$" || true)
-          exact="ubuntu-6000.3.29f1-${MOD}-3"
-          if echo "$tags" | grep -qx "$exact"; then t="$exact"; else t=$(echo "$tags" | sed -E 's/ubuntu-6000\.3\.([0-9]+)f1.*/\1 &/' | sort -n | tail -1 | cut -d' ' -f2); fi
-          [ -n "$t" ] || { echo "::error::No unityci/editor 6000.3.x ${MOD} image found"; exit 1; }
-          echo "Using unityci/editor:$t (project is 6000.3.29f1)"; echo "image=unityci/editor:$t" >> "$GITHUB_OUTPUT"
-          echo "version=$(echo $t | sed -E 's/ubuntu-([^-]+)-.*/\1/')" >> "$GITHUB_OUTPUT"
-        env:
-          MODULE: windows-mono
-      - uses: game-ci/unity-builder@v4
+          key: Library-winrunner-${{ hashFiles('Packages/manifest.json', 'ProjectSettings/ProjectVersion.txt') }}
+          restore-keys: Library-winrunner-
+      - uses: buildalon/unity-setup@v2
         with:
-          unityVersion: ${{ steps.img.outputs.version }}
-          customImage: ${{ steps.img.outputs.image }}
-          targetPlatform: StandaloneWindows64
-          buildMethod: MedSimAI.Surgery.EditorTools.MedSimSurgeryCI.BuildDesktop
-          buildName: MedSimAI
+          version-file: ProjectSettings/ProjectVersion.txt
+          build-targets: StandaloneWindows64
+      - uses: buildalon/activate-unity-license@v2
+        with:
+          license: Personal
+          username: ${{ secrets.UNITY_EMAIL }}
+          password: ${{ secrets.UNITY_PASSWORD }}
+      - name: Build surgery scenes + Windows player
+        shell: bash
+        run: |
+          "$UNITY_EDITOR_PATH" -batchmode -nographics -quit -projectPath "${UNITY_PROJECT_PATH:-$GITHUB_WORKSPACE}" -buildTarget StandaloneWindows64 \
+            -executeMethod MedSimAI.Surgery.EditorTools.MedSimSurgeryCI.BuildDesktop -logFile unity-build.log || status=$?
+          grep -E "\[Surgery|error CS|Build (Succeeded|Failed)|Exception" unity-build.log | head -80 || true
+          exit ${status:-0}
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: MedSimAI_Surgery_Desktop
           path: |
-            build
+            build/StandaloneWindows64
             Docs/Surgery/Integration/LAST_SCENE_BUILD.txt
+            unity-build.log
