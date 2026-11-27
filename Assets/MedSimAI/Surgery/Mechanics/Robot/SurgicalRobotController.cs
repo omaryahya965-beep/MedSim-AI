@@ -28,8 +28,23 @@ namespace MedSimAI.Surgery.Mechanics
 
         private void Awake()
         {
-            if (baseTransform == null) baseTransform = transform;
+            CaptureRest();
+        }
 
+        public Transform Base => baseTransform;
+        public Transform EndEffector => endEffector;
+        public Transform[] Joints => joints;
+
+        /// <summary>Binds the controller to a physical robot (integration: Person 1's OrthopedicAssistRobot joints J1..J6 and RobotToolMount).</summary>
+        public void Bind(Transform robotBase, Transform toolMount, Transform[] jointChain)
+        {
+            baseTransform = robotBase; endEffector = toolMount; joints = jointChain;
+            CaptureRest();
+        }
+
+        void CaptureRest()
+        {
+            if (baseTransform == null) return;
             initialBasePos = baseTransform.position;
             initialBaseRot = baseTransform.rotation;
 

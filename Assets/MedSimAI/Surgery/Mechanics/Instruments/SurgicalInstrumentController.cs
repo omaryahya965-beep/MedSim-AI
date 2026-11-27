@@ -21,6 +21,7 @@ namespace MedSimAI.Surgery.Mechanics
         public Transform initialParent;
         public InstrumentHolder holder = InstrumentHolder.OnTable;
         public bool isActivated;
+        public bool initialKinematic;
     }
 
     /// <summary>
@@ -86,6 +87,7 @@ namespace MedSimAI.Surgery.Mechanics
                 initialPosition = tag.transform.position,
                 initialRotation = tag.transform.rotation,
                 initialParent = tag.transform.parent,
+                initialKinematic = tag.GetComponent<Rigidbody>() != null && tag.GetComponent<Rigidbody>().isKinematic,
                 holder = InstrumentHolder.OnTable,
                 isActivated = false
             };
@@ -127,6 +129,7 @@ namespace MedSimAI.Surgery.Mechanics
             if (!instruments.TryGetValue(toolId, out var item)) return;
 
             item.holder = newHolder;
+            if (!scenarioEngine) { scenarioEngine = GetComponent<SurgeryScenarioEngine>(); if (!scenarioEngine) scenarioEngine = FindFirstObjectByType<SurgeryScenarioEngine>(); }
             string activeObjId = scenarioEngine != null ? scenarioEngine.CurrentObjectiveId : "";
 
             SurgeryEventBusHost.Publish(SurgeryEvent.Tool(SurgeryEventIds.ToolGrabbed, toolId, activeObjId));
@@ -176,23 +179,15 @@ namespace MedSimAI.Surgery.Mechanics
                 var item = kv.Value;
                 if (item.tag != null)
                 {
-                    // Check if an anchor exists for this slot
-                    var slotAnchor = SurgeryAnchor.Find(AnchorIds.InstrumentSlot(item.instrumentId));
-                    if (slotAnchor != null)
-                    {
-                        item.tag.transform.position = slotAnchor.position;
-                        item.tag.transform.rotation = slotAnchor.rotation;
-                    }
-                    else
-                    {
-                        item.tag.transform.position = item.initialPosition;
-                        item.tag.transform.rotation = item.initialRotation;
-                    }
-
+                    // Back to where it started (its tray slot): same parent, pose and physics state.
+                    item.tag.transform.SetParent(item.initialParent, true);
+                    var slotAnchor = item.initialParent ? null : SurgeryAnchor.Find(AnchorIds.InstrumentSlot(item.instrumentId));
+                    if (slotAnchor != null) item.tag.transform.SetPositionAndRotation(slotAnchor.position, slotAnchor.rotation);
+                    else item.tag.transform.SetPositionAndRotation(item.initialPosition, item.initialRotation);
                     if (item.rb != null)
                     {
-                        item.rb.linearVelocity = Vector3.zero;
-                        item.rb.angularVelocity = Vector3.zero;
+                        item.rb.isKinematic = item.initialKinematic;
+                        if (!item.rb.isKinematic) { item.rb.linearVelocity = Vector3.zero; item.rb.angularVelocity = Vector3.zero; }
                     }
                 }
 

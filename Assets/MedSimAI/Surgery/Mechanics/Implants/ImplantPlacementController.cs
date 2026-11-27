@@ -18,6 +18,8 @@ namespace MedSimAI.Surgery.Mechanics
         public Vector3 initialPosition;
         public Quaternion initialRotation;
         public bool isPlaced;
+        public Transform initialParent;
+        public bool initialKinematic;
     }
 
     /// <summary>
@@ -31,7 +33,6 @@ namespace MedSimAI.Surgery.Mechanics
         [SerializeField] private SurgeryScenarioEngine scenarioEngine;
         [SerializeField] private AnatomyInteractionController anatomyController;
         [SerializeField] private bool autoRegisterSceneImplants = true;
-        [SerializeField] private float snapSpeed = 10f;
 
         private readonly Dictionary<string, TrackedImplant> implants = new Dictionary<string, TrackedImplant>();
 
@@ -40,13 +41,26 @@ namespace MedSimAI.Surgery.Mechanics
 
         private void Awake()
         {
-            if (!scenarioEngine) scenarioEngine = FindFirstObjectByType<SurgeryScenarioEngine>();
-            if (!anatomyController) anatomyController = FindFirstObjectByType<AnatomyInteractionController>();
+            ResolveDependencies();
+            if (autoRegisterSceneImplants) RegisterSceneImplants();
+        }
 
-            if (autoRegisterSceneImplants)
-            {
-                RegisterSceneImplants();
-            }
+        bool subscribed;
+        void OnEnable() => ResolveDependencies();
+        void OnDisable() { if (subscribed && scenarioEngine) scenarioEngine.OnObjectiveCompleted -= HandleObjectiveCompleted; subscribed = false; }
+
+        void ResolveDependencies()
+        {
+            if (!scenarioEngine) { scenarioEngine = GetComponent<SurgeryScenarioEngine>(); if (!scenarioEngine) scenarioEngine = FindFirstObjectByType<SurgeryScenarioEngine>(); }
+            if (!anatomyController) { anatomyController = GetComponent<AnatomyInteractionController>(); if (!anatomyController) anatomyController = FindFirstObjectByType<AnatomyInteractionController>(); }
+            if (!subscribed && scenarioEngine) { scenarioEngine.OnObjectiveCompleted += HandleObjectiveCompleted; subscribed = true; }
+        }
+
+        /// <summary>Trials are taken out once the trial reduction is done, so the final components can be seated.</summary>
+        void HandleObjectiveCompleted(SurgicalObjective o)
+        {
+            if (o == null || !SurgeryInteractionValidator.IsTrial(o.implantId)) return;
+            foreach (var id in SurgeryInteractionValidator.ComponentsFor(o)) ResetImplant(id);
         }
 
         public void RegisterSceneImplants()
@@ -71,6 +85,8 @@ namespace MedSimAI.Surgery.Mechanics
                 rb = tag.GetComponent<Rigidbody>(),
                 initialPosition = tag.transform.position,
                 initialRotation = tag.transform.rotation,
+                initialParent = tag.transform.parent,
+                initialKinematic = tag.GetComponent<Rigidbody>() != null && tag.GetComponent<Rigidbody>().isKinematic,
                 isPlaced = false
             };
 
@@ -94,103 +110,62 @@ namespace MedSimAI.Surgery.Mechanics
         /// </summary>
         public bool CheckPlacementAttempt(string implantId)
         {
+            ResolveDependencies();
             if (!implants.TryGetValue(implantId, out var item) || item.tag == null) return false;
             if (scenarioEngine == null || scenarioEngine.IsFinished) return false;
-
             var activeObj = scenarioEngine.CurrentObjective;
             if (activeObj == null) return false;
 
-            // Find authored target pose: from tag.placementTarget or scene search "PlacementTarget_<implantId>"
             Transform targetPose = item.tag.placementTarget;
             if (targetPose == null)
             {
                 var targetObj = GameObject.Find("PlacementTarget_" + implantId);
                 if (targetObj != null) targetPose = targetObj.transform;
             }
-
             if (targetPose == null)
             {
                 Debug.LogWarning($"[ImplantPlacementController] No placement target found for {implantId}");
                 return false;
             }
 
-            string targetAnatomyId = ResolveTargetAnatomy(implantId, activeObj);
+            string targetAnatomyId = SurgeryInteractionValidator.TargetOfImplant(implantId);
+            if (string.IsNullOrEmpty(targetAnatomyId)) targetAnatomyId = ResolveTargetAnatomy(implantId, activeObj);
+            var validation = SurgeryInteractionValidator.ValidateImplantPlacement(activeObj, implantId,
+                item.tag.transform.position, item.tag.transform.rotation, targetPose.position, targetPose.rotation, scenarioEngine.Progress);
 
-            Vector3 actualPos = item.tag.transform.position;
-            Quaternion actualRot = item.tag.transform.rotation;
-            Vector3 expectedPos = targetPose.position;
-            Quaternion expectedRot = targetPose.rotation;
-
-            var validation = SurgeryInteractionValidator.ValidateImplantPlacement(
-                activeObj,
-                implantId,
-                targetAnatomyId,
-                actualPos,
-                actualRot,
-                expectedPos,
-                expectedRot);
-
-            // 1. Emit implant.placement_attempted
-            SurgeryEventBusHost.Publish(SurgeryEvent.Implant(
-                SurgeryEventIds.ImplantPlacementAttempted,
-                implantId,
-                targetAnatomyId,
-                validation.PositionErrorMm,
-                validation.AngleErrorDeg,
-                validation.Success,
-                activeObj.id));
-
+            SurgeryEventBusHost.Publish(SurgeryEvent.Implant(SurgeryEventIds.ImplantPlacementAttempted, implantId, targetAnatomyId,
+                validation.PositionErrorMm, validation.AngleErrorDeg, validation.Success, activeObj.id));
             OnImplantPlacementAttempted?.Invoke(implantId, validation.Success, validation.PositionErrorMm, validation.AngleErrorDeg);
 
-            if (validation.Success)
+            if (!validation.Success)
             {
-                // Snap implant to authored pose
-                item.isPlaced = true;
-                if (item.rb != null)
-                {
-                    item.rb.isKinematic = true;
-                    item.rb.linearVelocity = Vector3.zero;
-                    item.rb.angularVelocity = Vector3.zero;
-                }
-
-                item.tag.transform.position = expectedPos;
-                item.tag.transform.rotation = expectedRot;
-
-                // 2. Emit implant.placement_completed
-                SurgeryEventBusHost.Publish(SurgeryEvent.Implant(
-                    SurgeryEventIds.ImplantPlacementCompleted,
-                    implantId,
-                    targetAnatomyId,
-                    validation.PositionErrorMm,
-                    validation.AngleErrorDeg,
-                    true,
-                    activeObj.id));
-
-                OnImplantPlacementCompleted?.Invoke(implantId);
-
-                // 3. Update anatomy state
-                if (!string.IsNullOrEmpty(validation.NextAnatomyState))
-                {
-                    var view = anatomyController != null ? anatomyController.GetTargetView(targetAnatomyId) : null;
-                    if (view != null) view.SetState(validation.NextAnatomyState);
-
-                    SurgeryEventBusHost.Publish(SurgeryEvent.StateChanged(targetAnatomyId, validation.NextAnatomyState, activeObj.id));
-                }
-
-                // 4. Complete objective
-                if (validation.CompletesObjective)
-                {
-                    scenarioEngine.CompleteCurrentObjective();
-                }
-
-                return true;
-            }
-            else
-            {
-                // Emit rejection
                 SurgeryEventBusHost.Publish(SurgeryEvent.Rejected(validation.Reason, implantId, targetAnatomyId, activeObj.id));
                 return false;
             }
+
+            // Seat: snap to the authored pose and keep it there (kinematic, parented to the target so it follows the knee).
+            item.isPlaced = true;
+            scenarioEngine.Progress.PlacedImplants.Add(implantId);
+            if (item.rb != null)
+            {
+                if (!item.rb.isKinematic) { item.rb.linearVelocity = Vector3.zero; item.rb.angularVelocity = Vector3.zero; }
+                item.rb.isKinematic = true;
+            }
+            item.tag.transform.SetParent(targetPose, true);
+            item.tag.transform.SetPositionAndRotation(targetPose.position, targetPose.rotation);
+
+            SurgeryEventBusHost.Publish(SurgeryEvent.Implant(SurgeryEventIds.ImplantPlacementCompleted, implantId, targetAnatomyId,
+                validation.PositionErrorMm, validation.AngleErrorDeg, true, activeObj.id));
+            OnImplantPlacementCompleted?.Invoke(implantId);
+
+            if (!string.IsNullOrEmpty(validation.NextAnatomyState))
+            {
+                var view = anatomyController != null ? anatomyController.GetTargetView(targetAnatomyId) : null;
+                if (view != null) view.SetState(validation.NextAnatomyState);
+                SurgeryEventBusHost.Publish(SurgeryEvent.StateChanged(targetAnatomyId, validation.NextAnatomyState, activeObj.id));
+            }
+            if (validation.CompletesObjective) scenarioEngine.CompleteCurrentObjective();
+            return true;
         }
 
         private string ResolveTargetAnatomy(string implantId, SurgicalObjective activeObj)
@@ -202,32 +177,21 @@ namespace MedSimAI.Surgery.Mechanics
 
         public void ResetAllImplants()
         {
-            foreach (var kv in implants)
-            {
-                var item = kv.Value;
-                if (item.tag != null)
-                {
-                    var implantTableAnchor = SurgeryAnchor.Find(AnchorIds.ImplantTable);
-                    if (implantTableAnchor != null)
-                    {
-                        item.tag.transform.position = implantTableAnchor.position;
-                        item.tag.transform.rotation = implantTableAnchor.rotation;
-                    }
-                    else
-                    {
-                        item.tag.transform.position = item.initialPosition;
-                        item.tag.transform.rotation = item.initialRotation;
-                    }
+            foreach (var id in implants.Keys.ToList()) ResetImplant(id);
+        }
 
-                    if (item.rb != null)
-                    {
-                        item.rb.isKinematic = false;
-                        item.rb.linearVelocity = Vector3.zero;
-                        item.rb.angularVelocity = Vector3.zero;
-                    }
-                }
-                item.isPlaced = false;
+        /// <summary>Returns one component to where it started (its own spot on the implant table) and makes it grabbable again.</summary>
+        public void ResetImplant(string implantId)
+        {
+            if (!implants.TryGetValue(implantId, out var item) || item.tag == null) return;
+            item.tag.transform.SetParent(item.initialParent, true);
+            item.tag.transform.SetPositionAndRotation(item.initialPosition, item.initialRotation);
+            if (item.rb != null)
+            {
+                item.rb.isKinematic = item.initialKinematic;
+                if (!item.rb.isKinematic) { item.rb.linearVelocity = Vector3.zero; item.rb.angularVelocity = Vector3.zero; }
             }
+            item.isPlaced = false;
         }
     }
 }

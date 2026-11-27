@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using MedSimAI.Surgery.Shared;
 using UnityEngine;
@@ -40,6 +41,23 @@ namespace MedSimAI.Surgery.Mechanics
     /// Ensures only valid instruments, targets, power states, and implant alignments
     /// advance simulation state, strictly enforcing the authored scenario contract.
     /// </summary>
+
+    /// <summary>
+    /// Integration (2026-11-28): progress inside the CURRENT objective, so multi-step objectives authored in
+    /// OR_TKA_TRAINING_001 are not completed by their first valid contact. Simulation sequencing only (DRAFT):
+    ///   * resection objectives (cutting guide + oscillating saw): guide on the target first (guide_placed), then the
+    ///     powered saw (resected, completes). Saw before guide -> prerequisite_missing.
+    ///   * placement objectives (implantId): every component of the same kind (trial / final) whose seat is one of the
+    ///     objective's targets must be seated within tolerance; the tibial insert needs the tray first. Objectives that
+    ///     also list impaction tools complete when one of them is applied to the target after all components are seated.
+    /// </summary>
+    public sealed class ObjectiveProgress
+    {
+        public readonly HashSet<string> GuidedTargets = new HashSet<string>();
+        public readonly HashSet<string> PlacedImplants = new HashSet<string>();
+        public void Clear() { GuidedTargets.Clear(); PlacedImplants.Clear(); }
+    }
+
     public static class SurgeryInteractionValidator
     {
         /// <summary>
@@ -127,6 +145,78 @@ namespace MedSimAI.Surgery.Mechanics
             return ImplantValidationResult.Valid(posErrMm, angleErrDeg, nextState);
         }
 
+
+        static readonly string[] AllImplants = { ImplantIds.FemoralTrial, ImplantIds.TibialTrial, ImplantIds.FemoralComponent, ImplantIds.TibialTray, ImplantIds.PolyInsert };
+        public static bool IsCuttingGuide(string toolId) => toolId == InstrumentIds.FemoralCuttingGuide || toolId == InstrumentIds.TibialCuttingGuide;
+        public static bool IsTrial(string implantId) => implantId == ImplantIds.FemoralTrial || implantId == ImplantIds.TibialTrial;
+        public static string TargetOfImplant(string implantId) =>
+            implantId == ImplantIds.FemoralTrial || implantId == ImplantIds.FemoralComponent ? AnatomyTargetIds.DistalFemur
+            : implantId == ImplantIds.TibialTrial || implantId == ImplantIds.TibialTray || implantId == ImplantIds.PolyInsert ? AnatomyTargetIds.ProximalTibia : "";
+        /// <summary>Components the objective needs seated (same kind as objective.implantId, seat in objective.targets).</summary>
+        public static string[] ComponentsFor(SurgicalObjective o)
+        {
+            if (o == null || string.IsNullOrEmpty(o.implantId)) return Array.Empty<string>();
+            bool trial = IsTrial(o.implantId);
+            var list = AllImplants.Where(x => IsTrial(x) == trial && o.targets != null && o.targets.Contains(TargetOfImplant(x))).ToList();
+            if (!list.Contains(o.implantId)) list.Insert(0, o.implantId);
+            return list.ToArray();
+        }
+        static bool IsSequencedResection(SurgicalObjective o) =>
+            o.requiredTools != null && o.requiredTools.Any(IsCuttingGuide) && o.requiredTools.Contains(InstrumentIds.OscillatingSaw);
+
+        /// <summary>Tool contact with progress-aware sequencing (see ObjectiveProgress).</summary>
+        public static ToolValidationResult ValidateToolInteraction(SurgicalObjective objective, string toolId, string targetId, bool isToolActive, bool isRightSide, ObjectiveProgress progress)
+        {
+            var basic = ValidateToolInteraction(objective, toolId, targetId, isToolActive, isRightSide);
+            if (!basic.Success || progress == null) return basic;
+            var components = ComponentsFor(objective);
+            if (components.Length > 0)   // impaction after seating
+                return components.All(progress.PlacedImplants.Contains)
+                    ? ToolValidationResult.Valid(string.IsNullOrEmpty(objective.completionState) ? AnatomyStates.Implanted : objective.completionState, true)
+                    : ToolValidationResult.Rejected(RejectReasons.PrerequisiteMissing);
+            if (IsSequencedResection(objective))
+            {
+                if (IsCuttingGuide(toolId))
+                    return progress.GuidedTargets.Contains(targetId) ? ToolValidationResult.Valid("", false) : ToolValidationResult.Valid(AnatomyStates.GuidePlaced, false);
+                if (toolId == InstrumentIds.OscillatingSaw && !progress.GuidedTargets.Contains(targetId))
+                    return ToolValidationResult.Rejected(RejectReasons.PrerequisiteMissing);
+            }
+            return basic;
+        }
+
+        /// <summary>Placement with progress: allowed components, tray-before-insert order, completion when all are seated.</summary>
+        public static ImplantValidationResult ValidateImplantPlacement(SurgicalObjective objective, string implantId, Vector3 actualPos, Quaternion actualRot, Vector3 targetPos, Quaternion targetRot, ObjectiveProgress progress)
+        {
+            if (objective == null || string.IsNullOrEmpty(objective.id)) return ImplantValidationResult.Rejected(RejectReasons.PrerequisiteMissing, -1f, -1f);
+            var components = ComponentsFor(objective);
+            if (!components.Contains(implantId)) return ImplantValidationResult.Rejected(RejectReasons.WrongTool, -1f, -1f);
+            if (implantId == ImplantIds.PolyInsert && components.Contains(ImplantIds.TibialTray) && (progress == null || !progress.PlacedImplants.Contains(ImplantIds.TibialTray)))
+                return ImplantValidationResult.Rejected(RejectReasons.PrerequisiteMissing, -1f, -1f);
+            var r = ValidateImplantPlacement(objective, objective.implantId, TargetOfImplant(implantId), actualPos, actualRot, targetPos, targetRot);
+            if (!r.Success) return r;
+            bool allSeated = components.All(c => c == implantId || (progress != null && progress.PlacedImplants.Contains(c)));
+            bool needsImpaction = objective.requiredTools != null && objective.requiredTools.Length > 0;
+            r.CompletesObjective = allSeated && !needsImpaction;
+            r.NextAnatomyState = IsTrial(implantId) ? AnatomyStates.TrialFitted : "";   // final components: state changes on impaction
+            return r;
+        }
+
+        /// <summary>Fallback when an objective names no completion state: the state the tool itself produces.</summary>
+        public static string StateForTool(string toolId)
+        {
+            switch (toolId)
+            {
+                case InstrumentIds.SkinMarker: return AnatomyStates.Marked;
+                case InstrumentIds.Scalpel: return AnatomyStates.Incised;
+                case InstrumentIds.Retractor: return AnatomyStates.Exposed;
+                case InstrumentIds.FemoralCuttingGuide: case InstrumentIds.TibialCuttingGuide: return AnatomyStates.GuidePlaced;
+                case InstrumentIds.OscillatingSaw: return AnatomyStates.Resected;
+                case InstrumentIds.Impactor: case InstrumentIds.Mallet: return AnatomyStates.Implanted;
+                case InstrumentIds.NeedleDriver: case InstrumentIds.SkinStapler: return AnatomyStates.Closed;
+                default: return AnatomyStates.Intact;
+            }
+        }
+
         public static bool RequiresPowerActivation(string toolId)
         {
             return toolId == InstrumentIds.OscillatingSaw || toolId == InstrumentIds.Drill;
@@ -149,7 +239,7 @@ namespace MedSimAI.Surgery.Mechanics
                 case "obj.implant_femoral":
                 case "obj.implant_tibial": return AnatomyStates.Implanted;
                 case "obj.closure": return AnatomyStates.Closed;
-                default: return AnatomyStates.Intact;
+                default: return StateForTool(toolId);
             }
         }
     }

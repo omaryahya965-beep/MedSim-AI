@@ -13,6 +13,7 @@ namespace MedSimAI.Surgery.Mechanics
     /// </summary>
     [DisallowMultipleComponent]
     [DefaultExecutionOrder(-100)]
+    [ExecuteAlways]
     public class SurgeryMechanicsRoot : MonoBehaviour, ISurgicalScenarioRuntime, IInstrumentRegistry
     {
         [Header("Subsystems")]
@@ -61,16 +62,24 @@ namespace MedSimAI.Surgery.Mechanics
             EnsureSubsystems();
         }
 
-        private void EnsureSubsystems()
+        static T Ensure<T>(GameObject go, T current) where T : Component
         {
-            if (!scenarioEngine) scenarioEngine = GetComponentInChildren<SurgeryScenarioEngine>() ?? gameObject.AddComponent<SurgeryScenarioEngine>();
-            if (!instrumentController) instrumentController = GetComponentInChildren<SurgicalInstrumentController>() ?? gameObject.AddComponent<SurgicalInstrumentController>();
-            if (!anatomyController) anatomyController = GetComponentInChildren<AnatomyInteractionController>() ?? gameObject.AddComponent<AnatomyInteractionController>();
-            if (!implantController) implantController = GetComponentInChildren<ImplantPlacementController>() ?? gameObject.AddComponent<ImplantPlacementController>();
-            if (!robotController) robotController = GetComponentInChildren<SurgicalRobotController>() ?? gameObject.AddComponent<SurgicalRobotController>();
-            if (!resetController) resetController = GetComponentInChildren<SurgeryResetController>() ?? gameObject.AddComponent<SurgeryResetController>();
-            if (!desktopAdapter) desktopAdapter = GetComponentInChildren<SurgicalDesktopInteractionAdapter>() ?? gameObject.AddComponent<SurgicalDesktopInteractionAdapter>();
-            if (!feedback) feedback = GetComponentInChildren<SurgeryInteractionFeedback>() ?? gameObject.AddComponent<SurgeryInteractionFeedback>();
+            if (current) return current;
+            var found = go.GetComponentInChildren<T>(true);
+            return found ? found : go.AddComponent<T>();   // explicit bool test: '??' does not see Unity fake-null
         }
+
+        public void EnsureSubsystems()
+        {
+            scenarioEngine = Ensure(gameObject, scenarioEngine);
+            instrumentController = Ensure(gameObject, instrumentController);
+            anatomyController = Ensure(gameObject, anatomyController);
+            implantController = Ensure(gameObject, implantController);
+            robotController = Ensure(gameObject, robotController);
+            resetController = Ensure(gameObject, resetController);
+            desktopAdapter = Ensure(gameObject, desktopAdapter);
+            feedback = Ensure(gameObject, feedback);
+        }
+
     }
 }

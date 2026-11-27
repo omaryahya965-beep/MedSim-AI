@@ -23,6 +23,8 @@ namespace MedSimAI.Surgery.Mechanics
         private readonly List<SurgicalObjective> objectives = new List<SurgicalObjective>();
         private int currentObjectiveIndex = -1;
         private bool isFinished;
+        /// <summary>Steps done inside the current objective (guide placed, components seated). Cleared when an objective starts.</summary>
+        public ObjectiveProgress Progress { get; } = new ObjectiveProgress();
 
         public event Action<SurgicalObjective> OnObjectiveStarted;
         public event Action<SurgicalObjective> OnObjectiveCompleted;
@@ -65,6 +67,7 @@ namespace MedSimAI.Surgery.Mechanics
             completedObjectiveIds.Clear();
             currentObjectiveIndex = -1;
             isFinished = false;
+            Progress.Clear();
 
             if (scenarioData?.objectives != null)
             {
@@ -132,6 +135,7 @@ namespace MedSimAI.Surgery.Mechanics
             }
 
             currentObjectiveIndex = nextIndex;
+            Progress.Clear();
 
             // Ordering guarantee §7.3: objective.started(X) comes before any gameplay event tagged X
             SurgeryEventBusHost.Publish(SurgeryEvent.Objective(SurgeryEventIds.ObjectiveStarted, nextObj.id));
@@ -172,6 +176,7 @@ namespace MedSimAI.Surgery.Mechanics
         /// </summary>
         public void ResetForNewSession()
         {
+            Progress.Clear();
             completedObjectiveIds.Clear();
             currentObjectiveIndex = -1;
             isFinished = false;

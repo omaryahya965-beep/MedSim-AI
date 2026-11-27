@@ -25,15 +25,19 @@ namespace MedSimAI.Surgery.Mechanics
 
         private void Awake()
         {
-            if (!scenarioEngine) scenarioEngine = FindFirstObjectByType<SurgeryScenarioEngine>();
-            if (!instrumentController) instrumentController = FindFirstObjectByType<SurgicalInstrumentController>();
-
+            ResolveDependencies();
             RegisterSceneAnatomyViews();
+        }
+
+        /// <summary>Lazy wiring: also works for controllers created from code or in EditMode tests (no Awake there).</summary>
+        void ResolveDependencies()
+        {
+            if (!scenarioEngine) { scenarioEngine = GetComponent<SurgeryScenarioEngine>(); if (!scenarioEngine) scenarioEngine = FindFirstObjectByType<SurgeryScenarioEngine>(); }
+            if (!instrumentController) { instrumentController = GetComponent<SurgicalInstrumentController>(); if (!instrumentController) instrumentController = FindFirstObjectByType<SurgicalInstrumentController>(); }
         }
 
         public void RegisterSceneAnatomyViews()
         {
-            targetViews.Clear();
             var views = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None).OfType<IAnatomyStateView>();
             foreach (var v in views)
             {
@@ -54,15 +58,24 @@ namespace MedSimAI.Surgery.Mechanics
 
         public IAnatomyStateView GetTargetView(string targetId)
         {
+            if (!targetViews.ContainsKey(targetId)) RegisterSceneAnatomyViews();
             targetViews.TryGetValue(targetId, out var view);
             return view;
         }
 
+        /// <summary>Targets on the non-operative (left) knee are only there to detect wrong-side attempts.</summary>
+        public static bool IsOperativeSide(string targetId) => string.IsNullOrEmpty(targetId) || !targetId.StartsWith("knee_l.");
+
         /// <summary>
-        /// Handles physical contact between a surgical tool and an anatomical target.
+        /// Handles physical contact between a surgical tool and an anatomical target. Every outcome is published:
+        /// valid → anatomy.interacted (+ anatomy.state_changed, objective.completed when the objective is done);
+        /// invalid → interaction.rejected and no state change (contract §7.3).
         /// </summary>
-        public bool HandleContact(string toolId, string targetId, bool isRightSide = true)
+        public bool HandleContact(string toolId, string targetId) => HandleContact(toolId, targetId, IsOperativeSide(targetId));
+
+        public bool HandleContact(string toolId, string targetId, bool isRightSide)
         {
+            ResolveDependencies();
             if (scenarioEngine == null || scenarioEngine.IsFinished) return false;
 
             var activeObj = scenarioEngine.CurrentObjective;
@@ -73,43 +86,28 @@ namespace MedSimAI.Surgery.Mechanics
             }
 
             bool isToolActive = instrumentController != null && instrumentController.IsToolActive(toolId);
+            var validation = SurgeryInteractionValidator.ValidateToolInteraction(activeObj, toolId, targetId, isToolActive, isRightSide, scenarioEngine.Progress);
 
-            var validation = SurgeryInteractionValidator.ValidateToolInteraction(
-                activeObj, toolId, targetId, isToolActive, isRightSide);
-
-            if (validation.Success)
+            if (!validation.Success)
             {
-                // 1. Publish anatomy.interacted
-                SurgeryEventBusHost.Publish(SurgeryEvent.Anatomy(targetId, toolId, activeObj.id));
-
-                // 2. Change anatomy state if a new state is specified
-                if (!string.IsNullOrEmpty(validation.NextAnatomyState))
-                {
-                    if (targetViews.TryGetValue(targetId, out var view))
-                    {
-                        view.SetState(validation.NextAnatomyState);
-                    }
-
-                    SurgeryEventBusHost.Publish(SurgeryEvent.StateChanged(targetId, validation.NextAnatomyState, activeObj.id));
-                }
-
-                OnValidInteraction?.Invoke(toolId, targetId, activeObj.id);
-
-                // 3. Complete objective if applicable
-                if (validation.CompletesObjective)
-                {
-                    scenarioEngine.CompleteCurrentObjective();
-                }
-
-                return true;
-            }
-            else
-            {
-                // Ordering guarantee §7.3: A rejected attempt publishes interaction.rejected and does not change anatomy state
                 SurgeryEventBusHost.Publish(SurgeryEvent.Rejected(validation.Reason, toolId, targetId, activeObj.id));
                 OnRejectedInteraction?.Invoke(validation.Reason, toolId, targetId, activeObj.id);
                 return false;
             }
+
+            SurgeryEventBusHost.Publish(SurgeryEvent.Anatomy(targetId, toolId, activeObj.id));
+            if (validation.NextAnatomyState == AnatomyStates.GuidePlaced) scenarioEngine.Progress.GuidedTargets.Add(targetId);
+
+            if (!string.IsNullOrEmpty(validation.NextAnatomyState))
+            {
+                var view = GetTargetView(targetId);
+                if (view != null) view.SetState(validation.NextAnatomyState);
+                SurgeryEventBusHost.Publish(SurgeryEvent.StateChanged(targetId, validation.NextAnatomyState, activeObj.id));
+            }
+
+            OnValidInteraction?.Invoke(toolId, targetId, activeObj.id);
+            if (validation.CompletesObjective) scenarioEngine.CompleteCurrentObjective();
+            return true;
         }
 
         /// <summary>
@@ -117,6 +115,7 @@ namespace MedSimAI.Surgery.Mechanics
         /// </summary>
         public void ResetAllAnatomyViews()
         {
+            RegisterSceneAnatomyViews();
             foreach (var kv in targetViews)
             {
                 if (kv.Value is AnatomyStateController ctrl)

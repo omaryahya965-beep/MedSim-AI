@@ -21,13 +21,15 @@ namespace MedSimAI.Surgery.Mechanics
 
         public event Action OnResetCompleted;
 
-        private void Awake()
+        private void Awake() => ResolveDependencies();
+
+        void ResolveDependencies()
         {
-            if (!scenarioEngine) scenarioEngine = FindFirstObjectByType<SurgeryScenarioEngine>();
-            if (!instrumentController) instrumentController = FindFirstObjectByType<SurgicalInstrumentController>();
-            if (!anatomyController) anatomyController = FindFirstObjectByType<AnatomyInteractionController>();
-            if (!implantController) implantController = FindFirstObjectByType<ImplantPlacementController>();
-            if (!robotController) robotController = FindFirstObjectByType<SurgicalRobotController>();
+            if (!scenarioEngine) { scenarioEngine = GetComponent<SurgeryScenarioEngine>(); if (!scenarioEngine) scenarioEngine = FindFirstObjectByType<SurgeryScenarioEngine>(); }
+            if (!instrumentController) { instrumentController = GetComponent<SurgicalInstrumentController>(); if (!instrumentController) instrumentController = FindFirstObjectByType<SurgicalInstrumentController>(); }
+            if (!anatomyController) { anatomyController = GetComponent<AnatomyInteractionController>(); if (!anatomyController) anatomyController = FindFirstObjectByType<AnatomyInteractionController>(); }
+            if (!implantController) { implantController = GetComponent<ImplantPlacementController>(); if (!implantController) implantController = FindFirstObjectByType<ImplantPlacementController>(); }
+            if (!robotController) { robotController = GetComponent<SurgicalRobotController>(); if (!robotController) robotController = FindFirstObjectByType<SurgicalRobotController>(); }
         }
 
         private void Start()
@@ -62,6 +64,7 @@ namespace MedSimAI.Surgery.Mechanics
         /// </summary>
         public void ExecuteReset()
         {
+            ResolveDependencies();
             // 1. Reset anatomy targets to intact
             if (anatomyController != null)
             {
