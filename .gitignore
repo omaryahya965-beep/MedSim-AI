@@ -29,3 +29,6 @@ Backend/medsim-proxy/data/
 # Off-Unity test harness build output
 Tools/OffUnityTests/**/bin/
 Tools/OffUnityTests/**/obj/
+
+# Evidence frame sequences (the assembled GIFs and stills are kept)
+Screenshots/Embodied/*/

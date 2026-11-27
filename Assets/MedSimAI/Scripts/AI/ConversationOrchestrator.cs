@@ -168,9 +168,10 @@ namespace MedSimAI.AI
         /// </summary>
         string ApplyLive(Persona target, AIResponse r, ConversationTurn turn, string utterance)
         {
-            turn.action = r.action; turn.supervisorIntervention = r.supervisorIntervention;
-            if (r.action != null && r.action.status != "none" && !string.IsNullOrEmpty(r.action.type) && r.action.type != "none")
-                session.Record("ACTION_REQUESTED", $"{target}:{r.action.type}:{r.action.side}:{r.action.status}"); // logged for the debrief, never scored
+            turn.action = r.action; turn.actions = r.actions != null && r.actions.Length > 0 ? r.actions : (r.action != null && r.action.type != "none" ? new[] { r.action } : new LiveAction[0]);
+            turn.supervisorIntervention = r.supervisorIntervention;
+            foreach (var a in turn.actions) if (a != null && a.type != "none" && a.status != "none")
+                session.Record("ACTION_REQUESTED", $"{target}:{a.type}:{a.side}:{a.status}"); // requested ≠ performed ≠ examined: logged, never scored
             var s = session.Scenario;
             if (target == Persona.Patient)
             {
@@ -203,7 +204,10 @@ namespace MedSimAI.AI
         public ConversationTurn ApplyVoiceTurn(Persona target, string heard, AIResponse resp)
         {
             var turn = new ConversationTurn { persona = target, studentText = heard ?? "" };
-            if (!string.IsNullOrWhiteSpace(heard))
+            // A physical instruction ("ارفع إيدك", "come here") is not a history question or a clinical statement:
+            // it is not matched against symptoms or investigations (and never scored).
+            bool physical = (resp.actions != null && resp.actions.Any(a => a != null && a.type != "none")) || (resp.action != null && resp.action.type != "none" && resp.action.status != "none") || resp.intent == "physical_request";
+            if (!string.IsNullOrWhiteSpace(heard) && !physical)
             {
                 if (target == Persona.Patient) session.ProcessStudentQuestion(heard);
                 else

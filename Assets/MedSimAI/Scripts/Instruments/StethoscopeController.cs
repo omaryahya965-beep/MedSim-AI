@@ -18,12 +18,16 @@ namespace MedSimAI.Instruments
         [Tooltip("2D source near the player's head, simulating the earpieces.")] public AudioSource earpiece;
         float dwell; PlacementZone dwellZone; readonly Dictionary<string, ExamResult> cache = new Dictionary<string, ExamResult>();
         string playingKey;
+        /// <summary>The chest piece is on the patient (aligned over a zone) — the patient keeps still while being listened to.</summary>
+        public bool IsOnPatient => dwellZone != null && Time.time - lastOnPatient < 0.25f;
+        float lastOnPatient;
 
         protected override void WhileHeld(PlacementZone zone)
         {
             if (zone && IsAligned(zone))
             {
                 if (zone != dwellZone) { dwellZone = zone; dwell = 0; }
+                lastOnPatient = Time.time;
                 dwell += Time.deltaTime;
                 if (dwell >= dwellSeconds)
                 {
