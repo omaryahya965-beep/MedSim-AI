@@ -162,7 +162,8 @@ test('voice actor: a cancelled line\'s late events never end or pollute the next
     ws.emit({ type: 'error', error: { code: 'response_cancel_not_active' } });             // harmless late error
     ws.emit({ type: 'response.output_audio.delta', response_id: 'rA', delta: Buffer.alloc(50).toString('base64') }); // stale audio
     ws.emit({ type: 'response.done', response: { id: 'rA', status: 'cancelled' } });       // stale done (settles A)
-    await new Promise(r => setTimeout(r, 20));
+    // Wait until line B's response.create was actually sent (a fixed 20 ms was flaky on slow CI runners).
+    for (let t = 0; t < 100 && ws.sent.filter(m => m.type === 'response.create').length < 2; t++) await new Promise(r => setTimeout(r, 20));
     const createB = ws.sent.filter(m => m.type === 'response.create')[1];
     ws.emit({ type: 'response.created', response: { id: 'rB', metadata: createB.response.metadata } });
     for (let i = 0; i < 6; i++) { ws.emit({ type: 'response.output_audio.delta', response_id: 'rB', delta: Buffer.alloc(480).toString('base64') }); await new Promise(r => setTimeout(r, 60)); } // 360 ms > first-audio timeout
