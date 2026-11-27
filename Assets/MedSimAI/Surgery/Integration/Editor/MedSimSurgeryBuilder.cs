@@ -37,7 +37,7 @@ namespace MedSimAI.Surgery.EditorTools
         const string DoctorFbx = "Assets/MedSimAI/Characters/v2/Doctor/DrSaraHassan.fbx", AssistantFbx = "Assets/MedSimAI/Characters/v2/Patient/AdamReyes.fbx";
         const string DoctorCtrl = "Assets/MedSimAI/Characters/v2/Animations/DrHassan.controller";
         // Contract prefab paths (Docs/Surgery/SURGERY_CONTRACT.md §6)
-        const string EnvPrefab = "Assets/MedSimAI/Surgery/Environment/Prefabs/OperatingRoom_Env.prefab";
+        const string EnvPrefab = "Assets/MedSimAI/Surgery/Environment/Prefabs/OperatingRoom.prefab", EnvPrefabAlt = "Assets/MedSimAI/Surgery/Environment/Prefabs/OperatingRoom_Env.prefab";
         const string PatientPrefab = "Assets/MedSimAI/Surgery/Anatomy/Prefabs/SurgicalPatient.prefab";
         const string InstrumentDir = "Assets/MedSimAI/Surgery/Instruments/Prefabs";
         const string MechanicsPrefab = "Assets/MedSimAI/Surgery/Mechanics/Prefabs/SurgeryMechanics.prefab";
@@ -63,6 +63,7 @@ namespace MedSimAI.Surgery.EditorTools
             var report = new List<string>();
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             var env = PlaceholderRoom(report);
+            EnvironmentAnchorAdapter.EnsureDerived();
             PlaceholderPatient(report);
             PlaceholderInstruments(report);
             Systems(mock: true);
@@ -77,7 +78,7 @@ namespace MedSimAI.Surgery.EditorTools
             var report = new List<string>();
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             Transform env;
-            var envP = AssetDatabase.LoadAssetAtPath<GameObject>(EnvPrefab);
+            var envP = AssetDatabase.LoadAssetAtPath<GameObject>(EnvPrefab); if (!envP) envP = AssetDatabase.LoadAssetAtPath<GameObject>(EnvPrefabAlt);
             if (envP) { env = ((GameObject)PrefabUtility.InstantiatePrefab(envP)).transform; report.Add("✓ Environment prefab (Person 1)"); }
             else { env = PlaceholderRoom(report); report.Add("✗ MISSING " + EnvPrefab + " (Person 1) — placeholder room used"); }
 
@@ -104,6 +105,7 @@ namespace MedSimAI.Surgery.EditorTools
             if (mechP) { PrefabUtility.InstantiatePrefab(mechP); report.Add("✓ Mechanics prefab (Person 3)"); }
             else report.Add("✗ MISSING " + MechanicsPrefab + " (Person 3) — the session falls back to MOCK mechanics (labelled, not scored as real)");
 
+            report.Add(EnvironmentAnchorAdapter.EnsureDerived().Trim());
             Systems(mock: !mechP);
             if (!envP) Bake(env);
             var missingAnchors = new[] { AnchorIds.PlayerSpawn, AnchorIds.OperatingTable, AnchorIds.PatientRoot, AnchorIds.InstrumentTable, AnchorIds.SurgeonObserve, AnchorIds.AssistantHome, AnchorIds.AssistantAtTable, AnchorIds.StudentOperatingPosition }
@@ -189,7 +191,7 @@ namespace MedSimAI.Surgery.EditorTools
             var go = new GameObject(id); go.transform.SetParent(parent, false); go.transform.SetPositionAndRotation(pos, Quaternion.Euler(0, yaw, 0));
             go.AddComponent<SurgeryAnchor>().anchorId = id; return go.transform;
         }
-        static Transform SurgeryAnchorFind(string id) => Object.FindObjectsByType<SurgeryAnchor>(FindObjectsSortMode.None).FirstOrDefault(a => a.anchorId == id)?.transform;
+        static Transform SurgeryAnchorFind(string id) => SurgeryAnchor.Find(id);   // contract 1.1: also resolves alias names (Person 1's IntegrationAnchors)
 
         static GameObject Box(Transform p, string name, Vector3 pos, Vector3 size, Color c)
         {

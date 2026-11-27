@@ -51,6 +51,8 @@ namespace MedSimAI.Surgery.Integration
             var host = SurgeryEventBusHost.Instance ? SurgeryEventBusHost.Instance : new GameObject("[Surgery Event Bus]").AddComponent<SurgeryEventBusHost>();
             bus = host.Bus;
             Core = new SurgerySessionCore(Scenario, () => Time.timeAsDouble, bus) { Language = ScenarioRouter.Language };
+            var derived = EnvironmentAnchorAdapter.EnsureDerived();
+            if (derived.Length > 0) Debug.Log("[Surgery] Anchors " + derived.Trim().Replace("\n", ", "));
         }
 
         IEnumerator Start()
