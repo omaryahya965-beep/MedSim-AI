@@ -1,8 +1,6 @@
 # Orthopedic operating room
 
-The draft contains the Unity authoring code and source textures. Unity Hub installed 6000.3.29f1, but the editor rejected the local license before project import. The first scene and prefab generation is pending. Once the editor is active, run **MedSim AI > Surgery > Rebuild Operating Room Prototype**. The batch entry point is `MedSimAI.Surgery.Environment.Editor.OperatingRoomBuilder.Rebuild`.
-
-After generation, open `Assets/MedSimAI/Surgery/Scenes/OperatingRoom_Environment.unity`. In Play Mode, use the left and right arrow keys to switch among six fixed viewpoints. The scene uses the project's URP settings. The generation step saves `OperatingRoom.prefab` and the nested, independently reusable `OrthopedicAssistRobot.prefab` in `Assets/MedSimAI/Surgery/Environment/Prefabs`.
+Open `Assets/MedSimAI/Surgery/Scenes/OperatingRoom_Environment.unity` in Unity 6000.3.29f1. In Play Mode, use the left and right arrow keys to switch among six fixed viewpoints. The scene uses the project's URP settings. The reusable `OperatingRoom.prefab` and the nested, independently reusable `OrthopedicAssistRobot.prefab` are in `Assets/MedSimAI/Surgery/Environment/Prefabs`.
 
 The integration branch was created from master commit `c1b73d6` at the project owner's direction. `Docs/Surgery/SURGERY_CONTRACT.md` was absent from that baseline. The names below come from the environment brief. Person 4 still needs to confirm the placements, transform ownership, and integration bindings.
 
@@ -34,7 +32,7 @@ Positions are in `OperatingRoom` space unless described as local to a parent. Us
 | `MonitorPosition` | (0, 0, 0.056) in `Patient Monitor Display` space | +Z points out from the screen toward the patient and team |
 | `RoomExit` | (−1.92, 0, −4.72) | Faces −Z from the vestibule |
 
-The six unparented-by-equipment markers sit in `IntegrationAnchors`. The other markers are bound to their cart, display, or tool flange so they follow placement and movement. Resolve by name under the instantiated room or bind serialized transform references. Avoid assuming they are all direct children of one transform.
+Six markers sit under `IntegrationAnchors`. The equipment anchors sit under their cart, display, or flange so they follow movement. Resolve them by name under the instantiated room or bind serialized transform references.
 
 ## Robot pivots
 
