@@ -147,14 +147,8 @@ namespace MedSimAI.Surgery.Environment.Editor
             OpenCart(cart, width, depth, .935f);
             var linen = Node(cart, "Sterile Table Cover");
             art.Cloth(linen, M("Fabric"), V(0, .982f, .018f), width + .077f, depth + .059f);
-            foreach (float x in new[] { -.27f, .28f })
-            {
-                art.Box(cart, M("Steel"), V(x, 1.005f, -.034f), V(.39f, .031f, .295f), .013f);
-                art.Box(cart, M("ShellSide"), V(x, 1.027f, -.034f), V(.343f, .013f, .253f), .008f);
-                foreach (int side in new[] { -1, 1 })
-                    art.Box(cart, M("Steel"), V(x + .180f * side, 1.040f, -.034f),
-                        V(.023f, .033f, .282f), .008f);
-            }
+            // Integration: the generic implant components (Person 2) are staged here, within reach of the operating side.
+            Anchor(cart, AnchorIds.ImplantTable, V(0, .99f, .02f));
             foreach (float x in new[] { -.29f, .29f })
                 SupplyBox(cart, V(x, .405f, .03f), V(.39f, .16f, .37f), "WallPale", "Teal");
         }
@@ -192,7 +186,6 @@ namespace MedSimAI.Surgery.Environment.Editor
             }
             SupplyBox(cart, V(-.17f, .973f, -.17f), V(.37f, .163f, .160f), "WallPale", "Teal");
             SupplyBox(cart, V(.20f, .939f, -.17f), V(.29f, .109f, .150f), "Teal", "WallPale");
-            Anchor(cart, AnchorIds.ImplantTable, V(0, .912f, .08f));
             art.Hose(cart, M("Steel"), .018f, V(.446f, .883f, -.24f), V(.52f, .938f, -.224f),
                 V(.55f, .946f, .055f), V(.518f, .937f, .222f), V(.444f, .885f, .245f));
         }

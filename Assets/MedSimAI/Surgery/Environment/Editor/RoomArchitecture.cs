@@ -291,7 +291,7 @@ namespace MedSimAI.Surgery.Environment.Editor
 
                 Vector3 emitter = arm.TransformPoint(head + V(0, -.095f, 0));
                 MakeLight(lights, side < 0 ? "Primary surgical beam" : "Secondary surgical beam", emitter,
-                    V(-.08f, .89f, -.32f), LightType.Spot, side < 0 ? 4.6f : 2.35f, 4.15f, side < 0);
+                    OperatingRoomBuilder.KneeSite, LightType.Spot, side < 0 ? 4.6f : 2.35f, 4.15f, side < 0);
             }
 
             foreach (var p in new[] { V(-2.15f, 2.88f, -2.05f), V(2.15f, 2.88f, -2.05f),

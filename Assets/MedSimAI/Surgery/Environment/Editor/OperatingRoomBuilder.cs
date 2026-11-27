@@ -26,6 +26,8 @@ namespace MedSimAI.Surgery.Environment.Editor
         private readonly Dictionary<string, Material> materials = new();
 
         private static Vector3 V(float x, float y, float z) => new(x, y, z);
+        /// <summary>Right-knee joint centre of Person 2's SurgicalPatient placed at ANCHOR_PatientRoot (room space).</summary>
+        internal static readonly Vector3 KneeSite = new(-.154f, 1.318f, -.235f);
         private Material M(string name) => materials[name];
 
         [MenuItem("MedSim AI/Surgery/Rebuild Operating Room Prototype")]
@@ -64,11 +66,13 @@ namespace MedSimAI.Surgery.Environment.Editor
             Anchor(anchors, AnchorIds.PlayerSpawn, V(-1.93f, 0, -2.79f), V(-.1f, 0, -.65f));
             Anchor(anchors, AnchorIds.OperatingTable, V(0, .92f, 0));
             Anchor(anchors, AnchorIds.PatientRoot, V(0, .92f, 0));
-            Anchor(anchors, AnchorIds.StudentOperatingPosition, V(-1.16f, 0, -.56f), V(-.14f, 0, -.51f));
+            // Integration (2026-11-28): face Person 2's ANCHOR_SurgicalSite_Knee_R (flexed knee, (-0.154, 1.318, -0.235) with the patient at PatientRoot).
+            Anchor(anchors, AnchorIds.StudentOperatingPosition, V(-1.16f, 0, -.56f), V(KneeSite.x, 0, KneeSite.z));
             Anchor(anchors, AnchorIds.SurgeonObserve, V(1.12f, 0, 1.03f), V(0, 0, .63f));
-            Anchor(anchors, AnchorIds.AssistantHome, V(-.84f, 0, .87f), V(-.14f, 0, -.51f));
+            Anchor(anchors, AnchorIds.AssistantHome, V(-.84f, 0, .87f), V(KneeSite.x, 0, KneeSite.z));
             Anchor(anchors, AnchorIds.AssistantAtTable, V(-1.75f, 0, -1.48f), V(-.86f, 0, -1.44f));
-            var robotBase = Anchor(anchors, AnchorIds.RobotBase, V(1.99f, 0, -.94f));
+            // Docked beside the foot section so the knee is inside the arm's reach (shoulder-to-knee about 1.2 m of 1.45 m).
+            var robotBase = Anchor(anchors, AnchorIds.RobotBase, V(1.05f, 0, -.75f));
             robot.name = "RobotBase";
             robot.transform.SetParent(robotBase, false);
 
