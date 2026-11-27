@@ -16,4 +16,11 @@ The standalone RTX 3050 4 GB and physical VIVE Focus 3 runs require the respecti
 
 ## Current evidence
 
-The editor-side implementation passes a C# syntax and Unity base API preflight using reference assemblies and package signatures. This check does not exercise Unity serialization, the render pipeline, or navigation. Exact-version editor execution, screenshots, and measurements are pending local Unity license activation.
+| Check | Result |
+| --- | --- |
+| C# compiler preflight | Passed for the authoring code and six test methods using Unity 6000.3.29f1 base API references, NUnit, and package API signatures. |
+| Exact Unity Editor startup | Blocked by local licensing. Unity 6000.3.29f1 launched and exited with code 198 before opening the project. It reported `No valid Unity Editor license found. Please activate your license.` |
+| Generated scene, prefabs and baked navigation | Pending a successful editor run. |
+| Unity Edit Mode tests and visual checks | Pending the generated scene. No Unity screenshots captured. |
+| Desktop FPS and GPU frame time | Pending a standalone Unity run. |
+| RTX 3050 4 GB and VIVE Focus 3 | Pending access to physical target hardware. |

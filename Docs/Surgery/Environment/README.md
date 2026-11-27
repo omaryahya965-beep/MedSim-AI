@@ -1,6 +1,8 @@
 # Orthopedic operating room
 
-Open `Assets/MedSimAI/Surgery/Scenes/OperatingRoom_Environment.unity` in Unity 6000.3.29f1. Enter Play Mode and use the left and right arrow keys to switch among six fixed demo viewpoints. The scene uses the project's URP settings. The reusable `OperatingRoom.prefab` is inside `Assets/MedSimAI/Surgery/Environment/Prefabs`. It includes an independently reusable nested `OrthopedicAssistRobot.prefab`.
+The draft contains the Unity authoring code and source textures. Unity Hub installed 6000.3.29f1, but the editor rejected the local license before project import. The first scene and prefab generation is pending. Once the editor is active, run **MedSim AI > Surgery > Rebuild Operating Room Prototype**. The batch entry point is `MedSimAI.Surgery.Environment.Editor.OperatingRoomBuilder.Rebuild`.
+
+After generation, open `Assets/MedSimAI/Surgery/Scenes/OperatingRoom_Environment.unity`. In Play Mode, use the left and right arrow keys to switch among six fixed viewpoints. The scene uses the project's URP settings. The generation step saves `OperatingRoom.prefab` and the nested, independently reusable `OrthopedicAssistRobot.prefab` in `Assets/MedSimAI/Surgery/Environment/Prefabs`.
 
 The integration branch was created from master commit `c1b73d6` at the project owner's direction. `Docs/Surgery/SURGERY_CONTRACT.md` was absent from that baseline. The names below come from the environment brief. Person 4 still needs to confirm the placements, transform ownership, and integration bindings.
 
