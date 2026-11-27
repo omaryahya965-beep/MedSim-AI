@@ -96,7 +96,9 @@ namespace MedSimAI.Surgery.AssetsEditor
 
         public static void Instrument(string id, GameObject g, List<string> issues)
         {
-            var tag = g.GetComponent<InstrumentTagBridge>(); if (!tag) { issues.Add($"{id}: no InstrumentTagBridge (SurgeryInstrumentTag carrier) on root"); return; }
+            var tag = g.GetComponent<SurgeryInstrumentTag>(); if (!tag) { issues.Add($"{id}: no serialized SurgeryInstrumentTag on root"); return; }
+            if (g.GetComponents<SurgeryInstrumentTag>().Length > 1) issues.Add($"{id}: duplicate SurgeryInstrumentTag");
+            if (g.GetComponents<XRGrabInteractable>().Length > 1 || g.GetComponents<Rigidbody>().Length > 1) issues.Add($"{id}: duplicate grab interactable or rigidbody");
             if (tag.instrumentId != id) issues.Add($"{id}: tag id '{tag.instrumentId}' does not match");
             if (!tag.tip) issues.Add($"{id}: tip not assigned");
             else if (g.transform.InverseTransformPoint(tag.tip.position).z <= 0.0f) issues.Add($"{id}: tip must lie toward +Z of the grip");
@@ -115,7 +117,7 @@ namespace MedSimAI.Surgery.AssetsEditor
 
         public static void Implant(string id, GameObject g, List<string> issues)
         {
-            var tag = g.GetComponent<ImplantTagBridge>(); if (!tag || tag.implantId != id) issues.Add($"{id}: ImplantTagBridge (SurgeryImplantTag carrier) missing or wrong id");
+            var tag = g.GetComponent<SurgeryImplantTag>(); if (!tag || tag.implantId != id) issues.Add($"{id}: serialized SurgeryImplantTag missing or wrong id");
             var info = g.GetComponent<ImplantAssetInfo>(); if (!info || !info.placementAnchor || info.placementAnchor.localPosition.sqrMagnitude > 1e-8f) issues.Add($"{id}: PlacementAnchor must be at the root origin");
             var mc = g.GetComponentInChildren<MeshCollider>(true); if (!mc || !mc.convex) issues.Add($"{id}: needs a convex MeshCollider");
             if (!g.GetComponent<Rigidbody>() || !g.GetComponent<XRGrabInteractable>()) issues.Add($"{id}: needs Rigidbody + XRGrabInteractable");

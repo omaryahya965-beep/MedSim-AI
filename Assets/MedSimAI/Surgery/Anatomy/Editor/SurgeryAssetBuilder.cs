@@ -270,7 +270,7 @@ namespace MedSimAI.Surgery.AssetsEditor
                 var grip = Anchor(root.transform, "GripPoint", b.center, Quaternion.identity);
                 var place = Anchor(root.transform, "PlacementAnchor", Vector3.zero, Quaternion.identity);
                 var reset = Anchor(root.transform, "ResetAnchor", Vector3.zero, Quaternion.identity);
-                Add<ImplantTagBridge>(root).implantId = kv.Key;   // adds SurgeryImplantTag at runtime
+                Add<SurgeryImplantTag>(root).implantId = kv.Key;   // contract tag, serialized (placementTarget is resolved by PlacementTarget_<id> at runtime)
                 var info = Add<ImplantAssetInfo>(root); info.isTrial = kv.Value.trial; info.targetId = kv.Value.target; info.gripPoint = grip; info.placementAnchor = place; info.resetAnchor = reset;
                 info.sizeMm = b.size * 1000f;
                 var rb = Add<Rigidbody>(root); rb.mass = kv.Value.mass; rb.interpolation = RigidbodyInterpolation.Interpolate; rb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
@@ -319,7 +319,7 @@ namespace MedSimAI.Surgery.AssetsEditor
                 foreach (var go in made.Values)
                     if (go.GetComponent<MeshFilter>()) { var bc = go.AddComponent<BoxCollider>(); var b = go.GetComponent<MeshFilter>().sharedMesh.bounds; bc.center = b.center; bc.size = Vector3.Max(b.size, Vector3.one * 0.002f); }
                 Transform F(string n) => made.TryGetValue(n, out var g) ? g.transform : null;
-                var tag = Add<InstrumentTagBridge>(root); tag.instrumentId = id; tag.tip = F("Tip");   // adds SurgeryInstrumentTag at runtime
+                var tag = Add<SurgeryInstrumentTag>(root); tag.instrumentId = id; tag.tip = F("Tip");   // contract tag, serialized
                 if (names.TryGetValue(id, out var nm)) { tag.displayNameEn = nm.en; tag.displayNameAr = nm.ar; }
                 var meta = Add<InstrumentAssetInfo>(root); var def = InstrumentDefs[id];
                 meta.category = def.cat; meta.catalogName = (string)info["name"]; var sz = SimpleJson.V3(info["size_mm"]); meta.sizeMm = sz;
@@ -543,6 +543,14 @@ namespace MedSimAI.Surgery.AssetsEditor
             }
             var joints = Group(root.transform, "JointAnchors");
             foreach (var t in fbx.GetComponentsInChildren<Transform>(true).Where(t => t.name.StartsWith("Joint_"))) Anchor(joints.transform, t.name, PosIn(fbx, t), Quaternion.identity);
+            // Non-operative knee: a trigger only, so touching the (draped) left knee is detected as a wrong-side attempt.
+            var kneeL = joints.transform.Find("Joint_Knee_L");
+            if (kneeL)
+            {
+                var wrong = new GameObject("knee_l.site_marking"); wrong.transform.SetParent(kneeL, false); wrong.transform.localPosition = new Vector3(0, 0.08f, 0);
+                var wbc = wrong.AddComponent<BoxCollider>(); wbc.isTrigger = true; wbc.size = new Vector3(0.18f, 0.22f, 0.24f);
+                wrong.AddComponent<SurgeryAnatomyTag>().targetId = "knee_l.site_marking";
+            }
             var site = Anchor(root.transform, AnchorIds.SurgicalSiteKneeR, SimpleJson.V3(L["kneeCenter_patient"]), Quaternion.identity, true);
             var knee = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(KneePrefab)); knee.transform.SetParent(site, false);
             var drape = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(DrapePrefab)); drape.transform.SetParent(root.transform, false);
@@ -577,7 +585,7 @@ namespace MedSimAI.Surgery.AssetsEditor
             var ids = AllInstrumentIds.ToList();
             for (int k = 0; k < ids.Count; k++)
             {
-                var go = AssetDatabase.LoadAssetAtPath<GameObject>(InstrumentPrefab(ids[k])); var tag = go.GetComponent<InstrumentTagBridge>(); var info = go.GetComponent<InstrumentAssetInfo>();
+                var go = AssetDatabase.LoadAssetAtPath<GameObject>(InstrumentPrefab(ids[k])); var tag = go.GetComponent<SurgeryInstrumentTag>(); var info = go.GetComponent<InstrumentAssetInfo>();
                 var cols = go.GetComponentsInChildren<Collider>(true);
                 sb.Append($"    {{\"id\":\"{ids[k]}\",\"inContract\":{(!info.proposedIdNotInContract).ToString().ToLower()},\"nameEn\":\"{Esc(tag.displayNameEn)}\",\"nameAr\":\"{Esc(tag.displayNameAr)}\",\"category\":\"{info.category}\",\"prefab\":\"{InstrumentPrefab(ids[k])}\",");
                 sb.Append($"\"sizeMm\":{V(info.sizeMm)},\"massKg\":{go.GetComponent<Rigidbody>().mass:0.###},\"colliders\":{cols.Length},\"colliderType\":\"BoxCollider per part\",");

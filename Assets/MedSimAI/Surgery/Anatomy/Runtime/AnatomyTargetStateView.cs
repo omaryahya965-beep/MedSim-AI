@@ -9,8 +9,7 @@ namespace MedSimAI.Surgery.Anatomy
     /// <summary>
     /// Contract §6.2 / §8: one per anatomy interaction target (with a trigger collider). Implements IAnatomyStateView:
     /// visual state only — mechanics (Person 3) decide WHEN to change it; unsupported states are refused and change nothing.
-    /// It also carries the target id and adds the shared <see cref="SurgeryAnatomyTag"/> at runtime (execution order −1000),
-    /// because SurgerySceneTags.cs currently cannot serialize that tag in prefabs (see InstrumentTagBridge for details).
+    /// The shared <see cref="SurgeryAnatomyTag"/> is serialized next to it by the builder; EnsureTag() keeps the two ids in sync.
     /// The owning <see cref="KneeAnatomyStateController"/> composes the visuals of all targets (skin, bones, patella...).
     /// </summary>
     [DefaultExecutionOrder(-1000)]
@@ -54,7 +53,7 @@ namespace MedSimAI.Surgery.Anatomy
 
 #if UNITY_EDITOR
         /// <summary>Editor builder only.</summary>
-        public void EditorConfigure(string id, string[] states, KneeAnatomyStateController owner) { targetId = id; supportedStates = states; controller = owner; }
+        public void EditorConfigure(string id, string[] states, KneeAnatomyStateController owner) { targetId = id; supportedStates = states; controller = owner; EnsureTag(); }
 #endif
     }
 }

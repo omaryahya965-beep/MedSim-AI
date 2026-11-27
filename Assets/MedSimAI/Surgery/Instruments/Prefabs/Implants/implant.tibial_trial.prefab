@@ -102,7 +102,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3189929006549753857}
-  - component: {fileID: 7696392576446224947}
+  - component: {fileID: 1444679626573529624}
   - component: {fileID: 3973941683669444447}
   - component: {fileID: 5423014678519675179}
   - component: {fileID: 6745203251559087109}
@@ -132,7 +132,7 @@ Transform:
   - {fileID: 8496774236767872612}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &7696392576446224947
+--- !u!114 &1444679626573529624
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -141,9 +141,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 3394025572252581032}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f367efa4d0f33f5489847dbd1b4397ff, type: 3}
+  m_Script: {fileID: 11500000, guid: 7c3e9a4d1f5b6a8c0d2e3f4051627384, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: MedSimAI.Surgery.Instruments::MedSimAI.Surgery.Instruments.ImplantTagBridge
+  m_EditorClassIdentifier: MedSimAI.Surgery.Shared.Unity::MedSimAI.Surgery.Shared.Unity.SurgeryImplantTag
   implantId: implant.tibial_trial
   placementTarget: {fileID: 0}
 --- !u!114 &3973941683669444447

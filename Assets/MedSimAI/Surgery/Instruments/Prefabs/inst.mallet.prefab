@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 196400504478512751}
-  - component: {fileID: 8779473465574391286}
+  - component: {fileID: 7874336015367414201}
   - component: {fileID: 4698884083794450730}
   - component: {fileID: 8740746485506235455}
   - component: {fileID: 6042736935179700514}
@@ -44,7 +44,7 @@ Transform:
   - {fileID: 300785652227161203}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &8779473465574391286
+--- !u!114 &7874336015367414201
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -53,9 +53,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 314807863167529806}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 49fc8f6a89b700347ba371efd1c193df, type: 3}
+  m_Script: {fileID: 11500000, guid: 5a1c7e2b9d3f4e6a8b0c1d2e3f405162, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: MedSimAI.Surgery.Instruments::MedSimAI.Surgery.Instruments.InstrumentTagBridge
+  m_EditorClassIdentifier: MedSimAI.Surgery.Shared.Unity::MedSimAI.Surgery.Shared.Unity.SurgeryInstrumentTag
   instrumentId: inst.mallet
   tip: {fileID: 300785652227161203}
   displayNameEn: mallet

@@ -71,7 +71,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5585285462104255003}
-  - component: {fileID: 2731406456033797373}
+  - component: {fileID: 8726205795300628256}
   - component: {fileID: 4040720170427525275}
   - component: {fileID: 1664308734660080577}
   - component: {fileID: 7939263158949036774}
@@ -101,7 +101,7 @@ Transform:
   - {fileID: 9012634837201094545}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2731406456033797373
+--- !u!114 &8726205795300628256
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -110,9 +110,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 3100896458875895446}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f367efa4d0f33f5489847dbd1b4397ff, type: 3}
+  m_Script: {fileID: 11500000, guid: 7c3e9a4d1f5b6a8c0d2e3f4051627384, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: MedSimAI.Surgery.Instruments::MedSimAI.Surgery.Instruments.ImplantTagBridge
+  m_EditorClassIdentifier: MedSimAI.Surgery.Shared.Unity::MedSimAI.Surgery.Shared.Unity.SurgeryImplantTag
   implantId: implant.femoral_component
   placementTarget: {fileID: 0}
 --- !u!114 &4040720170427525275

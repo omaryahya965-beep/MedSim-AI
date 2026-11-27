@@ -101,14 +101,25 @@ namespace MedSimAI.Surgery.Tests.Anatomy
             c.ResetAll(); Assert.Less(Vector3.Distance(c.patellaGroup.localPosition, rest), 1e-4f);
         }
 
-        [Test] public void TagBridges_CreateContractTags()
+        /// <summary>After the shared-file split the contract tags are saved in the prefab assets themselves (no runtime bridge).</summary>
+        [Test] public void ContractTags_AreSerializedInPrefabAssets_ExactlyOnce()
         {
-            var v = Spawn(SurgeryAssetBuilder.KneePrefab).GetComponentsInChildren<AnatomyTargetStateView>(true).First(x => x.TargetId == AnatomyTargetIds.DistalFemur);
-            Assert.AreEqual(AnatomyTargetIds.DistalFemur, v.EnsureTag().targetId);
-            var s = Spawn(SurgeryAssetBuilder.InstrumentPrefab(InstrumentIds.Scalpel)).GetComponent<InstrumentTagBridge>().EnsureTag();
-            Assert.AreEqual(InstrumentIds.Scalpel, s.instrumentId); Assert.IsNotNull(s.tip); Assert.IsNotEmpty(s.displayNameAr);
-            var i = Spawn(SurgeryAssetBuilder.ImplantPrefab(ImplantIds.TibialTray)).GetComponent<ImplantTagBridge>().EnsureTag();
-            Assert.AreEqual(ImplantIds.TibialTray, i.implantId);
+            var knee = P(SurgeryAssetBuilder.KneePrefab);
+            foreach (var v in knee.GetComponentsInChildren<AnatomyTargetStateView>(true))
+            {
+                var tags = v.GetComponents<SurgeryAnatomyTag>();
+                Assert.AreEqual(1, tags.Length, v.TargetId); Assert.AreEqual(v.TargetId, tags[0].targetId);
+            }
+            foreach (var id in SurgeryAssetBuilder.AllInstrumentIds)
+            {
+                var g = P(SurgeryAssetBuilder.InstrumentPrefab(id)); var t = g.GetComponents<SurgeryInstrumentTag>();
+                Assert.AreEqual(1, t.Length, id); Assert.AreEqual(id, t[0].instrumentId); Assert.IsNotNull(t[0].tip, id); Assert.IsNotEmpty(t[0].displayNameAr, id);
+                Assert.AreEqual(1, g.GetComponents<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>().Length, id + ": one grab interactable");
+                Assert.AreEqual(1, g.GetComponentsInChildren<Rigidbody>(true).Length, id + ": one rigidbody");
+            }
+            foreach (var id in ImplantIds.All) { var t = P(SurgeryAssetBuilder.ImplantPrefab(id)).GetComponents<SurgeryImplantTag>(); Assert.AreEqual(1, t.Length, id); Assert.AreEqual(id, t[0].implantId); }
+            var left = P(SurgeryAssetBuilder.PatientPrefab).GetComponentsInChildren<SurgeryAnatomyTag>(true).Where(t => t.targetId == "knee_l.site_marking").ToList();
+            Assert.AreEqual(1, left.Count, "wrong-side trigger on the left knee"); Assert.IsTrue(left[0].GetComponent<BoxCollider>().isTrigger);
         }
 
         [Test] public void Instruments_FollowPrefabConventions()
@@ -117,7 +128,7 @@ namespace MedSimAI.Surgery.Tests.Anatomy
             Assert.AreEqual(ids.Count, ids.Distinct().Count());
             foreach (var id in ids)
             {
-                var g = P(SurgeryAssetBuilder.InstrumentPrefab(id)); var tag = g.GetComponent<InstrumentTagBridge>(); var info = g.GetComponent<InstrumentAssetInfo>();
+                var g = P(SurgeryAssetBuilder.InstrumentPrefab(id)); var tag = g.GetComponent<SurgeryInstrumentTag>(); var info = g.GetComponent<InstrumentAssetInfo>();
                 Assert.AreEqual(id, tag.instrumentId);
                 Assert.AreEqual(Vector3.one, g.transform.localScale, id);
                 Assert.Less(info.gripPoint.localPosition.magnitude, 1e-5f, id + ": grip at origin");

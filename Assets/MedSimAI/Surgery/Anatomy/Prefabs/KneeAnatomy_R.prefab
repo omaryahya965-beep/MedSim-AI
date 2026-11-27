@@ -736,6 +736,7 @@ GameObject:
   - component: {fileID: 8695495856037021861}
   - component: {fileID: 8708252567506946558}
   - component: {fileID: 9028500344993621524}
+  - component: {fileID: 1966163092078724101}
   m_Layer: 0
   m_Name: knee_r.incision_line
   m_TagString: Untagged
@@ -796,6 +797,19 @@ MonoBehaviour:
   - intact
   - incised
   controller: {fileID: 6035144822519804130}
+--- !u!114 &1966163092078724101
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1327654617873699963}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b2d8f3c0e4a5f7b9c1d2e3f40516273, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: MedSimAI.Surgery.Shared.Unity::MedSimAI.Surgery.Shared.Unity.SurgeryAnatomyTag
+  targetId: knee_r.incision_line
 --- !u!1 &1608256738970987075
 GameObject:
   m_ObjectHideFlags: 0
@@ -2086,6 +2100,7 @@ GameObject:
   - component: {fileID: 308502926763073552}
   - component: {fileID: 6826492962085256851}
   - component: {fileID: 3466623067814098150}
+  - component: {fileID: 557355283768923507}
   m_Layer: 0
   m_Name: knee_r.joint_capsule
   m_TagString: Untagged
@@ -2146,6 +2161,19 @@ MonoBehaviour:
   - intact
   - exposed
   controller: {fileID: 6035144822519804130}
+--- !u!114 &557355283768923507
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2796499745345267127}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b2d8f3c0e4a5f7b9c1d2e3f40516273, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: MedSimAI.Surgery.Shared.Unity::MedSimAI.Surgery.Shared.Unity.SurgeryAnatomyTag
+  targetId: knee_r.joint_capsule
 --- !u!1 &2831036223323150023
 GameObject:
   m_ObjectHideFlags: 0
@@ -3189,6 +3217,7 @@ GameObject:
   - component: {fileID: 2129692096575331470}
   - component: {fileID: 1999826188954518862}
   - component: {fileID: 4009207351485051223}
+  - component: {fileID: 6880183362864061827}
   m_Layer: 0
   m_Name: knee_r.wound
   m_TagString: Untagged
@@ -3249,6 +3278,19 @@ MonoBehaviour:
   - intact
   - closed
   controller: {fileID: 6035144822519804130}
+--- !u!114 &6880183362864061827
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4332693598262556491}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b2d8f3c0e4a5f7b9c1d2e3f40516273, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: MedSimAI.Surgery.Shared.Unity::MedSimAI.Surgery.Shared.Unity.SurgeryAnatomyTag
+  targetId: knee_r.wound
 --- !u!1 &4379783722796162949
 GameObject:
   m_ObjectHideFlags: 0
@@ -3656,6 +3698,7 @@ GameObject:
   - component: {fileID: 5135196885624372968}
   - component: {fileID: 7287034707404179664}
   - component: {fileID: 8815395114671294196}
+  - component: {fileID: 5086540555092386930}
   m_Layer: 0
   m_Name: knee_r.patella
   m_TagString: Untagged
@@ -3716,6 +3759,19 @@ MonoBehaviour:
   - intact
   - exposed
   controller: {fileID: 6035144822519804130}
+--- !u!114 &5086540555092386930
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4738348969935266491}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b2d8f3c0e4a5f7b9c1d2e3f40516273, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: MedSimAI.Surgery.Shared.Unity::MedSimAI.Surgery.Shared.Unity.SurgeryAnatomyTag
+  targetId: knee_r.patella
 --- !u!1 &4764949970239194374
 GameObject:
   m_ObjectHideFlags: 0
@@ -3862,6 +3918,7 @@ GameObject:
   - component: {fileID: 7749452499992837916}
   - component: {fileID: 8218998533015692544}
   - component: {fileID: 4593568988540580666}
+  - component: {fileID: 5033754457763872137}
   m_Layer: 0
   m_Name: knee_r.site_marking
   m_TagString: Untagged
@@ -3922,6 +3979,19 @@ MonoBehaviour:
   - intact
   - marked
   controller: {fileID: 6035144822519804130}
+--- !u!114 &5033754457763872137
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4802861163947733772}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b2d8f3c0e4a5f7b9c1d2e3f40516273, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: MedSimAI.Surgery.Shared.Unity::MedSimAI.Surgery.Shared.Unity.SurgeryAnatomyTag
+  targetId: knee_r.site_marking
 --- !u!1 &5021875038580585543
 GameObject:
   m_ObjectHideFlags: 0
@@ -5669,6 +5739,7 @@ GameObject:
   - component: {fileID: 2456033099200977271}
   - component: {fileID: 2638897829602413310}
   - component: {fileID: 8909105984723645056}
+  - component: {fileID: 8311358091735766858}
   m_Layer: 0
   m_Name: knee_r.distal_femur
   m_TagString: Untagged
@@ -5732,6 +5803,19 @@ MonoBehaviour:
   - trial_fitted
   - implanted
   controller: {fileID: 6035144822519804130}
+--- !u!114 &8311358091735766858
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7418022718999344795}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b2d8f3c0e4a5f7b9c1d2e3f40516273, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: MedSimAI.Surgery.Shared.Unity::MedSimAI.Surgery.Shared.Unity.SurgeryAnatomyTag
+  targetId: knee_r.distal_femur
 --- !u!1 &7510773598273988662
 GameObject:
   m_ObjectHideFlags: 0
@@ -5886,6 +5970,7 @@ GameObject:
   - component: {fileID: 4676316197181825056}
   - component: {fileID: 5312390123574215032}
   - component: {fileID: 5949756287083391098}
+  - component: {fileID: 5034080795953000522}
   m_Layer: 0
   m_Name: knee_r.proximal_tibia
   m_TagString: Untagged
@@ -5949,6 +6034,19 @@ MonoBehaviour:
   - trial_fitted
   - implanted
   controller: {fileID: 6035144822519804130}
+--- !u!114 &5034080795953000522
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7581746751424708234}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b2d8f3c0e4a5f7b9c1d2e3f40516273, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: MedSimAI.Surgery.Shared.Unity::MedSimAI.Surgery.Shared.Unity.SurgeryAnatomyTag
+  targetId: knee_r.proximal_tibia
 --- !u!1 &7630479937115559714
 GameObject:
   m_ObjectHideFlags: 0

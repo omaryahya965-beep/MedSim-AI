@@ -1,5 +1,5 @@
 {
-  "contractVersion": "1.0.0",
+  "contractVersion": "1.1.0",
   "conventions": "pivot = GripPoint at the root origin; +Z toward the working tip; +Y up; metres; scale (1,1,1)",
   "instruments": [
     {"id":"inst.skin_marker","inContract":true,"nameEn":"skin marker","nameAr":"قلم تعليم الجلد","category":"Marking","prefab":"Assets/MedSimAI/Surgery/Instruments/Prefabs/inst.skin_marker.prefab","sizeMm":[12.4,14.1,138],"massKg":0.015,"colliders":5,"colliderType":"BoxCollider per part","gripPoint":"GripPoint","tip":"Tip","tipLocalPos":[0,0,0.037],"interactionPoint":"InteractionPoint","attachmentPoint":"AttachmentPoint","resetAnchor":"ResetAnchor","movableParts":[{"path":"Cap","motion":"Translate","axis":[0,0,1],"min":0,"max":0.05}]},

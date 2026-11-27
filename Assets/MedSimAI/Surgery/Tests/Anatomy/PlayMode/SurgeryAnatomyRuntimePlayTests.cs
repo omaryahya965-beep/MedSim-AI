@@ -37,6 +37,7 @@ namespace MedSimAI.Surgery.Tests.Anatomy
         [UnityTest] public IEnumerator Instrument_AwakeCreatesSurgeryInstrumentTag()
         {
             root = Object.Instantiate(Load(R + "Instruments/Prefabs/inst.oscillating_saw.prefab")); yield return null;
+            Assert.AreEqual(1, root.GetComponents<SurgeryInstrumentTag>().Length, "no duplicate tag at runtime");
             var tag = root.GetComponent<SurgeryInstrumentTag>();
             Assert.IsNotNull(tag); Assert.AreEqual(InstrumentIds.OscillatingSaw, tag.instrumentId); Assert.IsNotNull(tag.tip);
             var blade = root.GetComponentsInChildren<InstrumentMovablePart>().First(p => p.partId == "Pivot_Blade");
@@ -61,9 +62,9 @@ namespace MedSimAI.Surgery.Tests.Anatomy
             root = new GameObject("test");
             var knee = Object.Instantiate(Load(R + "Anatomy/Prefabs/KneeAnatomy_R.prefab"), root.transform);
             var imp = Object.Instantiate(Load(R + "Instruments/Prefabs/Implants/implant.femoral_component.prefab"), root.transform); yield return null;
-            var bridge = imp.GetComponent<ImplantTagBridge>(); bridge.placementTarget = knee.GetComponentsInChildren<Transform>(true).First(x => x.name == "PlacementTarget_" + ImplantIds.FemoralComponent);
-            var tag = bridge.EnsureTag();
-            Assert.AreEqual(ImplantIds.FemoralComponent, tag.implantId); Assert.AreSame(bridge.placementTarget, tag.placementTarget);
+            var tags = imp.GetComponents<SurgeryImplantTag>(); Assert.AreEqual(1, tags.Length, "one serialized tag, no runtime duplicate");
+            var tag = tags[0]; tag.placementTarget = knee.GetComponentsInChildren<Transform>(true).First(x => x.name == "PlacementTarget_" + ImplantIds.FemoralComponent);
+            Assert.AreEqual(ImplantIds.FemoralComponent, tag.implantId); Assert.IsNotNull(tag.placementTarget);
         }
     }
 }

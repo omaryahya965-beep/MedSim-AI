@@ -345,7 +345,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 999686038152209085}
-  - component: {fileID: 5231618192759335098}
+  - component: {fileID: 963806744653622667}
   - component: {fileID: 7789462003761238616}
   - component: {fileID: 3995486930984992316}
   - component: {fileID: 8896990569160174957}
@@ -381,7 +381,7 @@ Transform:
   - {fileID: 8580210490894383764}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &5231618192759335098
+--- !u!114 &963806744653622667
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -390,9 +390,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 4649540018715695444}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 49fc8f6a89b700347ba371efd1c193df, type: 3}
+  m_Script: {fileID: 11500000, guid: 5a1c7e2b9d3f4e6a8b0c1d2e3f405162, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: MedSimAI.Surgery.Instruments::MedSimAI.Surgery.Instruments.InstrumentTagBridge
+  m_EditorClassIdentifier: MedSimAI.Surgery.Shared.Unity::MedSimAI.Surgery.Shared.Unity.SurgeryInstrumentTag
   instrumentId: inst.skin_marker
   tip: {fileID: 8580210490894383764}
   displayNameEn: skin marker
