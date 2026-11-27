@@ -28,14 +28,18 @@ namespace MedSimAI.Surgery.Environment.Editor
             var target = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32);
             var previousTarget = camera.targetTexture;
             var previousActive = RenderTexture.active;
+            bool previousAsyncCompilation = ShaderUtil.allowAsyncCompilation;
             var image = new Texture2D(width, height, TextureFormat.RGB24, false);
             string output = Argument("-or-screenshots") ?? "Docs/Surgery/Environment/Screenshots";
             Directory.CreateDirectory(output);
             try
             {
+                ShaderUtil.allowAsyncCompilation = false;
                 camera.targetTexture = target;
                 target.Create();
                 var request = new UniversalRenderPipeline.SingleCameraRequest { destination = target };
+                OperatingRoomBuilder.SetView(camera, 0);
+                RenderPipeline.SubmitRenderRequest(camera, request);
                 for (int i = 0; i < OperatingRoomBuilder.Viewpoints.Length; i++)
                 {
                     OperatingRoomBuilder.SetView(camera, i);
@@ -53,6 +57,7 @@ namespace MedSimAI.Surgery.Environment.Editor
                 OperatingRoomBuilder.SetView(camera, 0);
                 camera.targetTexture = previousTarget;
                 RenderTexture.active = previousActive;
+                ShaderUtil.allowAsyncCompilation = previousAsyncCompilation;
                 target.Release();
                 Object.DestroyImmediate(target);
                 Object.DestroyImmediate(image);

@@ -1,6 +1,13 @@
 {
   "name": "MedSimAI.Surgery.Environment.Tests",
-  "references": ["Unity.AI.Navigation", "UnityEngine.TestRunner", "UnityEditor.TestRunner"],
+  "references": [
+    "MedSimAI.Surgery.Environment",
+    "MedSimAI.Surgery.Shared",
+    "MedSimAI.Surgery.Shared.Unity",
+    "Unity.AI.Navigation",
+    "UnityEngine.TestRunner",
+    "UnityEditor.TestRunner"
+  ],
   "includePlatforms": ["Editor"],
   "overrideReferences": true,
   "precompiledReferences": ["nunit.framework.dll"],

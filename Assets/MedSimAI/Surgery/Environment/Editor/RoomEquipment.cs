@@ -1,3 +1,4 @@
+using MedSimAI.Surgery.Shared;
 using UnityEngine;
 using static MedSimAI.Surgery.Environment.Editor.RoomGeometry;
 
@@ -144,7 +145,6 @@ namespace MedSimAI.Surgery.Environment.Editor
             var cart = Node(equipment, "Sterile Instrument Back Table", V(-2.53f, 0, .12f), V(0, 91, 0));
             const float width = 1.16f, depth = .56f;
             OpenCart(cart, width, depth, .935f);
-            Node(cart, "InstrumentTable", V(0, .985f, 0));
             var linen = Node(cart, "Sterile Table Cover");
             art.Cloth(linen, M("Fabric"), V(0, .982f, .018f), width + .077f, depth + .059f);
             foreach (float x in new[] { -.27f, .28f })
@@ -175,6 +175,7 @@ namespace MedSimAI.Surgery.Environment.Editor
             art.Box(stand, M("Steel"), V(0, 1.068f, .128f), V(.503f, .038f, .395f), .015f);
             art.Box(stand, M("Fabric"), V(0, 1.089f, .128f), V(.454f, .008f, .342f), .003f);
             art.Box(stand, M("Steel"), V(0, 1.117f, .306f), V(.484f, .048f, .021f), .007f);
+            Anchor(stand, AnchorIds.InstrumentTable, V(0, 1.098f, .128f));
             Bounds(stand, "Mayo Stand Footprint", V(0, .54f, .125f), V(.49f, 1.12f, .423f));
         }
 
@@ -189,8 +190,9 @@ namespace MedSimAI.Surgery.Environment.Editor
                 art.Box(cart, M("Shell"), V(0, y, .274f), V(.696f, .121f, .034f), .012f);
                 art.Box(cart, M("Steel"), V(0, y + .016f, .302f), V(.238f, .023f, .038f), .009f);
             }
-            SupplyBox(cart, V(-.17f, .973f, -.03f), V(.37f, .163f, .344f), "WallPale", "Teal");
-            SupplyBox(cart, V(.20f, .939f, .03f), V(.29f, .109f, .221f), "Teal", "WallPale");
+            SupplyBox(cart, V(-.17f, .973f, -.17f), V(.37f, .163f, .160f), "WallPale", "Teal");
+            SupplyBox(cart, V(.20f, .939f, -.17f), V(.29f, .109f, .150f), "Teal", "WallPale");
+            Anchor(cart, AnchorIds.ImplantTable, V(0, .912f, .08f));
             art.Hose(cart, M("Steel"), .018f, V(.446f, .883f, -.24f), V(.52f, .938f, -.224f),
                 V(.55f, .946f, .055f), V(.518f, .937f, .222f), V(.444f, .885f, .245f));
         }

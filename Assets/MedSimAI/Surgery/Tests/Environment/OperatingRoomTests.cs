@@ -1,4 +1,6 @@
 using System.Linq;
+using MedSimAI.Surgery.Shared;
+using MedSimAI.Surgery.Shared.Unity;
 using NUnit.Framework;
 using Unity.AI.Navigation;
 using UnityEditor;
@@ -12,7 +14,7 @@ namespace MedSimAI.Surgery.Environment.Tests
 {
     public sealed class OperatingRoomTests
     {
-        private const string Room = "Assets/MedSimAI/Surgery/Environment/Prefabs/OperatingRoom.prefab";
+        private const string Room = "Assets/MedSimAI/Surgery/Environment/Prefabs/OperatingRoom_Env.prefab";
         private const string Demo = "Assets/MedSimAI/Surgery/Scenes/OperatingRoom_Environment.unity";
         private GameObject instance;
         private Scene sandbox;
@@ -40,25 +42,37 @@ namespace MedSimAI.Surgery.Environment.Tests
         }
 
         [Test]
-        public void PrefabUsesMetersAndEveryProvisionalAnchorIsUnique()
+        public void PrefabUsesMetersAndEveryContractAnchorIsUnique()
         {
             Assert.That(instance.transform.localScale, Is.EqualTo(Vector3.one));
             foreach (string name in new[]
             {
-                "PlayerSpawn", "PatientRoot", "SurgicalSite", "SurgeonPosition",
-                "AssistantPosition", "InstrumentTable", "RobotBase", "RobotToolMount",
-                "MonitorPosition", "RoomExit"
+                AnchorIds.OperatingRoomRoot, AnchorIds.PlayerSpawn, AnchorIds.RoomEntry,
+                AnchorIds.OperatingTable, AnchorIds.PatientRoot, AnchorIds.InstrumentTable,
+                AnchorIds.ImplantTable, AnchorIds.RobotBase, AnchorIds.OverheadMonitor,
+                AnchorIds.SurgeonObserve, AnchorIds.AssistantHome, AnchorIds.AssistantAtTable,
+                AnchorIds.StudentOperatingPosition
             })
+            {
                 Assert.That(Transforms.Count(item => item.name == name), Is.EqualTo(1), name);
+                Assert.That(Find(name).GetComponent<SurgeryAnchor>().anchorId, Is.EqualTo(name));
+            }
+
+            var anchors = instance.GetComponentsInChildren<SurgeryAnchor>();
+            Assert.That(anchors.Length, Is.EqualTo(13));
+            Assert.That(Find(AnchorIds.OperatingRoomRoot).position, Is.EqualTo(instance.transform.position));
+            Assert.That(Find(AnchorIds.StudentOperatingPosition).position.x, Is.LessThan(instance.transform.position.x));
+            Assert.That(Find(AnchorIds.SurgeonObserve).position.x, Is.GreaterThan(instance.transform.position.x));
+            Assert.That(Find(AnchorIds.PatientRoot).forward, Is.EqualTo(Vector3.forward));
 
             var floor = Find("Room Floor Collider").GetComponent<BoxCollider>();
             Assert.That(floor.size.x, Is.EqualTo(7.6f).Within(.002f));
             Assert.That(floor.size.z, Is.EqualTo(7.8f).Within(.002f));
-            Assert.That(CollisionAt(Find("PatientRoot").position + Vector3.up * .1f, Vector3.down, .22f),
+            Assert.That(CollisionAt(Find(AnchorIds.PatientRoot).position + Vector3.up * .1f, Vector3.down, .22f),
                 Is.EqualTo("Deck Support Collider"));
             float supportTop = Find("Seat Section").GetComponentInChildren<BoxCollider>().bounds.max.y;
-            Assert.That(Find("PatientRoot").position.y, Is.EqualTo(supportTop).Within(.002f));
-            Assert.That(Find("SurgicalSite").position.z, Is.LessThan(Find("PatientRoot").position.z));
+            Assert.That(Find(AnchorIds.PatientRoot).position.y, Is.EqualTo(supportTop).Within(.002f));
+            Assert.That(Find(AnchorIds.OperatingTable).position, Is.EqualTo(Find(AnchorIds.PatientRoot).position));
         }
 
         [Test]
@@ -74,7 +88,7 @@ namespace MedSimAI.Surgery.Environment.Tests
                 foreach (var material in renderer.sharedMaterials)
                 {
                     Assert.That(material && material.shader && material.shader.isSupported, renderer.name);
-                    Assert.That(material.shader.name, Does.StartWith("Universal Render Pipeline/"), material.name);
+                    Assert.That(material.shader.name, Is.EqualTo("Universal Render Pipeline/Lit"), material.name);
                 }
             }
 
@@ -96,6 +110,7 @@ namespace MedSimAI.Surgery.Environment.Tests
                 var asset = AssetDatabase.LoadAssetAtPath<Material>(
                     $"Assets/MedSimAI/Surgery/Environment/Materials/{label}.mat");
                 Assert.That(asset.GetTexture("_BaseMap"), Is.Not.Null, label);
+                Assert.That(asset.IsKeywordEnabled("_EMISSION"), Is.EqualTo(label != "RoomSign"), label);
             }
 
             foreach (string surface in new[] { "Floor", "Pad", "Fabric", "Steel" })
@@ -110,7 +125,7 @@ namespace MedSimAI.Surgery.Environment.Tests
         [Test]
         public void FloorSupportsPlayerAndDoorPanelsBlockOnlyWhenClosed()
         {
-            Vector3 spawn = Find("PlayerSpawn").position;
+            Vector3 spawn = Find(AnchorIds.PlayerSpawn).position;
             Assert.That(CollisionAt(spawn + Vector3.up * .8f, Vector3.down, 1.1f), Is.EqualTo("Room Floor Collider"));
             Assert.That(CollisionAt(RoomPoint(-1.72f, 1.45f, -3.28f), Vector3.back, 1f),
                 Is.EqualTo("Door Panel Collider"));
@@ -147,11 +162,12 @@ namespace MedSimAI.Surgery.Environment.Tests
             navigation = NavMesh.AddNavMeshData(surface.navMeshData, instance.transform.position,
                 instance.transform.rotation);
             Assert.That(navigation.valid);
-            Assert.That(NavMesh.SamplePosition(Find("PatientRoot").position, out _, .15f, NavMesh.AllAreas),
+            Assert.That(NavMesh.SamplePosition(Find(AnchorIds.PatientRoot).position, out _, .15f, NavMesh.AllAreas),
                 Is.False, "The operating table is a navigation obstacle.");
-            foreach (string destination in new[] { "SurgeonPosition", "AssistantPosition" })
+            foreach (string destination in new[] { AnchorIds.SurgeonObserve, AnchorIds.AssistantHome,
+                AnchorIds.AssistantAtTable, AnchorIds.StudentOperatingPosition })
             {
-                Assert.That(NavMesh.SamplePosition(Find("PlayerSpawn").position, out var start, .27f, NavMesh.AllAreas));
+                Assert.That(NavMesh.SamplePosition(Find(AnchorIds.PlayerSpawn).position, out var start, .27f, NavMesh.AllAreas));
                 Assert.That(NavMesh.SamplePosition(Find(destination).position, out var end, .30f, NavMesh.AllAreas),
                     "No nearby agent navigation at " + destination);
                 var route = new NavMeshPath();
@@ -186,6 +202,8 @@ namespace MedSimAI.Surgery.Environment.Tests
         public void DemoSceneIsPresentAndHasAReadableAsset()
         {
             Assert.That(AssetDatabase.LoadAssetAtPath<SceneAsset>(Demo), Is.Not.Null);
+            Assert.That(AssetDatabase.LoadAssetAtPath<SceneAsset>("Assets/MedSimAI/Surgery/Scenes/Env_Test.unity"),
+                Is.Not.Null);
             var beams = instance.GetComponentsInChildren<Light>()
                 .Where(light => light.name.EndsWith("surgical beam", System.StringComparison.Ordinal))
                 .ToArray();
@@ -194,6 +212,37 @@ namespace MedSimAI.Surgery.Environment.Tests
             Assert.That(beams.Count(light => light.shadows == LightShadows.Soft), Is.EqualTo(1));
             Assert.That(instance.GetComponentInChildren<ReflectionProbe>().customBakedTexture, Is.Not.Null);
             Assert.That(instance.GetComponentsInChildren<Camera>(), Is.Empty, "Prefab must accept the existing rig.");
+        }
+
+        [Test]
+        public void OnlyBoundPlayerPublishesOneRoomEntryPerSession()
+        {
+            var entry = Find(AnchorIds.RoomEntry);
+            Assert.That(entry.GetComponent<BoxCollider>().isTrigger);
+            Assert.That(entry.GetComponent<Rigidbody>().isKinematic);
+            var publisher = entry.GetComponent<RoomEntryPublisher>();
+            var player = new GameObject("Tracked Player");
+            SceneManager.MoveGameObjectToScene(player, sandbox);
+            var playerCollider = player.AddComponent<CapsuleCollider>();
+            var nonPlayer = Find("Room Floor Collider").GetComponent<Collider>();
+            var bus = new SurgeryEventBus();
+            publisher.BindPlayer(player.transform);
+            publisher.ObservePlayer(playerCollider, bus);
+            Assert.That(bus.Log, Is.Empty);
+
+            bus.BeginSession("first");
+            publisher.ObservePlayer(nonPlayer, bus);
+            Assert.That(bus.Log, Is.Empty);
+            publisher.ObservePlayer(playerCollider, bus);
+            publisher.ObservePlayer(playerCollider, bus);
+            Assert.That(bus.Log.Count, Is.EqualTo(1));
+            Assert.That(bus.Log[0].id, Is.EqualTo(SurgeryEventIds.PlayerEnteredRoom));
+            Assert.That(bus.Log[0].source, Is.EqualTo(SurgeryEventSources.Environment));
+
+            bus.BeginSession("next");
+            publisher.ObservePlayer(playerCollider, bus);
+            Assert.That(bus.Log.Count, Is.EqualTo(1));
+            Assert.That(bus.Log[0].sessionId, Is.EqualTo("next"));
         }
 
         private Transform[] Transforms => instance.GetComponentsInChildren<Transform>(true);

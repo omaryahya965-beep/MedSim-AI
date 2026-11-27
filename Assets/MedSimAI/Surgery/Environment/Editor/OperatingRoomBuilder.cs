@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using MedSimAI.Surgery.Shared;
 using Unity.AI.Navigation;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -18,6 +19,8 @@ namespace MedSimAI.Surgery.Environment.Editor
         internal const string Root = "Assets/MedSimAI/Surgery/Environment";
         internal const string ScenePath = "Assets/MedSimAI/Surgery/Scenes/OperatingRoom_Environment.unity";
         private const string RoomPath = Root + "/Prefabs/OperatingRoom.prefab";
+        private const string ContractRoomPath = Root + "/Prefabs/OperatingRoom_Env.prefab";
+        private const string ContractScenePath = "Assets/MedSimAI/Surgery/Scenes/Env_Test.unity";
         private const string RobotPath = Root + "/Prefabs/OrthopedicAssistRobot.prefab";
         private readonly RoomGeometry art = new();
         private readonly Dictionary<string, Material> materials = new();
@@ -56,16 +59,28 @@ namespace MedSimAI.Surgery.Environment.Editor
 
             var robot = (GameObject)PrefabUtility.InstantiatePrefab(
                 AssetDatabase.LoadAssetAtPath<GameObject>(RobotPath), scene);
-            robot.name = "RobotBase";
-            robot.transform.SetParent(room, false);
-            robot.transform.localPosition = V(1.99f, 0, -.94f);
-
             Transform anchors = Node(room, "IntegrationAnchors");
-            Facing(anchors, "PlayerSpawn", V(-1.93f, 0, -2.79f), V(-.1f, 0, -.65f));
-            Node(anchors, "PatientRoot", V(0, .92f, 0));
-            Node(anchors, "SurgicalSite", V(-.14f, 1.04f, -.51f));
-            Facing(anchors, "SurgeonPosition", V(-1.16f, 0, -.56f), V(-.14f, 0, -.51f));
-            Facing(anchors, "AssistantPosition", V(-.84f, 0, .87f), V(-.14f, 0, -.51f));
+            Anchor(anchors, AnchorIds.OperatingRoomRoot, Vector3.zero);
+            Anchor(anchors, AnchorIds.PlayerSpawn, V(-1.93f, 0, -2.79f), V(-.1f, 0, -.65f));
+            Anchor(anchors, AnchorIds.OperatingTable, V(0, .92f, 0));
+            Anchor(anchors, AnchorIds.PatientRoot, V(0, .92f, 0));
+            Anchor(anchors, AnchorIds.StudentOperatingPosition, V(-1.16f, 0, -.56f), V(-.14f, 0, -.51f));
+            Anchor(anchors, AnchorIds.SurgeonObserve, V(1.12f, 0, 1.03f), V(0, 0, .63f));
+            Anchor(anchors, AnchorIds.AssistantHome, V(-.84f, 0, .87f), V(-.14f, 0, -.51f));
+            Anchor(anchors, AnchorIds.AssistantAtTable, V(-1.75f, 0, -1.48f), V(-.86f, 0, -1.44f));
+            var robotBase = Anchor(anchors, AnchorIds.RobotBase, V(1.99f, 0, -.94f));
+            robot.name = "RobotBase";
+            robot.transform.SetParent(robotBase, false);
+
+            var entry = Anchor(anchors, AnchorIds.RoomEntry, V(-1.92f, .94f, -3.24f));
+            var threshold = entry.gameObject.AddComponent<BoxCollider>();
+            threshold.size = V(1.62f, 1.88f, 1.16f);
+            threshold.isTrigger = true;
+            var body = entry.gameObject.AddComponent<Rigidbody>();
+            body.isKinematic = true;
+            body.useGravity = false;
+            entry.gameObject.AddComponent<RoomEntryPublisher>();
+
             Facing(anchors, "RoomExit", V(-1.92f, 0, -4.72f), V(-1.92f, 0, -5.52f));
 
             AddReflection(room);
@@ -73,6 +88,7 @@ namespace MedSimAI.Surgery.Environment.Editor
             BakeNavigation(room);
 
             PrefabUtility.SaveAsPrefabAssetAndConnect(room.gameObject, RoomPath, InteractionMode.AutomatedAction);
+            PrefabUtility.SaveAsPrefabAsset(room.gameObject, ContractRoomPath);
             var views = new GameObject("DemoViewpoints").transform;
             Camera camera = Node(views, "Environment Camera").gameObject.AddComponent<Camera>();
             camera.gameObject.tag = "MainCamera";
@@ -96,6 +112,7 @@ namespace MedSimAI.Surgery.Environment.Editor
             SetView(camera, 0);
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene, ScenePath);
+            EditorSceneManager.SaveScene(scene, ContractScenePath, true);
             AssetDatabase.SaveAssets();
             Debug.Log("[Operating Room] Saved demo scene, room prefab, nested robot prefab, and baked navigation.");
         }
@@ -124,6 +141,13 @@ namespace MedSimAI.Surgery.Environment.Editor
             return node;
         }
 
+        private static Transform Anchor(Transform parent, string id, Vector3 position, Vector3? target = null)
+        {
+            Transform transform = target.HasValue ? Facing(parent, id, position, target.Value) : Node(parent, id, position);
+            transform.gameObject.AddComponent<OperatingRoomAnchor>().anchorId = id;
+            return transform;
+        }
+
         private static void ConfigureDemoLighting()
         {
             RenderSettings.skybox = null;
@@ -142,7 +166,7 @@ namespace MedSimAI.Surgery.Environment.Editor
             int nonWalkableArea = NavMesh.GetAreaFromName("Not Walkable");
             foreach (Collider collider in room.GetComponentsInChildren<Collider>())
             {
-                if (collider.transform.IsChildOf(walkable) ||
+                if (collider.isTrigger || collider.transform.IsChildOf(walkable) ||
                     collider.GetComponentInParent<NavMeshObstacle>())
                     continue;
                 var modifier = collider.gameObject.AddComponent<NavMeshModifier>();
@@ -251,10 +275,18 @@ namespace MedSimAI.Surgery.Environment.Editor
 
         private void Glow(string name, string tint, float intensity, string texture = null)
         {
-            var mat = GetMaterial(name, "Universal Render Pipeline/Unlit");
-            mat.SetColor("_BaseColor", Rgb(tint) * intensity);
+            var mat = GetMaterial(name, "Universal Render Pipeline/Lit");
+            mat.SetColor("_BaseColor", Rgb(tint) * .08f);
+            mat.SetFloat("_Smoothness", .20f);
+            mat.SetColor("_EmissionColor", Rgb(tint) * intensity);
+            mat.EnableKeyword("_EMISSION");
+            mat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.BakedEmissive;
             if (texture != null)
-                mat.SetTexture("_BaseMap", Texture(texture));
+            {
+                Texture2D image = Texture(texture);
+                mat.SetTexture("_BaseMap", image);
+                mat.SetTexture("_EmissionMap", image);
+            }
         }
 
         private void Glass()
