@@ -1,0 +1,17 @@
+{
+  "name": "MedSimAI.Surgery.Anatomy.Tests",
+  "references": [
+    "MedSimAI.Surgery.Shared",
+    "MedSimAI.Surgery.Shared.Unity",
+    "MedSimAI.Surgery.Anatomy",
+    "MedSimAI.Surgery.Instruments",
+    "MedSimAI.Surgery.Anatomy.Editor",
+    "Unity.XR.Interaction.Toolkit",
+    "UnityEngine.TestRunner",
+    "UnityEditor.TestRunner"
+  ],
+  "includePlatforms": ["Editor"],
+  "overrideReferences": true,
+  "precompiledReferences": ["nunit.framework.dll"],
+  "defineConstraints": ["UNITY_INCLUDE_TESTS"]
+}

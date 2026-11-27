@@ -1,0 +1,212 @@
+{
+ "kneeFlexDeg": 90.0,
+ "missing": [],
+ "meshes": [
+  "Human",
+  "Human.eyebrow001",
+  "Human.eyelashes01",
+  "Human.low-poly",
+  "Human.short04",
+  "Human.teeth_base",
+  "Human.tongue01"
+ ],
+ "hipFlexDeg": 48.0,
+ "footContactErr_m": 0.006056445538997646,
+ "joints": {
+  "Hip_R": [
+   0.1167,
+   -0.0,
+   0.0911
+  ],
+  "Knee_R": [
+   0.1542,
+   0.2346,
+   0.3976
+  ],
+  "Ankle_R": [
+   0.1803,
+   0.5601,
+   0.0686
+  ],
+  "Hip_L": [
+   -0.1167,
+   0.0,
+   0.0911
+  ],
+  "Knee_L": [
+   -0.1542,
+   0.3848,
+   0.1218
+  ],
+  "Ankle_L": [
+   -0.1803,
+   0.8468,
+   0.0951
+  ],
+  "Pelvis": [
+   -0.0,
+   -0.0267,
+   0.1015
+  ],
+  "Head": [
+   -0.0,
+   -0.6647,
+   0.132
+  ],
+  "Neck": [
+   -0.0,
+   -0.5779,
+   0.1046
+  ],
+  "Shoulder_R": [
+   0.1837,
+   -0.4737,
+   0.1048
+  ],
+  "Shoulder_L": [
+   -0.1837,
+   -0.4737,
+   0.1048
+  ],
+  "HeadTop": [
+   -0.0,
+   -0.8234,
+   0.1369
+  ]
+ },
+ "bounds": {
+  "min": [
+   -0.251,
+   -0.821,
+   -0.021
+  ],
+  "max": [
+   0.251,
+   0.916,
+   0.443
+  ]
+ },
+ "textures": {
+  "Body": [
+   {
+    "material": "Human.body",
+    "node": "Diffuse texture",
+    "file": "D:/Medical-Test/Tools/mpfb_assets/skins/old_caucasian_male/old_lightskinned_male_diffuse.png"
+   },
+   {
+    "material": "Human.body",
+    "node": "Alpha map texture",
+    "file": "D:/Medical-Test/Tools/mpfb_assets/skins/old_caucasian_male/old_lightskinned_male_diffuse.png"
+   }
+  ],
+  "Eyebrows": [
+   {
+    "material": "Human.eyebrow001",
+    "node": "Diffuse texture",
+    "file": "D:/Medical-Test/Tools/mpfb_assets/eyebrows/eyebrow001/eyebrow001.png"
+   },
+   {
+    "material": "Human.eyebrow001",
+    "node": "Alpha map texture",
+    "file": "D:/Medical-Test/Tools/mpfb_assets/eyebrows/eyebrow001/eyebrow001.png"
+   }
+  ],
+  "Eyelashes": [
+   {
+    "material": "Human.eyelashes01",
+    "node": "Diffuse texture",
+    "file": "D:/Medical-Test/Tools/mpfb_assets/eyelashes/eyelashes01/eyelashes01.png"
+   },
+   {
+    "material": "Human.eyelashes01",
+    "node": "Alpha map texture",
+    "file": "D:/Medical-Test/Tools/mpfb_assets/eyelashes/eyelashes01/eyelashes01.png"
+   }
+  ],
+  "Eyes": [
+   {
+    "material": "Human.low-poly",
+    "node": "Diffuse texture",
+    "file": "D:/Medical-Test/Tools/mpfb_assets/eyes/materials/brown_eye.png"
+   },
+   {
+    "material": "Human.low-poly",
+    "node": "Alpha map texture",
+    "file": "D:/Medical-Test/Tools/mpfb_assets/eyes/materials/brown_eye.png"
+   }
+  ],
+  "Hair": [
+   {
+    "material": "Human.short04",
+    "node": "Diffuse texture",
+    "file": "D:/Medical-Test/Tools/mpfb_assets/hair/short04/short04_diffuse.png"
+   },
+   {
+    "material": "Human.short04",
+    "node": "Alpha map texture",
+    "file": "D:/Medical-Test/Tools/mpfb_assets/hair/short04/short04_diffuse.png"
+   }
+  ],
+  "KneeSkin": [
+   {
+    "material": "Human.body",
+    "node": "Diffuse texture",
+    "file": "D:/Medical-Test/Tools/mpfb_assets/skins/old_caucasian_male/old_lightskinned_male_diffuse.png"
+   },
+   {
+    "material": "Human.body",
+    "node": "Alpha map texture",
+    "file": "D:/Medical-Test/Tools/mpfb_assets/skins/old_caucasian_male/old_lightskinned_male_diffuse.png"
+   }
+  ],
+  "RightLeg_Prepped": [
+   {
+    "material": "Human.body",
+    "node": "Diffuse texture",
+    "file": "D:/Medical-Test/Tools/mpfb_assets/skins/old_caucasian_male/old_lightskinned_male_diffuse.png"
+   },
+   {
+    "material": "Human.body",
+    "node": "Alpha map texture",
+    "file": "D:/Medical-Test/Tools/mpfb_assets/skins/old_caucasian_male/old_lightskinned_male_diffuse.png"
+   }
+  ],
+  "Teeth": [
+   {
+    "material": "Human.teeth_base",
+    "node": "Diffuse texture",
+    "file": "D:/Medical-Test/Tools/mpfb_assets/teeth/teeth_base/teeth.png"
+   },
+   {
+    "material": "Human.teeth_base",
+    "node": "Alpha map texture",
+    "file": "D:/Medical-Test/Tools/mpfb_assets/teeth/teeth_base/teeth.png"
+   }
+  ],
+  "Tongue": [
+   {
+    "material": "Human.tongue01",
+    "node": "Diffuse texture",
+    "file": "D:/Medical-Test/Tools/mpfb_assets/tongue/tongue01/tongue01_diffuse.png"
+   },
+   {
+    "material": "Human.tongue01",
+    "node": "Alpha map texture",
+    "file": "D:/Medical-Test/Tools/mpfb_assets/tongue/tongue01/tongue01_diffuse.png"
+   }
+  ]
+ },
+ "objects": {
+  "Body": 13011,
+  "Brief": 982,
+  "Eyebrows": 124,
+  "Eyelashes": 250,
+  "Eyes": 96,
+  "Gown": 3768,
+  "Hair": 865,
+  "KneeSkin": 3076,
+  "RightLeg_Prepped": 249,
+  "Teeth": 3868,
+  "Tongue": 226
+ }
+}
