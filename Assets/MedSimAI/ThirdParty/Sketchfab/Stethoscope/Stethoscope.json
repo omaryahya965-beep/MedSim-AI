@@ -1,0 +1,76 @@
+{
+ "asset": "Stethoscope",
+ "materials": [
+  {
+   "name": "Parts",
+   "color": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0.0,
+   "roughness": 0.5,
+   "base": "Textures/Stethoscope_Parts_Base.png",
+   "normal": "Textures/Stethoscope_Parts_Normal.png",
+   "mask": "Textures/Stethoscope_Parts_Mask.png",
+   "metallicLinked": true,
+   "roughnessLinked": true,
+   "alphaLinked": false,
+   "alpha": 1.0,
+   "blend": "HASHED",
+   "flat": false,
+   "doubleSided": true
+  },
+  {
+   "name": "Tube",
+   "color": [
+    0.0045714424923062325,
+    0.0045714424923062325,
+    0.0045714424923062325,
+    1.0
+   ],
+   "metallic": 0.0,
+   "roughness": 0.5,
+   "base": "Textures/Stethoscope_Tube_Base.png",
+   "normal": "Textures/Stethoscope_Tube_Normal.png",
+   "mask": "Textures/Stethoscope_Tube_Mask.png",
+   "metallicLinked": true,
+   "roughnessLinked": true,
+   "alphaLinked": false,
+   "alpha": 1.0,
+   "blend": "HASHED",
+   "flat": false,
+   "doubleSided": true
+  }
+ ],
+ "calcNormals": false,
+ "tris": 2318,
+ "size_blender_xyz": [
+  0.2014,
+  0.3025,
+  0.0277
+ ],
+ "min": [
+  -0.1007,
+  -0.1512,
+  0.0
+ ],
+ "max": [
+  0.1007,
+  0.1512,
+  0.0277
+ ],
+ "markers": {
+  "chest": [
+   0.03354,
+   0.07617,
+   0.0
+  ],
+  "chestTop": [
+   0.03354,
+   0.07617,
+   0.02683
+  ]
+ }
+}

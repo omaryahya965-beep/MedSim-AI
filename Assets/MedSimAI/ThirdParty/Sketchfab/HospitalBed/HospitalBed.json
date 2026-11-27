@@ -1,0 +1,118 @@
+{
+ "asset": "HospitalBed",
+ "materials": [
+  {
+   "name": "Bed_Steel",
+   "color": [
+    0.30000001192092896,
+    0.3100000023841858,
+    0.33000001311302185,
+    1.0
+   ],
+   "metallic": 0.0,
+   "roughness": 0.5,
+   "alphaLinked": false,
+   "alpha": 1.0,
+   "blend": "HASHED",
+   "flat": true,
+   "doubleSided": true
+  },
+  {
+   "name": "Bed_Plastic",
+   "color": [
+    0.7799999713897705,
+    0.7699999809265137,
+    0.7300000190734863,
+    1.0
+   ],
+   "metallic": 0.0,
+   "roughness": 0.5,
+   "alphaLinked": false,
+   "alpha": 1.0,
+   "blend": "HASHED",
+   "flat": true,
+   "doubleSided": true
+  },
+  {
+   "name": "Bed_Grey",
+   "color": [
+    0.550000011920929,
+    0.5600000023841858,
+    0.5699999928474426,
+    1.0
+   ],
+   "metallic": 0.0,
+   "roughness": 0.5,
+   "alphaLinked": false,
+   "alpha": 1.0,
+   "blend": "HASHED",
+   "flat": true,
+   "doubleSided": true
+  },
+  {
+   "name": "Bed_Trim",
+   "color": [
+    0.6200000047683716,
+    0.6299999952316284,
+    0.6399999856948853,
+    1.0
+   ],
+   "metallic": 0.0,
+   "roughness": 0.5,
+   "alphaLinked": false,
+   "alpha": 1.0,
+   "blend": "HASHED",
+   "flat": true,
+   "doubleSided": true
+  },
+  {
+   "name": "Bed_Rubber",
+   "color": [
+    0.07999999821186066,
+    0.07999999821186066,
+    0.09000000357627869,
+    1.0
+   ],
+   "metallic": 0.0,
+   "roughness": 0.5,
+   "alphaLinked": false,
+   "alpha": 1.0,
+   "blend": "HASHED",
+   "flat": true,
+   "doubleSided": true
+  },
+  {
+   "name": "Bed_Accent",
+   "color": [
+    0.41999998688697815,
+    0.5,
+    0.5799999833106995,
+    1.0
+   ],
+   "metallic": 0.0,
+   "roughness": 0.5,
+   "alphaLinked": false,
+   "alpha": 1.0,
+   "blend": "HASHED",
+   "flat": true,
+   "doubleSided": true
+  }
+ ],
+ "calcNormals": true,
+ "tris": 42000,
+ "size_blender_xyz": [
+  0.9964,
+  2.2206,
+  0.9895
+ ],
+ "min": [
+  -0.499,
+  -1.1147,
+  0.0
+ ],
+ "max": [
+  0.4974,
+  1.106,
+  0.9895
+ ]
+}

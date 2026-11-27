@@ -1,0 +1,87 @@
+{
+ "asset": "PulseOximeter",
+ "materials": [
+  {
+   "name": "M_DeviceWhite",
+   "color": [
+    0.800000011920929,
+    0.800000011920929,
+    0.800000011920929,
+    1.0
+   ],
+   "metallic": 0.0,
+   "roughness": 0.260572224855423,
+   "alphaLinked": false,
+   "alpha": 1.0,
+   "blend": "HASHED",
+   "flat": false,
+   "doubleSided": true
+  },
+  {
+   "name": "M_DeviceBlue",
+   "color": [
+    0.005376949906349182,
+    0.03104810044169426,
+    0.800000011920929,
+    1.0
+   ],
+   "metallic": 0.0,
+   "roughness": 1.0,
+   "alphaLinked": false,
+   "alpha": 1.0,
+   "blend": "HASHED",
+   "flat": false,
+   "doubleSided": true
+  },
+  {
+   "name": "material_0",
+   "color": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "metallic": 0.0,
+   "roughness": 0.6000000238418579,
+   "alphaLinked": false,
+   "alpha": 1.0,
+   "blend": "HASHED",
+   "flat": false,
+   "doubleSided": true
+  },
+  {
+   "name": "M_BlackScreeb",
+   "color": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0.6689544320106506,
+   "roughness": 0.0,
+   "base": "Textures/PulseOximeter_M_BlackScreeb_Base.png",
+   "alphaLinked": false,
+   "alpha": 1.0,
+   "blend": "HASHED",
+   "flat": false,
+   "doubleSided": true
+  }
+ ],
+ "calcNormals": false,
+ "tris": 5000,
+ "size_blender_xyz": [
+  0.0343,
+  0.062,
+  0.0404
+ ],
+ "min": [
+  -0.0172,
+  -0.031,
+  -0.0
+ ],
+ "max": [
+  0.0172,
+  0.031,
+  0.0404
+ ]
+}

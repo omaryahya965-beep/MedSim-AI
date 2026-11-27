@@ -1,0 +1,104 @@
+{
+ "asset": "SanitizerStation",
+ "materials": [
+  {
+   "name": "brushed_Metal",
+   "color": [
+    0.6399999856948853,
+    0.6399999856948853,
+    0.6399999856948853,
+    1.0
+   ],
+   "metallic": 0.0,
+   "roughness": 0.5527864098548889,
+   "alphaLinked": false,
+   "alpha": 1.0,
+   "blend": "HASHED",
+   "flat": false,
+   "doubleSided": true
+  },
+  {
+   "name": "PosterLabel",
+   "color": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0.4455626904964447,
+   "roughness": 0.5527864098548889,
+   "base": "Textures/SanitizerStation_PosterLabel_Base.png",
+   "alphaLinked": false,
+   "alpha": 1.0,
+   "blend": "HASHED",
+   "flat": false,
+   "doubleSided": true
+  },
+  {
+   "name": "chrome",
+   "color": [
+    0.2099684774875641,
+    0.2099684774875641,
+    0.2099684774875641,
+    1.0
+   ],
+   "metallic": 1.0,
+   "roughness": 0.5527864098548889,
+   "alphaLinked": false,
+   "alpha": 1.0,
+   "blend": "HASHED",
+   "flat": false,
+   "doubleSided": true
+  },
+  {
+   "name": "whiteplastic",
+   "color": [
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "metallic": 0.5854066610336304,
+   "roughness": 0.5527864098548889,
+   "alphaLinked": false,
+   "alpha": 1.0,
+   "blend": "HASHED",
+   "flat": false,
+   "doubleSided": true
+  },
+  {
+   "name": "metal_stand",
+   "color": [
+    0.546972930431366,
+    0.546972930431366,
+    0.546972930431366,
+    1.0
+   ],
+   "metallic": 1.0,
+   "roughness": 0.5527864098548889,
+   "alphaLinked": false,
+   "alpha": 1.0,
+   "blend": "HASHED",
+   "flat": false,
+   "doubleSided": true
+  }
+ ],
+ "calcNormals": false,
+ "tris": 588,
+ "size_blender_xyz": [
+  0.4209,
+  0.3997,
+  1.55
+ ],
+ "min": [
+  -0.2104,
+  -0.1999,
+  0.0
+ ],
+ "max": [
+  0.2104,
+  0.1999,
+  1.55
+ ],
+ "markers": {}
+}

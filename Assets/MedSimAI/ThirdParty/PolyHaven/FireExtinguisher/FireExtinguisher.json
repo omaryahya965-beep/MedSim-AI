@@ -1,0 +1,86 @@
+{
+ "asset": "FireExtinguisher",
+ "materials": [
+  {
+   "name": "korean_fire_extinguisher_01_body",
+   "color": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0.0,
+   "roughness": 0.5,
+   "base": "Textures/FireExtinguisher_korean_fire_extinguisher_01_body_Base.png",
+   "normal": "Textures/FireExtinguisher_korean_fire_extinguisher_01_body_Normal.png",
+   "mask": "Textures/FireExtinguisher_korean_fire_extinguisher_01_body_Mask.png",
+   "metallicLinked": true,
+   "roughnessLinked": true,
+   "alphaLinked": false,
+   "alpha": 1.0,
+   "blend": "HASHED",
+   "flat": false,
+   "doubleSided": true
+  },
+  {
+   "name": "korean_fire_extinguisher_01_glass",
+   "color": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0.0,
+   "roughness": 0.5,
+   "base": "Textures/FireExtinguisher_korean_fire_extinguisher_01_glass_Base.png",
+   "normal": "Textures/FireExtinguisher_korean_fire_extinguisher_01_glass_Normal.png",
+   "mask": "Textures/FireExtinguisher_korean_fire_extinguisher_01_glass_Mask.png",
+   "metallicLinked": true,
+   "roughnessLinked": true,
+   "alphaLinked": true,
+   "alpha": 1.0,
+   "blend": "BLEND",
+   "flat": false,
+   "doubleSided": true
+  },
+  {
+   "name": "korean_fire_extinguisher_01_paper",
+   "color": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0.0,
+   "roughness": 0.5,
+   "base": "Textures/FireExtinguisher_korean_fire_extinguisher_01_paper_Base.png",
+   "normal": "Textures/FireExtinguisher_korean_fire_extinguisher_01_paper_Normal.png",
+   "mask": "Textures/FireExtinguisher_korean_fire_extinguisher_01_paper_Mask.png",
+   "metallicLinked": true,
+   "roughnessLinked": true,
+   "alphaLinked": true,
+   "alpha": 1.0,
+   "blend": "BLEND",
+   "flat": false,
+   "doubleSided": false
+  }
+ ],
+ "calcNormals": false,
+ "tris": 9381,
+ "size_blender_xyz": [
+  0.2457,
+  0.2198,
+  0.5343
+ ],
+ "min": [
+  -0.1228,
+  -0.1099,
+  0.0
+ ],
+ "max": [
+  0.1228,
+  0.1099,
+  0.5343
+ ],
+ "markers": {}
+}

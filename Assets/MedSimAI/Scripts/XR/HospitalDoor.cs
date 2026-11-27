@@ -29,14 +29,14 @@ namespace MedSimAI.Instruments
         public bool IsOpen => Angle > 35f;
 
         IXRSelectInteractor holder; float autoTarget = -1f; float velocity, leverT, grabOffsetDeg; bool openedFired; Quaternion handleRest; Rigidbody body;
-        Quaternion hingeRest;
+        Quaternion hingeRest, leafRestLocal; Vector3 leafRestLocalPos;
 
         void Awake()
         {
             if (!hinge) hinge = transform;
             hingeRest = hinge.localRotation;
             if (handle) handleRest = handle.localRotation;
-            if (leaf) { body = leaf.GetComponent<Rigidbody>(); if (!body) body = leaf.gameObject.AddComponent<Rigidbody>(); body.isKinematic = true; body.interpolation = RigidbodyInterpolation.Interpolate; }
+            if (leaf) { leafRestLocal = leaf.localRotation; leafRestLocalPos = leaf.localPosition; body = leaf.GetComponent<Rigidbody>(); if (!body) body = leaf.gameObject.AddComponent<Rigidbody>(); body.isKinematic = true; body.interpolation = RigidbodyInterpolation.Interpolate; }
             if (handleInteractable) { handleInteractable.selectEntered.AddListener(OnGrab); handleInteractable.selectExited.AddListener(OnRelease); }
         }
 
@@ -99,6 +99,7 @@ namespace MedSimAI.Instruments
         {
             var rot = hingeRest * Quaternion.Euler(0, Angle * openSign, 0);
             hinge.localRotation = rot;
+            if (leaf) { leaf.localRotation = leafRestLocal; leaf.localPosition = leafRestLocalPos; } // exact pose from the hinge; never accumulate the body's interpolation lag
             if (body) { body.MoveRotation(leaf.rotation); body.MovePosition(leaf.position); }
         }
 
@@ -113,6 +114,9 @@ namespace MedSimAI.Instruments
             Angle = 0; velocity = 0; autoTarget = -1f; Latched = true; openedFired = false; leverT = 0; holder = null;
             if (hinge) hinge.localRotation = hingeRest;
             if (handle) handle.localRotation = handleRest;
+            // The leaf is an interpolated kinematic body: teleport it with the hinge, otherwise interpolation writes the old (open)
+            // pose back onto the transform and the leaf stays visually open while Angle is 0.
+            if (leaf) { leaf.localRotation = leafRestLocal; leaf.localPosition = leafRestLocalPos; if (body) { body.position = leaf.position; body.rotation = leaf.rotation; } }
         }
     }
 }

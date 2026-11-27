@@ -1,0 +1,65 @@
+{
+ "asset": "CodeCart",
+ "materials": [
+  {
+   "name": "lambert2",
+   "color": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0.0,
+   "roughness": 0.5,
+   "base": "Textures/CodeCart_lambert2_Base.png",
+   "normal": "Textures/CodeCart_lambert2_Normal.png",
+   "mask": "Textures/CodeCart_lambert2_Mask.png",
+   "metallicLinked": true,
+   "roughnessLinked": true,
+   "alphaLinked": true,
+   "alpha": 1.0,
+   "blend": "BLEND",
+   "flat": false,
+   "doubleSided": true
+  },
+  {
+   "name": "lambert1",
+   "color": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0.0,
+   "roughness": 0.5,
+   "base": "Textures/CodeCart_lambert1_Base.png",
+   "normal": "Textures/CodeCart_lambert1_Normal.png",
+   "mask": "Textures/CodeCart_lambert1_Mask.png",
+   "metallicLinked": true,
+   "roughnessLinked": true,
+   "alphaLinked": false,
+   "alpha": 1.0,
+   "blend": "HASHED",
+   "flat": false,
+   "doubleSided": true
+  }
+ ],
+ "calcNormals": false,
+ "tris": 14000,
+ "size_blender_xyz": [
+  1.0505,
+  0.6536,
+  1.4632
+ ],
+ "min": [
+  -0.5252,
+  -0.3268,
+  -0.0
+ ],
+ "max": [
+  0.5252,
+  0.3268,
+  1.4632
+ ],
+ "markers": {}
+}

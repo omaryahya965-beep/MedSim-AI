@@ -1,0 +1,38 @@
+{
+ "asset": "Blanket",
+ "materials": [
+  {
+   "name": "Blanket",
+   "color": [
+    0.6200000047683716,
+    0.699999988079071,
+    0.7799999713897705,
+    1.0
+   ],
+   "metallic": 0.0,
+   "roughness": 0.5,
+   "alphaLinked": false,
+   "alpha": 1.0,
+   "blend": "HASHED",
+   "flat": true,
+   "doubleSided": true
+  }
+ ],
+ "calcNormals": true,
+ "tris": 17664,
+ "size_blender_xyz": [
+  0.8389,
+  0.9848,
+  0.3563
+ ],
+ "min": [
+  -0.8048,
+  -0.8122,
+  0.5298
+ ],
+ "max": [
+  0.0341,
+  0.1726,
+  0.8861
+ ]
+}

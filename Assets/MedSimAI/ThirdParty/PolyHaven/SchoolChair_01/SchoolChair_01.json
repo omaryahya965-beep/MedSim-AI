@@ -1,0 +1,44 @@
+{
+ "asset": "SchoolChair_01",
+ "materials": [
+  {
+   "name": "SchoolChair_01",
+   "color": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0.0,
+   "roughness": 0.5,
+   "base": "Textures/SchoolChair_01_SchoolChair_01_Base.png",
+   "normal": "Textures/SchoolChair_01_SchoolChair_01_Normal.png",
+   "mask": "Textures/SchoolChair_01_SchoolChair_01_Mask.png",
+   "metallicLinked": true,
+   "roughnessLinked": true,
+   "alphaLinked": false,
+   "alpha": 1.0,
+   "blend": "HASHED",
+   "flat": false,
+   "doubleSided": true
+  }
+ ],
+ "calcNormals": false,
+ "tris": 5072,
+ "size_blender_xyz": [
+  0.4837,
+  0.5772,
+  0.86
+ ],
+ "min": [
+  -0.2419,
+  -0.2886,
+  0.0
+ ],
+ "max": [
+  0.2419,
+  0.2886,
+  0.86
+ ],
+ "markers": {}
+}

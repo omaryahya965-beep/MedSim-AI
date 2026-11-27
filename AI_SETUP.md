@@ -1,62 +1,95 @@
-# AI Setup — Live, scenario-grounded conversation
+# AI Setup — Live AI for the doctor and the patient (v0.2)
 
-## What you need (credentials)
-**One OpenAI API key with billing enabled.** That's the only credential. It goes in an environment variable on the machine running the proxy, never in Unity, the APK or any file in this repository.
+Both characters understand natural speech and answer with **runtime-generated, scenario-grounded speech** from OpenAI. Every call goes through the local **MedSim proxy** (`Backend/medsim-proxy`). The OpenAI key never reaches Unity, builds, logs or the repository.
 
-| Variable | Required | Purpose |
-|---|---|---|
-| `OPENAI_API_KEY` | yes | Provider key (server-side only) |
-| `MEDSIM_CLIENT_TOKEN` | strongly recommended | Shared secret the headset sends in `X-MedSim-Client`; requests without it get 401 |
-| `MEDSIM_CHAT_MODEL` | no (default `gpt-6-luna`) | Structured-output classification |
-| `MEDSIM_STT_MODEL` | no (default `gpt-transcribe`) | Speech-to-text |
-| `MEDSIM_TTS_MODEL` | no (default `gpt-4o-mini-tts`) | Text-to-speech, see the warning below |
-| `MEDSIM_VOICE_PATIENT` / `MEDSIM_VOICE_INSTRUCTOR` | no (`ash` / `marin`) | Distinct voices |
-| `PORT` | no (8787) | |
+> Status: **verified against the real OpenAI API on 2026-11-27.** See [LIVE_AI_TEST_REPORT.md](LIVE_AI_TEST_REPORT.md).
 
-**Model status (checked 2026-11-26 on developers.openai.com):**
-- `gpt-6-luna` is current and supports Structured Outputs on Chat Completions.
-- `gpt-transcribe` is the current transcription model. I could not confirm Arabic support from its documentation, and the multipart field name for its `languages` parameter is unverified.
-- **Every model accepted by `/v1/audio/speech` is deprecated, with shutdown on 2027-01-06.** OpenAI's replacement (`gpt-realtime-2.1-mini`) uses the Realtime API, which this proxy does not implement yet.
+## 1. Provide the key securely (one time)
 
-All of these are configurable and are verified only by reading the documentation. **No billable call was made during development.**
+The proxy reads secrets from the environment first, then from a local file **outside the project and the git repository**:
 
-## Run the proxy
 ```
-cd Backend/medsim-proxy
-set OPENAI_API_KEY=...            (PowerShell: $env:OPENAI_API_KEY="...")
-set MEDSIM_CLIENT_TOKEN=<long random string>
+D:\Medical-Test\secrets\medsim.env      (ACL: your Windows user only)
+```
+
+The file contains two lines:
+```
+OPENAI_API_KEY=<your key>
+MEDSIM_CLIENT_TOKEN=<long random string shared with the Unity app>
+```
+
+**Do not paste keys into chat, source code, Unity assets or documents.**
+
+### Changing the key
+1. Open `D:\Medical-Test\secrets\medsim.env` in Notepad and replace the `OPENAI_API_KEY=` value.
+2. Restart the proxy.
+
+You can also set `OPENAI_API_KEY` as a Windows user environment variable: Start → "Edit environment variables for your account" → New. An environment variable overrides the file.
+
+> **Security note:** the key originally provided for this project was pasted into a chat conversation. Treat it as exposed: rotate it at platform.openai.com → API keys once testing is complete, then update the secrets file.
+
+To create a new client token (Unity ↔ proxy shared secret):
+```
+node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
+```
+Put it in `MEDSIM_CLIENT_TOKEN=` and re-run step 3.
+
+## 2. Start the proxy
+```
+cd "D:\Medical-Test\My project\Backend\medsim-proxy"
 node server.mjs
 ```
-The proxy loads `Assets/MedSimAI/Resources/Scenarios/*.json` (plus `*.ar.json` translations) **server-side** and validates them; you can override the location with `MEDSIM_SCENARIO_DIR`. `GET /health` reports the loaded scenarios, whether a provider key is configured (yes/no only, never the key) and the model names. Logs contain only the route, timing and error messages; they never include request bodies, audio or keys.
 
-Tests (no network, no key): `node --test Backend/medsim-proxy/server.test.mjs`
+The proxy listens on `http://127.0.0.1:8787` by default (localhost only). Set `MEDSIM_HOST=0.0.0.0` only if a standalone headset must reach the PC; in that case put it behind HTTPS first. The proxy needs Node 22+ and has no npm dependencies.
 
-Before sharing the proxy beyond one PC, put it behind HTTPS (a reverse proxy) and add rate limiting.
+`GET /health` reports:
+- the loaded scenarios,
+- whether a provider key is configured (yes/no only),
+- the models in use,
+- the remaining test budget.
 
-## Point the app at it
-Create `%USERPROFILE%\AppData\LocalLow\MedSim AI\MedSim AI\medsim_ai_config.json`. On Android, use the app's `persistentDataPath` instead.
-```json
-{ "proxyEndpoint": "http://<pc-ip>:8787", "clientSessionToken": "<same as MEDSIM_CLIENT_TOKEN>", "preferOnline": true, "timeoutMs": 12000, "language": "en" }
+## 3. Point Unity at the proxy
 ```
-In VR: **Voice & AI Settings → Live AI via secure proxy**. The status line shows `LIVE AI (validated, scenario-grounded)` or `OFFLINE SCRIPTED DEMO`.
+node tools/write-unity-config.mjs http://127.0.0.1:8787 en
+```
 
-## How grounding works
-1. The client sends only: scenario id and version, persona, the student's words, the current stage, the IDs of findings already revealed, a short history, and the language. It never sends clinical facts. Any `allowedFacts` field a client includes is ignored.
-2. The proxy asks the model for **Structured Outputs** restricted by JSON-schema enums:
-   - Patient: `{factIds: enum(approved fact IDs, max 2), leadIn, offTopic}`.
-   - Supervisor: `{intent: enum, investigationId: enum|null, mentionsEscalation, reply}`.
-3. **Clinical speech is rendered from approved text.** Patient answers are the authored answers, or the reviewed-draft Arabic translation. Investigation results come only from the scenario engine.
-4. Free text, meaning the patient's short lead-in and the supervisor's coaching sentence, is validated on **both** server and client. It must contain no numbers, no diagnosis before the feedback stage, no dosing and no citations, and lead-ins must contain no clinical words. Anything that fails is dropped or replaced with an approved line.
-5. If the AI recognised a history question only through intent (no keyword match), the event is tagged `AI_INTENT`. The debrief labels it "recognised via AI intent", so this is never a silent score change.
-6. A timeout, network error, version mismatch or rejected output falls back to the deterministic offline mode.
+This writes `%USERPROFILE%\AppData\LocalLow\MedSim AI\MedSim AI\medsim_ai_config.json` with the **client token only**. If this file is missing, the app runs text-only and says "AI OFFLINE — text only".
 
-## Voice
-- **Speech-to-text:** push-to-talk audio is held in memory, sent to `/v1/stt` and never written to disk. Offline on PC it uses Windows dictation (English).
-- **Text-to-speech:** pre-rendered approved English audio is used whenever the line matches exactly, which avoids paid calls. Otherwise `/v1/tts` is used, with distinct patient and supervisor voices.
-- **Lip sync:** driven from the audio amplitude plus text-timed Microsoft viseme blend shapes on the MPFB characters.
+## 4. Models (verified on this account, 2026-11-27)
+| Purpose | Model | Endpoint | Price (official pages, read 2026-11-27) |
+|---|---|---|---|
+| Understanding + reply generation, both personas (strict JSON schema) | `gpt-6-luna` | `/v1/responses` with `text.format: json_schema strict`, `reasoning.effort: none` | $0.10 / $0.50 per 1M input/output tokens |
+| Speech-to-text, English + Arabic | `gpt-transcribe` | `/v1/audio/transcriptions` | $0.0045 / min |
+| Runtime speech | `gpt-realtime-2.1-mini` | Realtime API over a server-side WebSocket; out-of-band responses (`conversation: "none"`) | Audio output $20 per 1M tokens (about $0.002–0.004 per spoken line in our measurements) |
+| Speech fallback (exact text) | `gpt-4o-mini-tts` | `/v1/audio/speech` (**deprecated; shuts down 2027-01-06**) | about $0.015 / min |
 
-## Phase 3 additions
-- **Palestinian / Levantine Arabic:** the classifier prompt explicitly accepts colloquial Palestinian Arabic (for example «من أيمتى بلش الوجع؟»), and STT receives a vocabulary/dialect prompt. Recognition quality is unverified until a real key is used.
-- **Indicators:** a small in-world tag above the addressed character shows *Listening* (red), *Thinking…* (blue) or *Speaking* (teal). It is hidden when idle.
-- **Latency:** prompts carry at most 8 history turns, structured classification output is small, and pre-rendered audio is used for exact approved lines, so only novel wording needs TTS. Expected round trip (not measured): STT 0.5–1.5 s + classification 0.5–1 s + TTS 0.5–1.5 s.
-- **No billable call has been made.** Starting the proxy with your key and switching to Live AI is the first billable step, and I will ask before doing it.
+All of these can be overridden by environment variables: `MEDSIM_CHAT_MODEL`, `MEDSIM_STT_MODEL`, `MEDSIM_TTS_MODEL`, `MEDSIM_TTS_FALLBACK_MODEL`.
+
+**Voices** (can be overridden with `MEDSIM_VOICE_PATIENT` / `MEDSIM_VOICE_INSTRUCTOR`):
+- Dr. Hassan: **marin**
+- Mr. Reyes: **cedar**
+
+**Why Realtime for speech?** OpenAI is retiring every `/v1/audio/speech` model on 2027-01-06, and its named replacement (`gpt-realtime-2.1-mini`) only runs on the Realtime API. MedSim uses Realtime as a *voice actor*: it is told to read a line exactly as written, and it returns its own transcript of what it said. The proxy compares that transcript with the validated text (`speechFidelity`). Below 0.75, the line is re-synthesised with the exact-text fallback. Measured fidelity was 1.00 for English and Palestinian Arabic.
+
+## 5. Spending limits (enforced in the application)
+- **Hard budget cap:** `MEDSIM_BUDGET_USD` (default **2.00**). Every call is priced from the provider's reported usage (or a conservative estimate for audio) and appended to `Backend/medsim-proxy/data/usage.jsonl`, which is git-ignored. Once the cap is reached, calls are refused with HTTP 402 and Unity shows "AI test budget reached". **The OpenAI dashboard budget alert is not a cap; this is.**
+- **Rate limits:** 40 AI requests per minute in total; 160 turns per session.
+- **Size limits:** utterances up to 600 characters; spoken lines up to 700 characters; microphone clips up to 30 s (Unity records at most 15 s per push-to-talk).
+- **Timeouts and retries:** upstream timeout 20 s, with at most one retry, and only for 429 or 5xx responses.
+- **No per-frame calls.** AI is called only when the student speaks, when the supervisor decides to speak, and for the welcome and the debrief.
+- **Usage summary:** `GET /v1/usage` (requires the client token).
+
+## 6. How grounding works (summary — details in ARCHITECTURE.md)
+1. Unity sends **ids only**: scenario id/version, persona, the student's words, stage, patient-state id, and the ids of events that have already happened. It never sends clinical text, and the proxy ignores any it receives.
+2. The proxy loads the authoritative scenario itself. It gives the model a persona brief, the approved facts, the current authored patient state, and (for the doctor) only the findings the student has already obtained.
+3. The model returns strict JSON: chosen fact ids, intent, concepts, and a natural reply.
+4. **Deterministic grounding check** (`lib/grounding.mjs`). Every number and every clinical term in the reply must already appear in the approved corpus for that turn. Diagnoses are blocked before the feedback stage, dosing is blocked, and meta-talk is blocked. If any check fails, the reply is replaced with approved scenario text (`source: approved-fallback`).
+5. The reply is spoken by runtime TTS.
+6. Unity's deterministic engine records events. AI-only recognitions are tagged `AI_INTENT` and shown in the debrief as "AI-interpreted — for instructor review".
+
+## 7. Failure behaviour
+If the proxy is down, the key is invalid, the budget is exhausted, or a call times out, Unity shows a clear status message. The characters then answer **text-only** (subtitles) from deterministic scenario text. **No pre-recorded dialogue exists or is played**, and the app never presents offline text as Live AI.
+
+## 8. Tests
+- Offline, no key, no cost: `node --test server.test.mjs live.test.mjs`
+- Live, billed against the budget: `node tools/live-harness.mjs patient instructor arabic states speech failure`, with the proxy running.

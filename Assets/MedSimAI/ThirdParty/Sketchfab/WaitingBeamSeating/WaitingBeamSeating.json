@@ -1,0 +1,54 @@
+{
+ "asset": "WaitingBeamSeating",
+ "materials": [
+  {
+   "name": "Seat_Frame",
+   "color": [
+    0.11999999731779099,
+    0.11999999731779099,
+    0.12999999523162842,
+    1.0
+   ],
+   "metallic": 0.0,
+   "roughness": 0.5,
+   "alphaLinked": false,
+   "alpha": 1.0,
+   "blend": "HASHED",
+   "flat": true,
+   "doubleSided": true
+  },
+  {
+   "name": "Seat_Pad",
+   "color": [
+    0.20000000298023224,
+    0.2800000011920929,
+    0.33000001311302185,
+    1.0
+   ],
+   "metallic": 0.0,
+   "roughness": 0.5,
+   "alphaLinked": false,
+   "alpha": 1.0,
+   "blend": "HASHED",
+   "flat": true,
+   "doubleSided": true
+  }
+ ],
+ "calcNormals": true,
+ "tris": 16000,
+ "size_blender_xyz": [
+  0.5842,
+  2.2071,
+  0.7947
+ ],
+ "min": [
+  -0.2921,
+  -1.1036,
+  0.0
+ ],
+ "max": [
+  0.2921,
+  1.1036,
+  0.7948
+ ]
+}

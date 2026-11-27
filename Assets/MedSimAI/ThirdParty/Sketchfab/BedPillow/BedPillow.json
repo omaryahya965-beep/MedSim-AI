@@ -1,0 +1,38 @@
+{
+ "asset": "BedPillow",
+ "materials": [
+  {
+   "name": "Linen_White",
+   "color": [
+    0.8999999761581421,
+    0.8999999761581421,
+    0.8799999952316284,
+    1.0
+   ],
+   "metallic": 0.0,
+   "roughness": 0.5,
+   "alphaLinked": false,
+   "alpha": 1.0,
+   "blend": "HASHED",
+   "flat": true,
+   "doubleSided": true
+  }
+ ],
+ "calcNormals": true,
+ "tris": 3000,
+ "size_blender_xyz": [
+  0.6801,
+  0.4399,
+  0.1501
+ ],
+ "min": [
+  -0.3399,
+  -0.2199,
+  -0.075
+ ],
+ "max": [
+  0.3402,
+  0.22,
+  0.0751
+ ]
+}

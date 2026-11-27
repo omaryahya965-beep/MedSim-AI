@@ -35,3 +35,28 @@ There are 7 objectives and 21 rubric items, each tagged *observable* or *communi
 
 ## State machine
 Introduction → {History, Initial assessment, Examination, Investigations in any order} → Clinical reasoning → Supervisor feedback → Debriefing. Patient condition changes only via authored `transitions` (v0.1: escalation acknowledgement, no vital-sign change).
+
+---
+## v0.2.0 additions (2026-11-27) — DRAFT, NOT CLINICALLY VALIDATED
+- **Personas:** approved persona briefs for the patient and the supervisor (`personas`). They define speaking style and boundaries; the AI phrases replies within them.
+- **Dynamic patient state:** 4 authored states and 3 transitions. See [DYNAMIC_PATIENT_STATE.md](DYNAMIC_PATIENT_STATE.md).
+- **Supervisor intervention rules:** 10 rules, each tied to an existing objective or rubric item. See [INTELLIGENT_SUPERVISOR.md](INTELLIGENT_SUPERVISOR.md).
+- **Escalation vs. diagnosis:**
+  - `escalation` has explicit phrases plus action and target lists.
+  - `diagnosisKeywords` are separate. Naming STEMI is no longer counted as escalating.
+- **Reasoning concepts** (`reasoningConcepts`):
+  - key history features,
+  - risk factors,
+  - ECG inferior ST elevation (requires the lead territory),
+  - working diagnosis,
+  - do not wait for troponin,
+  - next step: urgent escalation for reperfusion.
+- **Rubric:** `R_SUMMARY` now requires at least 2 deterministic concepts and is worth 1 point. New communication items:
+  - `R_REASON_ECG` (2)
+  - `R_REASON_DX` (2)
+  - `R_REASON_NEXT` (1)
+
+  There are now 24 items; the safety-critical items are unchanged.
+- **Clinical discussion:** 4 scenario questions (`discussion`), asked by the supervisor after escalation.
+- **Instructor lines:** short welcome (live-phrased from `welcomeBrief`). The long onboarding monologue was removed.
+- **Unchanged:** every history fact, vital sign, examination finding, investigation result, the educational working diagnosis and the references.

@@ -35,3 +35,49 @@ MakeHuman FAQ: "All core assets … are shared under CC0"; models may be used in
 
 ## Not used
 Mixamo, Asset Store or Sketchfab content (all require an account), and untrusted scripts. I found no account-free, permissively licensed, high-detail medical equipment models (see KNOWN_LIMITATIONS).
+
+---
+
+## Environment redesign v0.2 (corridor, door, room upgrade)
+
+All files below were obtained account-free (see `AssetStaging/MANIFEST.md`) and converted with portable Blender 4.2.23 by `scratch_env/convert.py` / `blanket.py` (import only; no downloaded script was executed). Converted meshes, textures and material descriptions live in `Assets/MedSimAI/ThirdParty/<Source>/<Asset>/`. This section supersedes the "Not used: Sketchfab content" note above.
+
+### Sketchfab models, CC BY 4.0 (attribution required; obtained through the Objaverse 1.0 mirror)
+
+| Title | Author | Source | Used for | Modifications |
+|---|---|---|---|---|
+| "Simple Hospital Bed" | Yvo Pors | https://sketchfab.com/3d-models/simple-hospital-bed-60651eac7e96454c8cf5c43a91412336 | Patient bed frame, rails, boards, castors (`HospitalBed`); pillow (`BedPillow`) | Scaled to a 2.0 m mattress; model mattress and coiled pendant cord removed; deck raised 0.10 m (hi-lo) to meet the in-project mattress; near-side rails lowered; pillow split out and resized; decimated 124k → 42k + 3k tris; cube-projected UVs; new materials |
+| "HospitalDoor" | azizcharfeddine1997 | https://sketchfab.com/3d-models/hospitaldoor-5455e5d934d940729304d49c7afff73b | Exam Room 3 hinged door (frame, leaf, lever) and the three closed corridor end-door leaves | Mirrored so it opens into the room; leaf scaled to 1.04 × 2.10 m; lever handles split into a separate mesh with its pivot on the spindle; hinge pivot moved to the knuckle line |
+| "Chair Hospital" | Khafesus | https://sketchfab.com/3d-models/chair-hospital-baaa4ec5d6d34ad49004e4d151b43aa2 | Corridor beam seating | Stretched 1.2× along the beam (0.44 m seat pitch); decimated 135k → 16k tris; new materials |
+| "Covid-19 Sanitizer Station" | Marco669966 | https://sketchfab.com/3d-models/covid-19-sanitizer-station-9b8dcfdf83404606bbdf070e6a8497b0 | Corridor hand-sanitiser stand | Scaled to 1.55 m |
+| "Pediatric Code Cart" | Mikpultro | https://sketchfab.com/3d-models/pediatric-code-cart-e55eb8ea1d6c47f1a4880e5532983850 | Resuscitation trolley in the exam room | Decimated 33k → 14k tris |
+| "Adjustable Bedside Table" | Ethan Cragun | https://sketchfab.com/3d-models/adjustable-bedside-table-e3ef6fd54af440efa31984214dd6f11d | Over-bed table | Scaled to 0.98 m height |
+| "IV Pole" | Mouch | https://sketchfab.com/3d-models/iv-pole-76521e2f71704b1986cf5ac54368b14f | IV stand with bag | One of the two poles kept; scaled to 2.0 m |
+| "Rigged Stethoscope" | Simon Pasi | https://sketchfab.com/3d-models/rigged-stethoscope-e0d5ec7eb4c842599205c6f65b14bdd3 | Stethoscope visual | Armature pose baked to a static mesh; scaled 1.2× |
+| "Sphygmomanometer Low Poly" | TheGiwi | https://sketchfab.com/3d-models/sphygmomanometer-low-poly-58f303b71fd047b0960785141485f8f0 | Blood-pressure cuff visual (loose state) | Scaled to 0.36 m |
+| "Pulse Oximeter \| Free Model" | Nofil.Khan | https://sketchfab.com/3d-models/pulse-oximeter-free-model-e3ad5ac95aed4546bb869fcd984a7a99 | Pulse-oximeter visual | Scaled to 62 mm; decimated to 5k tris; its printed read-out is covered by the live display |
+
+License text: https://creativecommons.org/licenses/by/4.0/ . The original credit lines are in `AssetStaging/HospitalModels/ATTRIBUTION_ALL.txt`.
+
+### Poly Haven, CC0
+| Asset | Author | Source | Used for | Modifications |
+|---|---|---|---|---|
+| SchoolChair_01 | Ethan Place | https://polyhaven.com/a/SchoolChair_01 | Visitor chair | Scaled to 0.86 m |
+| korean_fire_extinguisher_01 | UM JOORIN | https://polyhaven.com/a/korean_fire_extinguisher_01 | Corridor fire extinguisher | Floor stand (with Korean text) cut away; wall-mounted with the label turned to the wall |
+| urban_courtyard_02 (4K HDRI) | Sergej Majboroda | https://polyhaven.com/a/urban_courtyard_02 | Sky, window view and ambient light | Rotated; exposure 1.15 |
+
+### ambientCG, CC0 (Lennart Demes, https://ambientcg.com)
+PaintedPlaster017 (wall paint normal), OfficeCeiling001 (ceiling tiles), Metal009 (stainless / aluminium normal), Plastic013A (ABS, dado, powder coat normal), Fabric030 (linen, blanket, blind, notice-board felt normal), Leather026 (vinyl upholstery normal), Wood049 (handrail). 2K JPG, imported at 1024 px.
+
+### Audio
+| File | Source | Author | License | Used for |
+|---|---|---|---|---|
+| metalLatch.ogg, creak2.ogg, doorClose_4.ogg (+ doorOpen_1.ogg, spare) | Kenney "RPG Audio", https://kenney.nl/assets/rpg-audio | Kenney | CC0 | Door latch, swing and close |
+| BSB_1471_air-conditioner.wav | https://bigsoundbank.com/air-conditioner-s1471.html | Joseph Sardin | CC0 | Corridor HVAC room tone (looped, volume 0.10) |
+| BSB_0174_ventilation-2.wav | https://bigsoundbank.com/ventilation-2-s0174.html | Joseph Sardin | CC0 | Muffled plant noise behind the fire doors (low-pass 900 Hz, volume 0.06) |
+
+### Fonts
+- Noto Kufi Arabic Medium v2.110: SIL Open Font License 1.1 (© The Noto Project Authors), https://github.com/notofonts/arabic . Used for all Arabic signage (`Assets/MedSimAI/Art/Fonts/NotoKufiArabic SDF.asset`, generated by the builder).
+
+### Made in-project for v0.2
+Corridor shell and fixtures, signage, radiator, window, doctor stool, pedal bins, ECG cart frame and lead set, monitor housing details, towel dispenser, sheet-vinyl fleck texture (procedural), and the blanket (Blender cloth simulation over the reclined patient; `Assets/MedSimAI/ThirdParty/MedSim/Blanket`).

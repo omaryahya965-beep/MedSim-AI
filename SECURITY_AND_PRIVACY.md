@@ -1,14 +1,32 @@
-# Security & Privacy
+# Security and Privacy (v0.2)
 
-- **No secrets in the client.** No API keys are stored in scripts, Resources, PlayerPrefs or the APK. Provider keys live only in the proxy's environment variables. The client config holds only an endpoint and a proxy-access token, read from `persistentDataPath` at runtime, never from build assets.
-- **Microphone.** Recording is push-to-talk only. Audio stays in memory as an `AudioClip` and is destroyed after transcription. It is never written to disk. The reference proxy forwards audio for transcription and doesn't store it; check your provider's data-retention settings.
-- **Patient data.** The patient is fictional. The app doesn't collect real patient information. `InputGuard` deflects questions about real people ("my father has chest pain…") with a safety message.
-- **Stored data.** `persistentDataPath/medsim_sessions.json` keeps up to 50 session results: scores, timings and event IDs. It holds no audio, no transcripts beyond rubric event details, and no personal identifiers.
-- **AI safety in code.** Persona-restricted context, input guard, output validator (fact IDs, numbers, diagnosis disclosure, dosing, state-change claims, citations), and offline fallback. The AI has no write access to case state or scores.
-- **Third-party code.** Only official Unity packages and HTC's official VIVE OpenXR plugin are installed. Poly Haven content is data only (textures and FBX).
-- **Network.** Android declares the INTERNET permission for Live AI mode. Offline mode makes no network calls.
+## Provider credentials
+- **Where the key lives.** The OpenAI key exists only on the proxy machine:
+  - preferred: the `OPENAI_API_KEY` environment variable;
+  - otherwise: `D:\Medical-Test\secrets\medsim.env`, outside the Unity project and the git repository, readable only by the owning Windows user.
+  - It is never in Unity scripts, Resources, scenes, builds, client config, logs, screenshots or docs.
+- **What the client holds.** Unity holds only `MEDSIM_CLIENT_TOKEN`, a shared secret that authorises the client to the proxy. It is not a provider key, is stored in `%USERPROFILE%\AppData\LocalLow\MedSim AI\MedSim AI\medsim_ai_config.json`, and can be rotated at any time.
+- **Repository protection.** `.gitignore` excludes `.env`, `*.env`, `secrets/`, `medsim_ai_config.json`, `Backend/medsim-proxy/data/` and `AssetStaging/`.
+- **Log redaction.** Proxy logs record the route, timing and an error class only. Request bodies, audio and keys are never logged. All error text passes through `redact()`, which masks `sk-…` and `Bearer …` strings; this is unit-tested.
+- **No key in builds.** Verified by searching the built player for key material (see TEST_REPORT.md).
+- **Exposed key.** The key supplied for this project was pasted into a chat transcript. **Rotate it after testing.**
 
-## Phase 2
-- The proxy loads clinical data from disk and ignores any facts the client sends.
-- Logs record only the route, timing and error text. No bodies, audio or keys are logged, and `/health` reveals only whether a key is configured.
-- Recommended: set `MEDSIM_CLIENT_TOKEN`, put the proxy behind HTTPS, and keep it on the local network for demos.
+## Network
+- **Bind address.** The proxy binds to `127.0.0.1` by default. Exposing it to a standalone headset (`MEDSIM_HOST=0.0.0.0`) requires HTTPS (reverse proxy) and firewall rules.
+- **Authentication.** Every API route except `/health` requires the client token. Without `MEDSIM_CLIENT_TOKEN`, every route returns 401.
+- **Spend and abuse controls:**
+  - hard budget cap (in-app, default $2.00);
+  - 40 requests per minute;
+  - 160 turns per session;
+  - body size limit 4 MB;
+  - audio up to 30 s;
+  - text length limits.
+
+## Student data
+- **Microphone audio.** Held in memory, sent to the proxy, and forwarded to OpenAI for transcription. It is **not written to disk** by Unity or the proxy. Requests use `store: false` where the API supports it. Please review OpenAI's data-retention terms for your organisation.
+- **Transcripts and history.** Conversation history lives in proxy memory for the session only (deleted on session end or after 3 h).
+- **Session results.** Saved locally (`medsim_sessions.json` in persistentDataPath): scores and event ids only. No audio and no names.
+- **Fictional patient only.** The app refuses requests for real-patient advice (`InputGuard`).
+
+## Medical safety
+See [ARCHITECTURE.md](ARCHITECTURE.md) (grounding rules) and [CLINICAL_REVIEW.md](CLINICAL_REVIEW.md). **DRAFT — NOT CLINICALLY VALIDATED.** This is an educational technical demonstration, not for real-patient diagnosis or treatment.

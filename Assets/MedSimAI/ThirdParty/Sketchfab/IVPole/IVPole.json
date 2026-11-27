@@ -1,0 +1,44 @@
+{
+ "asset": "IVPole",
+ "materials": [
+  {
+   "name": "Material",
+   "color": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0.0,
+   "roughness": 0.5,
+   "base": "Textures/IVPole_Material_Base.png",
+   "normal": "Textures/IVPole_Material_Normal.png",
+   "mask": "Textures/IVPole_Material_Mask.png",
+   "metallicLinked": true,
+   "roughnessLinked": true,
+   "alphaLinked": true,
+   "alpha": 1.0,
+   "blend": "BLEND",
+   "flat": false,
+   "doubleSided": true
+  }
+ ],
+ "calcNormals": false,
+ "tris": 1036,
+ "size_blender_xyz": [
+  0.7008,
+  0.7008,
+  2.0
+ ],
+ "min": [
+  -0.3504,
+  -0.3504,
+  0.0
+ ],
+ "max": [
+  0.3504,
+  0.3504,
+  2.0
+ ],
+ "markers": {}
+}

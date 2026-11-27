@@ -1,0 +1,44 @@
+{
+ "asset": "OverbedTable",
+ "materials": [
+  {
+   "name": "BedTable",
+   "color": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0.0,
+   "roughness": 0.5,
+   "base": "Textures/OverbedTable_BedTable_Base.png",
+   "normal": "Textures/OverbedTable_BedTable_Normal.png",
+   "mask": "Textures/OverbedTable_BedTable_Mask.png",
+   "metallicLinked": true,
+   "roughnessLinked": true,
+   "alphaLinked": false,
+   "alpha": 1.0,
+   "blend": "HASHED",
+   "flat": false,
+   "doubleSided": true
+  }
+ ],
+ "calcNormals": false,
+ "tris": 3036,
+ "size_blender_xyz": [
+  0.4501,
+  0.7597,
+  0.98
+ ],
+ "min": [
+  -0.2251,
+  -0.3799,
+  0.0
+ ],
+ "max": [
+  0.2251,
+  0.3799,
+  0.98
+ ],
+ "markers": {}
+}

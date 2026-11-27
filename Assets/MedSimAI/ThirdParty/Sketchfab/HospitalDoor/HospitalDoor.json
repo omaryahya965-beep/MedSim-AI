@@ -1,0 +1,53 @@
+{
+ "asset": "HospitalDoor",
+ "materials": [
+  {
+   "name": "DoorTexture",
+   "color": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "metallic": 0.0,
+   "roughness": 0.5,
+   "base": "Textures/HospitalDoor_DoorTexture_Base.png",
+   "normal": "Textures/HospitalDoor_DoorTexture_Normal.png",
+   "mask": "Textures/HospitalDoor_DoorTexture_Mask.png",
+   "metallicLinked": true,
+   "roughnessLinked": true,
+   "alphaLinked": false,
+   "alpha": 1.0,
+   "blend": "HASHED",
+   "flat": false,
+   "doubleSided": true
+  }
+ ],
+ "calcNormals": false,
+ "tris": 10406,
+ "size_blender_xyz": [
+  1.1865,
+  0.2474,
+  2.199
+ ],
+ "min": [
+  -0.5955,
+  -0.1624,
+  -0.0018
+ ],
+ "max": [
+  0.591,
+  0.085,
+  2.1972
+ ],
+ "spindle": [
+  0.4461599886417389,
+  -0.07499270141124725,
+  1.1175273656845093
+ ],
+ "hinge": [
+  -0.54,
+  -0.115,
+  0
+ ]
+}

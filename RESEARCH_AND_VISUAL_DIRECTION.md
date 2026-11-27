@@ -463,3 +463,28 @@ Sample Arabic delivery (persona only): «دكتور… هو قلبي؟» · «آ
 Build in the order of the Top 15 table (§0).
 
 **Open decisions for the client [C]:** hijab option; working side of the bed; Arabic dialect sign-off by a native speaker; whether the patient keeps the name "Adam Reyes" in Arabic mode; university approval of the provisional sign wording.
+
+---
+
+## 11. Environment redesign (v0.2) — implemented vs. deferred
+
+Built by `Assets/MedSimAI/Editor/MedSimRedesignBuilder.cs` (menu **MedSim AI ▸ Build Redesign (v0.2)**, then **MedSim AI ▸ Bake Lighting**). The builder is idempotent: it rebuilds the roots `Redesign_Corridor`, `Redesign_Door`, `Redesign_Room`, `Redesign_Lighting`, `Redesign_Staging`, `Redesign_Exterior` and every child named `v2_*`; legacy visuals are deactivated, not deleted. Asset conversion: `scratch_env/convert.py` and `blanket.py` (Blender 4.2). Credits: `ASSET_CREDITS.md`.
+
+### Implemented
+| Spec | What was built | Deviation |
+|---|---|---|
+| §2 Corridor | 5.0 × 2.4 m bay at x −1.60…3.40, z −5.02…−2.62, ceiling 2.60 m: sheet vinyl with coved skirting, 0.9 m dado with cap, 600 mm ceiling grid, two LED panels, air diffuser, smoke detector, oak handrail, south window (frame, mullion, roller blind, sill, radiator), closed west door "Exam Room 2", closed east double fire doors with EXIT sign, hanging way-finding sign, notice board with four pinned sheets (the DRAFT notice moved here), beam seating, sanitiser stand, wall-mounted extinguisher with ID sign, room plate | Bench is the 5-seat beam (2.2 m) instead of 3 seats; leaflet rack and wheelchair omitted; extinguisher is at x = 3.20 next to the sanitiser stand (x = 2.78) |
+| §2.3 Sign | 1.20 × 0.45 m panel on four stand-offs at (0.50, 1.60, −2.62): «جامعة بيرزيت — أهلاً وسهلاً» / "Birzeit University — Welcome" / footer. Noto Kufi Arabic through `ArabicShaper`; verified joined and right-to-left in `C01_sign_closeup.png`. No logo | — |
+| §3 Door | CC-BY hospital door: separate frame, leaf (vision panel, kick plate, hinges) and lever on its spindle; hinge pivot on the east jamb at (2.39, −2.445); opens into the room 0–95°; kinematic leaf collider; latch / swing / close audio; overhead closer; amber "in use" dome | Vision panel is opaque (blind shut); no push plate; the closer is decorative (auto-close is the session script's job) |
+| §4 Room | New bed (split rails, castors, boards) around the existing mattress pivot; cloth-simulated blanket; pillow; visitor chair; doctor stool; two pedal bins away from the door; resus trolley replaces the domestic chest; over-bed table with a pulp bowl; IV pole with bag; towel dispenser; neutral observations chart replaces the "CHEST PAIN" poster; "MEDSIM AI" poster, rusty bins, invisible arm-chair / stool / fire alarm removed; tablet stand parked by the east wall | **Layout was not mirrored** (open decision [C] in §4.1): the student still works from the patient's left (+x), so the doctor observes from the far-side foot corner **(−0.80, −0.45)** instead of (1.25, −0.55), where the ECG cart stands. Backrest stays at 35° (existing patient pose) |
+| §5.1 Materials | Wall paint #D9D6CE and sage accent with ambientCG plaster normal, acoustic ceiling tile, procedural two-tone-fleck sheet vinyl (smoothness 0.60), ABS / powder-coat / stainless / vinyl upholstery / linen / cellular blanket families | Sheet vinyl has no roughness-variation map |
+| §5.2 Lighting | HDRI sky (Poly Haven urban_courtyard_02) as window view and ambient; baked sun at yaw 40°, pitch 38° through both windows; ceiling panels re-tuned; warm bedhead wash; exam spot remains the single Mixed light; 370+ light probes incl. door rows and a bed ring; two box-projected reflection probes (room, corridor); Neutral tonemapping, vignette off | Sky is urban_courtyard_02 (staged) rather than quadrangle_sunny; sun is Baked, not Mixed (the project keeps one realtime-shadow light for VRAM reasons); blinds unchanged |
+| §5.3 Instruments | Stethoscope, aneroid sphygmomanometer (loose state; the wrapped cuff shows when snapped to the arm via `InstrumentVisualState`) and fingertip oximeter visuals swapped; scripts, colliders, probe points and displays untouched. Monitor housing gained handle, alarm bar, keys, knob, connector panel and cables; ECG cart gained a frame, drawer, basket, push handle, cable arm and colour-coded leads | Device bodies are still the procedural boxes underneath; no 2.5 m NIBP hose / oximeter cable |
+| §9 Staging | Student spawn (0.45, −4.00) yaw 20°; doctor corridor mark (1.30, −3.30); doorway mark (1.50, −1.45); observe mark (−0.80, −0.45); `RoomEntryTrigger` inside the doorway; NavMeshSurface over both spaces (agent radius 0.25 m); NavMeshAgent + `DoctorMovement` + capsule on the instructor; capsules on the patient; teleport areas for corridor and doorway; SessionManager wired | — |
+| Audio | Corridor HVAC room tone (0.10) and muffled plant noise behind the fire doors (low-pass 900 Hz, 0.06) | No walla / PA (French speech and a possible baby in the staged files) |
+
+### Deferred
+- Mirroring the working side to the patient's right, wall-arm monitor move, L-shaped curtain track (needs the clinical decision [C]).
+- Characters, gown, reclined 40° pose, hands (another agent). The blanket is fitted to the *current* patient mesh: re-run `export_obj.cs` → `blanket.py` after the patient changes.
+- Corridor renderer culling when the door is latched; lever fumble prompt; door closer animation.
+- Curtain cloth model with mesh header, electrodes on the patient, NIBP hose, exam-lamp replacement, roughness-variation map for the floor, exterior parallax object beyond the two stone ledges.

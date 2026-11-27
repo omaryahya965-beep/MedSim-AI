@@ -1,5 +1,5 @@
 {
   "name": "MedSimAI.Editor",
-  "references": ["MedSimAI","Unity.XR.Interaction.Toolkit","Unity.InputSystem","Unity.TextMeshPro","UnityEngine.UI","Unity.XR.CoreUtils","Unity.RenderPipelines.Universal.Runtime","Unity.RenderPipelines.Core.Runtime"],
+  "references": ["MedSimAI","Unity.AI.Navigation","Unity.XR.Interaction.Toolkit","Unity.InputSystem","Unity.TextMeshPro","UnityEngine.UI","Unity.XR.CoreUtils","Unity.RenderPipelines.Universal.Runtime","Unity.RenderPipelines.Core.Runtime"],
   "includePlatforms": ["Editor"]
 }
