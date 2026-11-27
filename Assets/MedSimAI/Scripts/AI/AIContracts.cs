@@ -35,7 +35,7 @@ namespace MedSimAI.AI
     /// <summary>Structured output required from every provider.</summary>
     [Serializable] public class AIResponse
     {
-        public LiveAction action; public string supervisorIntervention;
+        public LiveAction action; public LiveAction[] actions; public string supervisorIntervention;
         public string speech;
         public string[] usedFactIds = new string[0];
         public bool outOfScope;
@@ -62,7 +62,7 @@ namespace MedSimAI.AI
         public Persona persona; public string studentText; public string responseText; public ResponseSource source; public string note;
         public InvestigationOutcome investigation;
         /// <summary>Validated physical action the character will perform (or declined / needs clarification).</summary>
-        public LiveAction action; public string supervisorIntervention;
+        public LiveAction action; public LiveAction[] actions; public string supervisorIntervention;
         public string audioId; // runtime-generated speech to fetch from the proxy (null → text-only fallback)
     }
 

@@ -12,12 +12,15 @@ namespace MedSimAI.Characters
     public class DoctorActionController : MonoBehaviour
     {
         public DoctorMovement movement; public HumanoidLifeController life; public MedicalInstructorController instructor;
-        public Transform student, patientChest, observeMark;
+        public Transform student, patientChest, observeMark, distanceMark;
         public event Action<string, string> Completed, Failed; // (type, reason/"")
         Transform mark; string pendingType; float pendingStart, gazeUntil; bool walking; Transform gazeTarget;
 
-        void Start()
+        void Start() => EnsureInit();
+        bool inited;
+        void EnsureInit() // also on first use (an action requested in the frame the controller was added, before Start)
         {
+            if (inited) return; inited = true;
             if (!movement) movement = GetComponent<DoctorMovement>();
             if (!life) life = GetComponent<HumanoidLifeController>();
             if (!instructor) instructor = GetComponent<MedicalInstructorController>();
@@ -69,6 +72,7 @@ namespace MedSimAI.Characters
         /// <summary>Starts an action; returns false (unavailable) if no safe reachable spot exists.</summary>
         public bool Execute(string type, string instrument)
         {
+            EnsureInit();
             if (pendingType != null) Failed?.Invoke(pendingType, "interrupted");
             pendingType = type; pendingStart = Time.time; walking = false;
             Vector3 sf = StudentFloor, fwd = StudentFwd, rightOfStudent = Vector3.Cross(Vector3.up, fwd).normalized;
@@ -88,6 +92,12 @@ namespace MedSimAI.Characters
                     var away = (sf - pat); away.y = 0; away = away.sqrMagnitude < 1e-3f ? -fwd : away.normalized;
                     return WalkTo(sf + away * 1.1f + rightOfStudent * 0.6f, sf) || WalkTo(sf + away * 1.1f - rightOfStudent * 0.6f, sf);
                 }
+                case "go_other_side":
+                {   // to the bedside on the other side from where she is now (still never between the student and the patient)
+                    float mySide = Mathf.Sign(transform.position.x - pat.x); if (mySide == 0) mySide = 1;
+                    return WalkTo(new Vector3(pat.x - mySide * 0.95f, pat.y, pat.z), patientChest ? patientChest.position : pat) || WalkTo(new Vector3(pat.x - mySide * 0.95f, pat.y, pat.z - 0.4f), pat);
+                }
+                case "observe_from_distance": return (distanceMark && WalkTo(distanceMark.position, pat)) || (observeMark && WalkTo(observeMark.position, pat));
                 case "return_to_observation": return observeMark && WalkTo(observeMark.position, pat);
                 case "wait": movement.Stop(); if (student) movement.Face(student.position); return true;
                 case "look_at_patient": if (patientChest) { movement.Face(patientChest.position); Gaze(patientChest, 6f); } return true;

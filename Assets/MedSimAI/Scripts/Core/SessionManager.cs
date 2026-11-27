@@ -73,6 +73,7 @@ namespace MedSimAI.Core
             if (flow != null) StopCoroutine(flow);
             V?.Interrupt();
             M.ResetSession();
+            MedSimAI.Characters.CharacterActionRouter.Reset();
             foreach (var i in instruments) if (i) i.ResetInstrument();
             if (ecg) ecg.ResetMachine();
             if (examDoor) examDoor.ResetDoor();
@@ -143,6 +144,7 @@ namespace MedSimAI.Core
         void OnConditionChanged(PatientStateDef from, PatientStateDef to, string message)
         {
             if (patient) patient.ApplyCondition(to);
+            if (to != null && to.id == "S_DETERIORATION") MedSimAI.Characters.CharacterActionRouter.Patient?.ReturnToRest(); // a deteriorating patient stops holding requested poses
             // The patient voices how he feels after an authored change (e.g. deterioration) when nobody is talking.
             if (to?.statements != null && to.statements.Length > 0 && State == AppState.Running) StartCoroutine(PatientVoicesChange(to.statements[0]));
             // After escalation (handover), the doctor moves on to the clinical discussion once things settle.

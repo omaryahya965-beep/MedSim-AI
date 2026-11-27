@@ -224,3 +224,24 @@ Details and the manual checklist: ARABIC_AUDIO_VR.md.
 | Builds | Desktop and PCVR rebuilt, 0 errors; secret scans clean; v0.4 builds backed up |
 
 The standalone exe was **not** re-run with the self-test this round: someone was using this PC during testing. Details: EMBODIED_AI_AND_CONVERSATION_UI.md.
+
+
+---
+# v0.6: Embodied intelligence (2026-11-27)
+| Suite | Result |
+|---|---|
+| Unity EditMode | **98 / 98** |
+| Unity PlayMode | **29 / 29**. New `EmbodiedQueuePlayTests` (5): multi-action order and a rejected unsafe step; interruption; clarify doesn't move; nearest arm on both sides; deep breath, then breathe normally, then deterioration returns to rest; doctor to the other side, then observing from a distance |
+| Proxy | **34 / 34**. New: multi-action, nearest arm, an unsafe step blocks the sentence, new doctor actions, a symptom question is not an action, arm-verb correction |
+| Natural instructions, real API (`tools/action-harness-v06.mjs`) | **17 / 17** |
+| Spoken instructions, real Realtime voice (`tools/voice-action-check.mjs`) | 2/2 correct (raise arm; history question with no action). The sit request was misheard, and the patient asked for clarification instead of guessing |
+| **Standalone Desktop exe self-test** | 6/6 mocked actions Completed (cuff 0.000 m on the raised arm). A spoken Arabic instruction was executed. 214 fps during actions (p95 8.33 ms); action layer 0.021 ms per frame |
+| Evidence | 10 GIFs and stills in `Screenshots/Embodied/`; realism before/after in `Screenshots/Realism/` |
+| Builds | Desktop (`D:/VRBuilds/MedSim_Desktop`) and PCVR (`D:/Medical-Test/Builds/MedSimAI_PCVR_v0.2`) rebuilt, 0 errors; secret scans clean; v0.5 builds backed up |
+
+Three bugs were found by these tests and fixed:
+- an action in the same frame as controller creation;
+- the speech model's raise→extend mislabel;
+- the far arm crossing the chest.
+
+During the exe run a person was speaking near the PC: some transcript lines are real speech, not the synthetic clips. One injected clip got "no speech" once, then passed on retest. **VR is not headset-verified.** Details: EMBODIED_AI.md.

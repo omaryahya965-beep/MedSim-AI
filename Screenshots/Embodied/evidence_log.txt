@@ -1,0 +1,14 @@
+01_resting_reclined: 20 frames
+02_sit_up: 35 frames
+03_raise_left_arm_bp_cuff: 30 frames
+cuff on raised arm: 0.000 m from its snap point
+04_extend_right_arm_pulse_oximeter: 30 frames
+oximeter on extended finger: 0.000 m from its snap point
+05_deep_breath: 90 frames
+06_auscultation_holds_still: 36 frames; stethoscope on the chest → patient holding still: True
+07_doctor_walks_to_student: 60 frames
+08_doctor_moves_aside: 50 frames
+09_doctor_other_side_of_bed: 70 frames
+10_speech_and_movement: 30 frames (player view with the conversation panel)
+patient action layer cost ≈ 0.020 ms/frame
+action history: Patient:sit_up(none) Completed | Patient:raise_arm(left) Completed | Patient:lower_arm(left) Completed | Patient:extend_arm(right) Completed | Patient:lower_arm(both) Completed | Patient:deep_breath(none) Completed | Patient:breathe_normally(none) Completed | Patient:recline(none) Completed | Instructor:come_to_student(none) Completed | Instructor:step_back(none) Completed | Instructor:go_other_side(none) Completed | Patient:raise_arm(left) Completed | Patient:rest(none) InProgress | Instructor:return_to_observation(none) InProgress
