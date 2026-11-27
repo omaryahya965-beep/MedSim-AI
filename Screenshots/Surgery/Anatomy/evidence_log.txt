@@ -33,3 +33,11 @@
 17_07_state_implanted
 17_08_state_closed
 18_asset_demonstration_scene
+
+== 2026-11-28 room-fit check (AnatomyRoomFitCheck.cs, Editor Play mode, after merging feature/surgery-complete e4fbd9c) ==
+Find(SurgicalSite_Knee_R) -> patient anchor at (-0.154, 1.318, -0.235)
+room SurgicalSite (-0.140, 1.040, -0.510) vs patient knee (-0.154, 1.318, -0.235) delta (-0.014, 0.278, 0.275) |d|=0.391
+body verts 25776, below deck top by >5mm: 373, lowest body point over deck -21.0 mm
+drape bounds min (-0.523, 0.395, -1.071) max (0.524, 1.489, 0.619)
+tray bounds (-2.755, 0.985, -0.184)-(-2.305, 1.154, 0.424); back table (-2.832, 0.000, -0.504)-(-2.192, 1.057, 0.743)
+shots 19_integration_room_overview, 19b_integration_surgeon_view, 19c_integration_instrument_table

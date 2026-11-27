@@ -1,6 +1,6 @@
 # MedSim AI — Surgery Module Integration Contract
 
-**Contract version:** 1.0.0  ·  **Baseline commit:** `c1b73d6` (tag `v0.5-stable`, MedSim AI v0.5)  ·  **Integration branch:** `feature/surgery-complete`
+**Contract version:** 1.1.0  ·  **Baseline commit:** `c1b73d6` (tag `v0.5-stable`, MedSim AI v0.5), updated with `master` v0.6 (`4108aaf`) on 2026-11-27  ·  **Integration branch:** `feature/surgery-complete`
 **Owner:** Person 4 (AI & Integration Lead). Changes to anything in this file go through a pull request into `feature/surgery-complete` and need the integration lead's approval.
 
 > **DRAFT — NOT CLINICALLY VALIDATED.** The surgical module is an educational simulation for a student project. It is not a substitute for clinical supervision or accredited surgical training, and its scores are not a competency certification. A qualified orthopaedic surgeon must review the clinical content before any real training use.
@@ -81,6 +81,7 @@ Shared  ◄── Shared.Unity ◄── Environment
 - Mechanics **must not** reference AI, Characters, UI, Integration or the network. They publish events and that's all.
 - AI/Characters/UI **must not** reference Mechanics, Anatomy, Instruments or Environment. They see the world only through `Shared` interfaces and events.
 - Nothing references `Integration`.
+- **Editor scripts go in `<Area>/Editor/` with the editor-only asmdef `MedSimAI.Surgery.<Area>.Editor`** (already created for Environment, Anatomy, Instruments, Mechanics). A plain `Editor` folder *inside* an asmdef folder is NOT editor-only in Unity, so without it `UnityEditor` code would break the player build.
 - The existing ER code (`MedSimAI` assembly) must not reference any Surgery assembly.
 
 ## 4. Units, coordinates and sides
@@ -114,12 +115,27 @@ Each anchor is an empty GameObject **named exactly as below** with a `SurgeryAnc
 | `ANCHOR_AssistantAtInstrumentTable` | P1 | Assistant stands here to pick up instruments |
 | `ANCHOR_StudentOperatingPosition` | P1 | Where the student stands to operate (patient's right side) |
 
+**Accepted alias names (contract 1.1).** Person 1's room uses plain names under `IntegrationAnchors`. `SurgeryAnchor.Find` resolves these automatically (`AnchorAliases` in code), so nobody needs to rename anything:
+
+| Contract id | Accepted transform name |
+|---|---|
+| `ANCHOR_PlayerSpawn` | `PlayerSpawn` |
+| `ANCHOR_PatientRoot` | `PatientRoot` |
+| `ANCHOR_SurgicalSite_Knee_R` | `SurgicalSite` |
+| `ANCHOR_InstrumentTable` | `InstrumentTable` |
+| `ANCHOR_RobotBase` | `RobotBase` |
+| `ANCHOR_OverheadMonitor` | `MonitorPosition` |
+| `ANCHOR_StudentOperatingPosition` | `SurgeonPosition` (the operator's = student's working position, patient's right) |
+| `ANCHOR_AssistantHome` | `AssistantPosition` |
+
+The AI surgeon's observation spot (`ANCHOR_SurgeonObserve`), `ANCHOR_AssistantAtInstrumentTable` and `ANCHOR_ImplantTable` are derived by the integration layer when the room doesn't provide them.
+
 Characters walk on a NavMesh that P1 bakes over the floor (keep 0.8 m clear around the table on both sides).
 
 ## 6. Prefab contracts
 
 ### 6.1 Environment (P1)
-`Surgery/Environment/Prefabs/OperatingRoom_Env.prefab`: room, table, lights, instrument and implant tables, monitors, every anchor from §5 that P1 owns, baked NavMesh surface, and the `ANCHOR_RoomEntry` trigger with a component that publishes `player.entered_room` once per session (source `environment`). URP Lit materials only. Target 90 fps on PCVR, so watch real-time lights and shadow casters.
+`Surgery/Environment/Prefabs/OperatingRoom.prefab` (contract 1.1; `OperatingRoom_Env.prefab` also accepted): room, table, lights, instrument and implant tables, monitors, every anchor from §5 that P1 owns, baked NavMesh surface, and the `ANCHOR_RoomEntry` trigger with a component that publishes `player.entered_room` once per session (source `environment`). URP Lit materials only. Target 90 fps on PCVR, so watch real-time lights and shadow casters.
 
 ### 6.2 Patient and anatomy (P2)
 - `Surgery/Anatomy/Prefabs/SurgicalPatient.prefab`: draped patient, zero pose at `ANCHOR_PatientRoot`, contains `ANCHOR_SurgicalSite_Knee_R`.
@@ -255,3 +271,4 @@ Every PR into `feature/surgery-complete` must state:
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-11-27 | Initial contract on baseline `c1b73d6` |
+| 1.1.0 | 2026-11-27 | `master` v0.6 merged in; anchor alias names from the environment branch accepted; `OperatingRoom.prefab` accepted; editor-only asmdefs per area; Environment asmdef gains `Unity.InputSystem`; test `.csproj` files tracked (`.gitignore` exception) |

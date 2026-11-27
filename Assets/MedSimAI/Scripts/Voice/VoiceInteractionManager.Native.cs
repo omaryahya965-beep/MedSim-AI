@@ -244,7 +244,7 @@ namespace MedSimAI.Voice
                 live = true, providerName = "Live AI (native voice)", speech = meta.text, usedFactIds = meta.factIds ?? new string[0], intent = meta.intent,
                 investigationId = string.IsNullOrEmpty(meta.investigationId) ? null : meta.investigationId, escalationRequested = meta.escalationRequested,
                 diagnosisNamed = meta.diagnosisNamed, isQuestion = meta.isQuestion, concepts = meta.concepts ?? new string[0], liveSource = meta.source,
-                action = meta.action, supervisorIntervention = meta.supervisorIntervention
+                action = meta.action, actions = meta.actions, supervisorIntervention = meta.supervisorIntervention
             };
             var turn = AI.Orchestrator.ApplyVoiceTurn(target, meta.heard, resp);
             TurnReady?.Invoke(turn);

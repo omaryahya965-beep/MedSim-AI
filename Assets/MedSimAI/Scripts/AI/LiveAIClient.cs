@@ -18,7 +18,7 @@ namespace MedSimAI.AI
 
     [Serializable] public class LiveTurnResponse
     {
-        public LiveAction action; public string supervisorIntervention;
+        public LiveAction action; public LiveAction[] actions; public string supervisorIntervention;
         public string persona, heard, text, lang, languageCommand, studentAct, emotion, intent, investigationId, source, rejected, audioId, error, model;
         public bool noSpeech;
         public string[] factIds, concepts, deterministicConcepts;

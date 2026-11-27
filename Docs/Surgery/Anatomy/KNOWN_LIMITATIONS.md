@@ -4,7 +4,11 @@
    - `SurgeryInstrumentTag`, `SurgeryAnatomyTag`, `SurgeryImplantTag` and `SurgeryEventBusHost` share `Shared/Unity/SurgerySceneTags.cs` with `SurgeryAnchor`. Unity cannot save them in prefabs or scenes.
    - My prefabs add them at runtime through bridges (execution order −1000). Before Play, the tags are not on the objects; tools must read the bridge fields.
    - Person 4 needs to split the file. Changing `Shared/` was outside my remit.
-2. **Branch base.** `feature/surgery-complete` is on v0.5 (`c1b73d6`), not on the v0.6 baseline (`4108aaf`). The v0.6 ER changes are not on my branch. My work adds files only in my folders.
+2. **Room fit (checked in the Editor only).** The patient fits Person 1's table. Open items are in INTEGRATION_GUIDE, "Checked in your merged OperatingRoom.prefab":
+   - the room's `SurgicalSite` transform is 0.39 m from the real knee site;
+   - the tray overlaps the room's placeholder containers;
+   - the left fingertips show at the drape edge;
+   - the body compresses about 2 cm into the deck pad.
 3. **Clinical status.** Everything is **DRAFT — NOT CLINICALLY VALIDATED**:
    - resection planes, cut thicknesses, guide-pin positions, exposure size, patella retraction and closure are illustrative placeholders;
    - the implants are generic shapes, not medical devices;
@@ -50,4 +54,4 @@
     - Measured only in the Editor game view.
     - The knee is about 184k triangles with no LODs (it is close-range hero geometry).
     - VR frame rate on the VIVE Focus 3 has not been measured.
-12. **Not verified on hardware.** No VIVE Focus 3 test. No integration with Person 1's room or Person 3's mechanics.
+12. **Not verified on hardware.** No VIVE Focus 3 test. Person 1's room was checked only in the Editor, not on the headset and not in `OperatingRoom.unity`. No integration with Person 3's mechanics.

@@ -5,7 +5,7 @@
     "MedSimAI.Surgery.Shared.Unity",
     "MedSimAI.Surgery.Anatomy",
     "MedSimAI.Surgery.Instruments",
-    "MedSimAI.Surgery.Assets.Editor",
+    "MedSimAI.Surgery.Anatomy.Editor",
     "Unity.XR.Interaction.Toolkit",
     "UnityEngine.TestRunner",
     "UnityEditor.TestRunner"

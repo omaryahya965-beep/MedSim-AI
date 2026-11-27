@@ -13,6 +13,18 @@
 - **Anaesthesia screen:** the drape includes an optional `ScreenFrame` (bar 0.56 m above the table at z +0.52). If your room has its own screen or IV poles, disable `SurgicalDrape/ScreenFrame`.
 - **Reflections:** metallic instruments and implants need a reflection probe in the OR. Without one, URP falls back to the skybox.
 
+### Checked in your merged `OperatingRoom.prefab` (contract 1.1, Editor Play mode)
+Patient at `PatientRoot` and populated tray at `InstrumentTable`. Screenshots `19_*`; script `tools/AnatomyRoomFitCheck.cs`.
+
+| Check | Result |
+|---|---|
+| Deck vs. drapes | Deck top y 0.92 = `PatientRoot`; sections span z −1.04…+1.05 and are 0.47–0.51 m wide, as the drapes assume. The patient lies on the seat section. |
+| Body vs. deck | The lowest body point is 21 mm below the deck top (373 of 25,776 vertices more than 5 mm below). It reads as compression into the pad; there is no visible clipping. |
+| `SurgeryAnchor.Find(ANCHOR_SurgicalSite_Knee_R)` | Returns **the patient's anchor** (−0.154, 1.318, −0.235), not the alias `SurgicalSite`. Code that reads the `SurgicalSite` transform directly is **0.39 m off** (straight-leg position). Please move it or stop using it. |
+| Surgeon view from `SurgeonPosition` + 1.65 m | The knee is clearly visible and in reach (`19b_integration_surgeon_view`). |
+| Tray on the back table | Fits the table footprint, but it **overlaps your placeholder instrument containers** at `InstrumentTable` (`19c_integration_instrument_table`). Hide those when the real tray is spawned, or give the tray its own anchor. |
+| Drape edge | The left hand's fingertips show at the far (patient-left) drape edge. This is cosmetic; I will fix it in a later drape pass. |
+
 ## Person 3: mechanics
 - **Targets:**
   - Find them via `GetComponentsInChildren<AnatomyTargetStateView>()` (it is the `IAnatomyStateView`) or, at runtime, via the contract's `SurgeryAnatomyTag`.
@@ -40,4 +52,4 @@
 - **Proposed extra ids:** `inst.forceps` and `inst.suction`. Add them to `InstrumentIds` if you want them in scenarios.
 - **Contract fix needed:** see PREFAB_CONTRACT "Shared components". Splitting `SurgerySceneTags.cs` makes the tags serializable; the bridges can stay as harmless helpers or be removed later.
 - **Credits:** merge the licence lines from [ASSET_LICENSES.md](ASSET_LICENSES.md) into `ASSET_CREDITS.md`. The Z-Anatomy-derived meshes require CC BY-SA 4.0 attribution.
-- **Branch base:** `feature/surgery-complete` is based on `c1b73d6` (v0.5), not on the v0.6 baseline `4108aaf`. Please merge or rebase it when integrating. My branch only adds files under my folders.
+- **Contract 1.1:** `feature/surgery-complete` at `e4fbd9c` (v0.6, room PR #1, contract 1.1.0) is merged into my branch. My editor code now lives in your editor-only asmdef `MedSimAI.Surgery.Anatomy.Editor`, to which I added references (Instruments, the Inspector, XRI, URP). My separate `MedSimAI.Surgery.Assets.Editor` asmdef is removed. I deleted the placeholder `AssemblyMarker.cs` files in Anatomy and Instruments because the folders now contain real code.

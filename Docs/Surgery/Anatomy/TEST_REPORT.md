@@ -1,17 +1,17 @@
 # Test Report: Person 2 assets (2026-11-28)
 
-Unity 6000.3.29f1, URP 17.3.0, Windows 11, NVIDIA RTX 3050 Laptop (4 GB). Branch `feature/surgery-anatomy-assets` on `origin/feature/surgery-complete` (`c9d03fe`, which itself sits on v0.5 `c1b73d6`). No paid API calls were made.
+Unity 6000.3.29f1, URP 17.3.0, Windows 11, NVIDIA RTX 3050 Laptop (4 GB). Branch `feature/surgery-anatomy-assets`, with `origin/feature/surgery-complete` at `e4fbd9c` merged in (v0.6 baseline `4108aaf`, Person 1's room PR #1, contract 1.1.0). No paid API calls were made.
 
-## Automated results
+## Automated results (after merging contract 1.1)
 | Suite | Result |
 |---|---|
-| Unity EditMode (whole project) | **127 / 127**: 98 existing ER tests + Person 4's shared-contract tests + **14 new** `SurgeryAnatomyAssetTests` |
-| Unity PlayMode (whole project) | **28 / 28**: 24 existing ER tests + **4 new** `SurgeryAnatomyRuntimePlayTests` |
-| Proxy (`node --test`) | **32 / 32**, unchanged (backend not touched; this branch's v0.5 baseline) |
+| Unity EditMode (whole project) | **133 / 133**: the v0.6 ER tests, Person 4's shared-contract tests, Person 1's `OperatingRoomTests` and **14 new** `SurgeryAnatomyAssetTests` |
+| Unity PlayMode (whole project) | **33 / 33**: 29 v0.6 ER tests + **4 new** `SurgeryAnatomyRuntimePlayTests` |
+| Proxy (`node --test`) | **34 / 34**, the v0.6 baseline (backend not touched) |
 | `SurgeryAssetValidator.ValidateAll()` | **0 issues** |
 | Compile | 0 errors |
 
-The baseline quoted in the brief (EditMode 98, PlayMode 29, proxy 34) is v0.6 on `master`. The integration branch is v0.5, whose ER baseline is EditMode 98, PlayMode 24 and proxy 32, all passing.
+Before the merge, on the v0.5 base `c9d03fe`, the results were EditMode 127/127, PlayMode 28/28 and proxy 32/32.
 
 ### New EditMode tests (`Assets/MedSimAI/Surgery/Tests/Anatomy/EditMode`)
 - **Validator, required prefabs:** no issues; every required prefab exists.
@@ -89,8 +89,9 @@ The baseline quoted in the brief (EditMode 98, PlayMode 29, proxy 34) is v0.6 on
 | 16 | `16_implant_placement_anchors`, `16b_components_seated_at_targets` | Placement anchors on the resected knee, and components seated |
 | 17 | `17_00…17_08_state_*`, `17_knee_state_sequence.gif` | Intact → marked → incised → exposed → guides → resected → trial → implanted → closed |
 | 18 | `18_asset_demonstration_scene` | Whole test scene |
+| 19 | `19_integration_room_overview`, `19b_integration_surgeon_view`, `19c_integration_instrument_table` | Patient and tray placed in Person 1's merged `OperatingRoom.prefab` at `PatientRoot` and `InstrumentTable` (Editor Play mode; findings in INTEGRATION_GUIDE) |
 
 ## Not verified
 - VIVE Focus 3 headset: rendering, scale perception, grabbing. **Not tested.**
-- Integration in Person 1's `OperatingRoom.prefab` and with Person 3's mechanics; their branches are not merged.
+- Person 1's room was checked only in the Editor with a temporary runtime instantiation (`tools/AnatomyRoomFitCheck.cs`). There is no integrated `OperatingRoom.unity` scene. Person 3's mechanics are not merged.
 - Clinical or anatomical review by a qualified specialist.

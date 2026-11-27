@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Compiles the engine-free surgical assemblies + their tests outside Unity. Run: dotnet run (from this folder). -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <RootNamespace>OffUnity</RootNamespace>
+    <NoWarn>CS0649;CS0414;CS0169;CS8632</NoWarn>
+    <S>../../../Assets/MedSimAI/Surgery</S>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../NUnitShim/*.cs" />
+    <Compile Include="$(S)/Shared/Runtime/**/*.cs;$(S)/Shared/Mocks/**/*.cs" />
+    <Compile Include="$(S)/Tests/Shared/**/*.cs" />
+    <!-- feature/surgery-ai-integration adds: AI/Core (engine-free) + Tests/Integration -->
+    <Compile Include="$(S)/AI/Core/**/*.cs" Condition="Exists('$(S)/AI/Core')" />
+    <Compile Include="$(S)/Tests/Integration/**/*.cs" Condition="Exists('$(S)/Tests/Integration')" />
+  </ItemGroup>
+</Project>

@@ -17,6 +17,15 @@ namespace MedSimAI.Surgery.Shared.Unity
         {
             if (registry.TryGetValue(id, out var a) && a) return a.transform;
             foreach (var x in Object.FindObjectsByType<SurgeryAnchor>(FindObjectsSortMode.None)) if (x.anchorId == id) { registry[id] = x; return x.transform; }
+            // Contract 1.1: accept the alias names (e.g. Person 1's IntegrationAnchors) and tag the transform so later lookups are fast.
+            var aliases = AnchorAliases.For(id);
+            if (aliases.Length == 0) return null;
+            foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsSortMode.None))
+                if (System.Array.IndexOf(aliases, t.name) >= 0)
+                {
+                    var tagged = t.gameObject.AddComponent<SurgeryAnchor>(); tagged.anchorId = id; registry[id] = tagged;
+                    return t;
+                }
             return null;
         }
 #if UNITY_EDITOR
