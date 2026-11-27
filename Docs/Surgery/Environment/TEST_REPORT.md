@@ -1,13 +1,13 @@
 # Operating room verification
 
-Unity 6000.3.29f1 compiled the MedSim AI project and generated the scene, room prefab, nested robot prefab, and navigation data. The contract-aligned build was tested on November 27, 2026.
+Unity 6000.3.29f1 compiled the MedSim AI project and generated the scene, room prefab, nested robot prefab, and navigation data. Verification ran on November 27, 2026 against surgery contract 1.1.0 and the v0.6 integration baseline at `e4fbd9c`.
 
 | Unity suite | Passed | Failed |
 | --- | ---: | ---: |
 | Environment Edit Mode | 7 | 0 |
 | Shared surgery contract Edit Mode | 15 | 0 |
 | Existing clinical Edit Mode | 98 | 0 |
-| Existing clinical Play Mode | 24 | 0 |
+| Existing clinical Play Mode | 29 | 0 |
 
 The environment checks covered the 13 shared anchor IDs and components, the patient support plane, rendered mesh and URP Lit material references, screen and fabric rendering inputs, doorway and player collisions, navigation to all four working and staff positions, robot joint and flange motion, and the entry event's player and session filters.
 
@@ -32,13 +32,13 @@ Unity 6000.3.29f1 macOS development player, Apple M3 with 24 GB unified memory, 
 
 | View | Pixels | Frames | Mean FPS | Median frame (ms) | p95 frame (ms) | Median GPU (ms) | p95 GPU (ms) | GPU samples |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 01-overview | 1920 × 1080 | 240 | 240.8 | 3.65 | 7.25 | 10.13 | 15.10 | 240 |
-| 02-surgeon | 1920 × 1080 | 240 | 205.3 | 4.28 | 7.13 | 12.30 | 14.04 | 240 |
-| 03-table | 1920 × 1080 | 240 | 352.2 | 2.85 | 3.14 | 6.40 | 7.53 | 240 |
-| 04-equipment | 1920 × 1080 | 240 | 313.7 | 3.33 | 3.62 | 7.56 | 9.04 | 240 |
-| 05-robot | 1920 × 1080 | 240 | 355.4 | 2.80 | 2.96 | 6.59 | 7.21 | 240 |
-| 06-entry | 1920 × 1080 | 240 | 438.8 | 2.19 | 2.95 | 5.06 | 6.59 | 240 |
-| All viewpoints | 1920 × 1080 | 1440 | 297.8 | 2.96 | 6.29 | 7.02 | 13.14 | 1440 |
+| 01-overview | 1920 × 1080 | 240 | 571.0 | 1.74 | 1.83 | 4.25 | 4.48 | 240 |
+| 02-surgeon | 1920 × 1080 | 240 | 530.2 | 1.89 | 2.00 | 4.29 | 4.61 | 240 |
+| 03-table | 1920 × 1080 | 240 | 499.7 | 2.02 | 2.11 | 4.69 | 4.94 | 240 |
+| 04-equipment | 1920 × 1080 | 240 | 563.6 | 1.79 | 1.88 | 4.17 | 4.34 | 240 |
+| 05-robot | 1920 × 1080 | 240 | 518.0 | 1.92 | 2.05 | 4.49 | 4.65 | 240 |
+| 06-entry | 1920 × 1080 | 240 | 674.4 | 1.48 | 1.55 | 3.49 | 3.60 | 240 |
+| All viewpoints | 1920 × 1080 | 1440 | 554.2 | 1.82 | 2.06 | 4.26 | 4.83 | 1440 |
 
 [Raw timing samples](Performance/mac-m3-1080p.csv)
 
@@ -50,4 +50,4 @@ Build the standalone fixture in batch mode using `-executeMethod MedSimAI.Surger
 
 ## Remaining verification
 
-The room follows surgery contract v1.0.0. Integrated testing with the patient, tools, staff and existing Desktop/XR rig remains open. The desktop timing sample covers the isolated environment camera. Windows RTX 3050 4 GB and physical VIVE Focus 3 verification requires target hardware.
+The room follows surgery contract v1.1.0. Integrated testing with the patient, tools, staff and existing Desktop/XR rig remains open. The desktop timing sample covers the isolated environment camera. Windows RTX 3050 4 GB and physical VIVE Focus 3 verification requires target hardware.

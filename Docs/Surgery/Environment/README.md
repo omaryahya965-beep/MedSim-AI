@@ -2,7 +2,7 @@
 
 Open `Assets/MedSimAI/Surgery/Scenes/OperatingRoom_Environment.unity` or the contract-named `Env_Test.unity` in Unity 6000.3.29f1. In Play Mode, use the left and right arrow keys to switch among six fixed viewpoints. The scenes use the project's URP settings.
 
-The contract entry point is `Assets/MedSimAI/Surgery/Environment/Prefabs/OperatingRoom_Env.prefab`, a variant of the reusable `OperatingRoom.prefab`. The nested `OrthopedicAssistRobot.prefab` can also be used independently. This branch started from `c1b73d6` and incorporated the shared integration contract at `c9d03fe`. [Surgery contract v1.0.0](../SURGERY_CONTRACT.md)
+The contract entry point is `Assets/MedSimAI/Surgery/Environment/Prefabs/OperatingRoom.prefab`. The `OperatingRoom_Env.prefab` variant also supports teams using the 1.0 prefab path. The nested `OrthopedicAssistRobot.prefab` can also be used independently. This branch started from `c1b73d6` and incorporated contract 1.1 and the v0.6 integration baseline at `e4fbd9c`. [Surgery contract v1.1.0](../SURGERY_CONTRACT.md)
 
 ## Scale and layout
 
@@ -53,7 +53,7 @@ Use the joint's local axis relative to its serialized rest rotation. The origina
 
 ## Integration
 
-1. Add one `OperatingRoom_Env.prefab` instance to the shared surgery scene. Align its root to the chosen room origin and check the shared scene's ambient lighting against the demo.
+1. Add one `OperatingRoom.prefab` instance to the shared surgery scene. Align its root to the chosen room origin and check the shared scene's ambient lighting against the demo.
 2. Move the existing Desktop and XR rig to `ANCHOR_PlayerSpawn`. Bind its root on the entry trigger with `RoomEntryPublisher.BindPlayer(rig.transform)`. Start the shared event-bus session before locomotion. The trigger accepts colliders under the bound rig and emits `player.entered_room` with source `environment` once per session. Solid walls, flooring, table sections, doorway leaves, carts, and the robot have environmental colliders.
 3. Register only the floor colliders under `Architecture/Walkable Floor` with the rig's existing XRI teleportation system. Use the project's teleport layer settings and landing clearance rules. Move the rig to a point whose controller capsule clears furniture after teleporting.
 4. Use the room root's collider-based, child-scoped `NavMeshSurface` for staff. Confirm the shared agent type, radius and height. Rebuild navigation after a layout, collider, or agent-size change.
