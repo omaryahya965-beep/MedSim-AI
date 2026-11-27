@@ -1,0 +1,85 @@
+{
+ "preset": "patient",
+ "missing": [],
+ "face_targets": true,
+ "objects": [
+  {
+   "name": "AdamReyes",
+   "type": "ARMATURE",
+   "bones": 53
+  },
+  {
+   "name": "Human",
+   "type": "MESH",
+   "verts": 12001,
+   "shapekeys": 75,
+   "materials": [
+    "Human.body"
+   ]
+  },
+  {
+   "name": "Human.eyebrow001",
+   "type": "MESH",
+   "verts": 124,
+   "shapekeys": 44,
+   "materials": [
+    "Human.eyebrow001"
+   ]
+  },
+  {
+   "name": "Human.eyelashes01",
+   "type": "MESH",
+   "verts": 250,
+   "shapekeys": 26,
+   "materials": [
+    "Human.eyelashes01"
+   ]
+  },
+  {
+   "name": "Human.low-poly",
+   "type": "MESH",
+   "verts": 96,
+   "shapekeys": 9,
+   "materials": [
+    "Human.low-poly"
+   ]
+  },
+  {
+   "name": "Human.short02",
+   "type": "MESH",
+   "verts": 1755,
+   "shapekeys": 49,
+   "materials": [
+    "Human.short02"
+   ]
+  },
+  {
+   "name": "Human.teeth_base",
+   "type": "MESH",
+   "verts": 3868,
+   "shapekeys": 20,
+   "materials": [
+    "Human.teeth_base"
+   ]
+  },
+  {
+   "name": "Human.toigo_shift_dress",
+   "type": "MESH",
+   "verts": 6892,
+   "shapekeys": 1,
+   "materials": [
+    "Human.toigo_shift_dress"
+   ]
+  },
+  {
+   "name": "Human.tongue01",
+   "type": "MESH",
+   "verts": 226,
+   "shapekeys": 21,
+   "materials": [
+    "Human.tongue01"
+   ]
+  }
+ ],
+ "fbx": "D:/Medical-Test/Tools/mpfb_out/patient\\AdamReyes.fbx"
+}

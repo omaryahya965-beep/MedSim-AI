@@ -1,0 +1,131 @@
+{
+  "scenarioId": "ER_CHEST_PAIN_001",
+  "version": "0.1.0",
+  "title": "Emergency Room — Chest Pain Assessment",
+  "language": "en",
+  "review": {
+    "status": "DRAFT",
+    "reviewerName": "",
+    "reviewerCredentials": "",
+    "reviewDate": "",
+    "notes": "Authored by software team for technical demonstration. Not reviewed by a licensed clinician."
+  },
+  "objectives": [
+    { "id": "OBJ_INTRO", "text": "Introduce yourself professionally, confirm the patient's identity and obtain consent." },
+    { "id": "OBJ_HISTORY", "text": "Obtain a focused chest pain history (onset, character, radiation, associated symptoms, severity)." },
+    { "id": "OBJ_RISK", "text": "Identify cardiovascular risk factors, medications and allergies." },
+    { "id": "OBJ_VITALS", "text": "Measure and interpret blood pressure, oxygen saturation and pulse." },
+    { "id": "OBJ_EXAM", "text": "Auscultate the heart and lungs." },
+    { "id": "OBJ_ECG", "text": "Obtain and review a 12-lead ECG early." },
+    { "id": "OBJ_ESCALATE", "text": "Recognise the need for urgent senior escalation and communicate your reasoning." }
+  ],
+  "patient": {
+    "displayName": "Mr. Adam Reyes",
+    "age": 58,
+    "sex": "male",
+    "occupation": "bus driver",
+    "fictionalNotice": "Fictional patient. Any resemblance to a real person is coincidental."
+  },
+  "chiefComplaint": "Central chest pain for about 45 minutes.",
+  "vitals": { "heartRate": 98, "systolic": 152, "diastolic": 94, "spo2": 96, "respiratoryRate": 20, "temperatureC": 37.0, "rhythm": "sinus" },
+  "historyFacts": [
+    { "id": "H_GREETING", "category": "communication", "keywords": ["hello","hi","my name is","i am a","i'm a","student","doctor"], "answer": "Hello, doctor. Thank you for coming. This pain is really worrying me.", "keyFact": false },
+    { "id": "H_IDENTITY", "category": "communication", "keywords": ["your name","date of birth","confirm who","who are you","full name"], "answer": "I'm Adam Reyes. I'm fifty-eight.", "keyFact": false },
+    { "id": "H_CONSENT", "category": "communication", "keywords": ["is it okay","may i","can i examine","consent","permission","alright if i"], "answer": "Yes, of course. Please do whatever you need to.", "keyFact": false },
+    { "id": "H_ONSET", "category": "history", "keywords": ["when did","start","began","how long","onset","started"], "answer": "It started about forty-five minutes ago. I was carrying shopping up the stairs.", "keyFact": true },
+    { "id": "H_CHARACTER", "category": "history", "keywords": ["describe","feel like","what kind","character","type of pain","sharp","dull","crushing","tight"], "answer": "It's a heavy, crushing feeling, like a weight sitting on my chest.", "keyFact": true },
+    { "id": "H_SITE", "category": "history", "keywords": ["where","location","point to","site"], "answer": "Right here, in the middle of my chest.", "keyFact": true },
+    { "id": "H_RADIATION", "category": "history", "keywords": ["spread","radiat","go anywhere","move","arm","jaw","neck","back"], "answer": "It goes into my left arm, and my jaw feels tight too.", "keyFact": true },
+    { "id": "H_SEVERITY", "category": "history", "keywords": ["how bad","scale","out of ten","severity","score","rate the pain"], "answer": "About eight out of ten.", "keyFact": true },
+    { "id": "H_ASSOCIATED", "category": "history", "keywords": ["other symptoms","sweat","nause","sick","vomit","short of breath","breath","dizzy","faint"], "answer": "I've been sweating a lot and I feel sick. A little short of breath, too.", "keyFact": true },
+    { "id": "H_TIMING", "category": "history", "keywords": ["constant","come and go","continuous","getting worse","better","relieve","rest"], "answer": "It hasn't gone away, even sitting still. Resting didn't help.", "keyFact": true },
+    { "id": "H_PREVIOUS", "category": "history", "keywords": ["before","previous","ever had","similar","happened"], "answer": "I've had a bit of tightness on hills over the last few weeks, but it always eased off quickly. Never like this.", "keyFact": true },
+    { "id": "H_PMH", "category": "risk", "keywords": ["medical history","medical conditions","health problems","illnesses","conditions","diabetes","blood pressure"], "answer": "I have high blood pressure and high cholesterol. No diabetes that I know of.", "keyFact": true },
+    { "id": "H_MEDS", "category": "risk", "keywords": ["medication","medicine","tablets","pills","take any","drugs"], "answer": "I take amlodipine for my blood pressure and atorvastatin for cholesterol.", "keyFact": true },
+    { "id": "H_ALLERGY", "category": "risk", "keywords": ["allerg","reaction"], "answer": "I'm allergic to penicillin. It gave me a rash.", "keyFact": true },
+    { "id": "H_SMOKING", "category": "risk", "keywords": ["smoke","cigarette","tobacco"], "answer": "I smoke about twenty a day. Have done for thirty years.", "keyFact": true },
+    { "id": "H_FAMILY", "category": "risk", "keywords": ["family","father","mother","parents","brother","sister","runs in"], "answer": "My father had a heart attack when he was fifty-five.", "keyFact": true },
+    { "id": "H_ALCOHOL", "category": "risk", "keywords": ["alcohol","drink","beer","wine"], "answer": "Just a couple of beers at the weekend.", "keyFact": false },
+    { "id": "H_SOCIAL", "category": "history", "keywords": ["work","job","live with","home","occupation"], "answer": "I drive buses. I live with my wife.", "keyFact": false }
+  ],
+  "unknownAnswers": [
+    "I'm sorry, I'm not sure about that.",
+    "I don't really know, doctor.",
+    "I can't remember, sorry."
+  ],
+  "examFindings": [
+    { "id": "EX_AUSC_HEART", "zoneIds": ["CHEST_AORTIC","CHEST_PULMONARY","CHEST_TRICUSPID","CHEST_MITRAL"], "instrument": "stethoscope", "finding": "Heart sounds: S1 and S2 present, regular rhythm, no added sounds or murmurs.", "soundKey": "heart_normal" },
+    { "id": "EX_AUSC_LUNGS", "zoneIds": ["CHEST_LUNG_L","CHEST_LUNG_R"], "instrument": "stethoscope", "finding": "Lungs: vesicular breath sounds bilaterally, no crackles or wheeze.", "soundKey": "lung_normal" },
+    { "id": "EX_BP", "zoneIds": ["ARM_UPPER_L","ARM_UPPER_R"], "instrument": "bp_cuff", "finding": "Blood pressure measured.", "soundKey": "" },
+    { "id": "EX_SPO2", "zoneIds": ["FINGER_L","FINGER_R"], "instrument": "pulse_oximeter", "finding": "Oxygen saturation and pulse measured on room air.", "soundKey": "" }
+  ],
+  "investigations": [
+    { "id": "INV_ECG", "name": "12-lead ECG", "keywords": ["ecg","ekg","electrocardiogram","12 lead","twelve lead"], "available": true, "result": "Sinus rhythm, rate approx. 98/min. ST-segment elevation in leads II, III and aVF with reciprocal ST depression in I and aVL. [SIMULATED EDUCATIONAL TRACING]", "imageKey": "ecg_inferior_ste" },
+    { "id": "INV_TROP", "name": "High-sensitivity troponin", "keywords": ["troponin","cardiac enzymes","biomarker"], "available": true, "result": "Sample sent to laboratory. Result not yet available within this simulation timeframe — management must not be delayed while awaiting it.", "imageKey": "" },
+    { "id": "INV_CXR", "name": "Portable chest X-ray", "keywords": ["x-ray","xray","chest film","cxr","radiograph"], "available": true, "result": "No acute cardiopulmonary abnormality. Mediastinum not widened. [SIMULATED REPORT]", "imageKey": "" },
+    { "id": "INV_GLUCOSE", "name": "Capillary blood glucose", "keywords": ["glucose","sugar","bm"], "available": true, "result": "6.2 mmol/L", "imageKey": "" },
+    { "id": "INV_ECHO", "name": "Formal echocardiogram", "keywords": ["echo","echocardiogram","ultrasound"], "available": false, "result": "Not available in this scenario.", "imageKey": "" }
+  ],
+  "transitions": [
+    { "id": "T_ESCALATED", "triggerEvent": "ESCALATION_REQUESTED", "message": "The senior team has been alerted and is on the way. Continue monitoring the patient.", "heartRate": 0, "systolic": 0, "diastolic": 0, "spo2": 0 }
+  ],
+  "escalationKeywords": ["senior","registrar","consultant","cardiology","cath lab","catheter","pci","escalate","call for help","stemi","heart attack","myocardial infarction"],
+  "rubric": [
+    { "id": "R_INTRO", "objectiveId": "OBJ_INTRO", "eventId": "FACT:H_GREETING", "points": 1, "category": "communication", "critical": false, "description": "Introduced self to the patient." },
+    { "id": "R_IDENTITY", "objectiveId": "OBJ_INTRO", "eventId": "FACT:H_IDENTITY", "points": 1, "category": "communication", "critical": false, "description": "Confirmed patient identity." },
+    { "id": "R_CONSENT", "objectiveId": "OBJ_INTRO", "eventId": "FACT:H_CONSENT", "points": 1, "category": "communication", "critical": false, "description": "Asked permission before examining." },
+    { "id": "R_ONSET", "objectiveId": "OBJ_HISTORY", "eventId": "FACT:H_ONSET", "points": 1, "category": "observable", "critical": false, "description": "Asked about onset." },
+    { "id": "R_CHARACTER", "objectiveId": "OBJ_HISTORY", "eventId": "FACT:H_CHARACTER", "points": 1, "category": "observable", "critical": false, "description": "Asked about the character of the pain." },
+    { "id": "R_RADIATION", "objectiveId": "OBJ_HISTORY", "eventId": "FACT:H_RADIATION", "points": 1, "category": "observable", "critical": false, "description": "Asked about radiation." },
+    { "id": "R_ASSOC", "objectiveId": "OBJ_HISTORY", "eventId": "FACT:H_ASSOCIATED", "points": 1, "category": "observable", "critical": false, "description": "Asked about associated symptoms." },
+    { "id": "R_SEVERITY", "objectiveId": "OBJ_HISTORY", "eventId": "FACT:H_SEVERITY", "points": 1, "category": "observable", "critical": false, "description": "Asked about severity." },
+    { "id": "R_PMH", "objectiveId": "OBJ_RISK", "eventId": "FACT:H_PMH", "points": 1, "category": "observable", "critical": false, "description": "Asked about past medical history." },
+    { "id": "R_MEDS", "objectiveId": "OBJ_RISK", "eventId": "FACT:H_MEDS", "points": 1, "category": "observable", "critical": false, "description": "Asked about medications." },
+    { "id": "R_ALLERGY", "objectiveId": "OBJ_RISK", "eventId": "FACT:H_ALLERGY", "points": 1, "category": "observable", "critical": true, "description": "Asked about allergies." },
+    { "id": "R_SMOKING", "objectiveId": "OBJ_RISK", "eventId": "FACT:H_SMOKING", "points": 1, "category": "observable", "critical": false, "description": "Asked about smoking." },
+    { "id": "R_FAMILY", "objectiveId": "OBJ_RISK", "eventId": "FACT:H_FAMILY", "points": 1, "category": "observable", "critical": false, "description": "Asked about family history." },
+    { "id": "R_BP", "objectiveId": "OBJ_VITALS", "eventId": "EXAM:EX_BP", "points": 2, "category": "observable", "critical": false, "description": "Measured blood pressure." },
+    { "id": "R_SPO2", "objectiveId": "OBJ_VITALS", "eventId": "EXAM:EX_SPO2", "points": 2, "category": "observable", "critical": false, "description": "Measured oxygen saturation." },
+    { "id": "R_HEART", "objectiveId": "OBJ_EXAM", "eventId": "EXAM:EX_AUSC_HEART", "points": 2, "category": "observable", "critical": false, "description": "Auscultated the heart." },
+    { "id": "R_LUNGS", "objectiveId": "OBJ_EXAM", "eventId": "EXAM:EX_AUSC_LUNGS", "points": 2, "category": "observable", "critical": false, "description": "Auscultated the lungs." },
+    { "id": "R_ECG", "objectiveId": "OBJ_ECG", "eventId": "INV:INV_ECG", "points": 3, "category": "observable", "critical": true, "description": "Requested a 12-lead ECG." },
+    { "id": "R_ECG_REVIEW", "objectiveId": "OBJ_ECG", "eventId": "ECG_REVIEWED", "points": 1, "category": "observable", "critical": false, "description": "Reviewed the ECG result." },
+    { "id": "R_ESCALATE", "objectiveId": "OBJ_ESCALATE", "eventId": "ESCALATION_REQUESTED", "points": 3, "category": "observable", "critical": true, "description": "Escalated urgently to the senior team." },
+    { "id": "R_SUMMARY", "objectiveId": "OBJ_ESCALATE", "eventId": "SUMMARY_GIVEN", "points": 2, "category": "communication", "critical": false, "description": "Summarised findings and reasoning to the supervisor." }
+  ],
+  "timedExpectations": [
+    { "eventId": "INV:INV_ECG", "withinSeconds": 600, "explanation": "Guidelines recommend a 12-lead ECG within 10 minutes of first medical contact for suspected acute coronary syndrome." }
+  ],
+  "hints": [
+    { "stage": "HistoryTaking", "order": 1, "text": "Think about the classic features of chest pain. How would you characterise it systematically?" },
+    { "stage": "HistoryTaking", "order": 2, "text": "Have you explored his cardiovascular risk factors and any allergies?" },
+    { "stage": "PhysicalExamination", "order": 1, "text": "Which bedside measurements would help you judge how unwell he is right now?" },
+    { "stage": "PhysicalExamination", "order": 2, "text": "The stethoscope, blood pressure cuff and pulse oximeter are on the trolley beside you." },
+    { "stage": "Investigations", "order": 1, "text": "Which single investigation should be done within minutes for anyone with suspected cardiac chest pain?" },
+    { "stage": "ClinicalReasoning", "order": 1, "text": "Look at the ECG again. What does the pattern suggest, and who needs to know now?" }
+  ],
+  "instructorLines": {
+    "welcome": "Welcome to the emergency department. I'm Doctor Sara Hassan, your supervising physician today. Mr. Reyes has come in with chest pain. Please assess him as you would a real patient: introduce yourself, take a focused history, examine him, and tell me what you would like to do.",
+    "tutorial": "Hold the grip button to pick up instruments. Point and press the trigger to use menus. Hold the primary button to talk, and release it when you are done speaking.",
+    "historyDone": "Good history. Now consider which bedside measurements you need.",
+    "examDone": "You've completed the core examination. What investigation would you prioritise?",
+    "ecgShown": "Here is the ECG. Take a moment to review it carefully.",
+    "reasoningPrompt": "Please summarise your findings for me, and tell me what you think needs to happen next.",
+    "escalationAck": "Thank you. That's an appropriate escalation. I'll support you while the team arrives.",
+    "debriefIntro": "Let's review your session together.",
+    "outOfScope": "That's outside what we can cover in this simulation. Please raise it with your clinical tutor.",
+    "noHintAvailable": "You're doing well. Keep going with your assessment.",
+    "onboardingRole": "You are the junior doctor on shift today, and I will supervise you. Speak to Mr. Reyes as you would to a real patient. Look at the person you want to talk to, hold the talk button, and simply ask your question.",
+    "onboardingInstruments": "Your stethoscope, blood pressure cuff and pulse oximeter are on the trolley beside the bed, and the ECG cart is near the foot of the bed. The tablet next to you has tests, hints and escalation. When you are ready, introduce yourself to Mr. Reyes."
+  },
+  "expectedReasoning": {
+    "workingDiagnosis": "Inferior ST-elevation myocardial infarction (STEMI)",
+    "keyPoints": ["Ischaemic-sounding central chest pain radiating to arm and jaw", "Multiple cardiovascular risk factors", "ST elevation in II, III, aVF with reciprocal changes", "Do not wait for troponin when ECG shows STEMI", "Urgent escalation for reperfusion per local pathway"],
+    "reasoningKeywords": ["stemi","st elevation","inferior","myocardial infarction","heart attack","acute coronary","reperfusion","cath lab","pci"]
+  },
+  "references": [
+    { "id": "REF_ESC_ACS_2023", "citation": "Byrne RA, Rossello X, Coughlan JJ, et al. 2023 ESC Guidelines for the management of acute coronary syndromes. Eur Heart J. 2023. doi:10.1093/eurheartj/ehad191", "url": "https://doi.org/10.1093/eurheartj/ehad191", "usedFor": "12-lead ECG within 10 minutes of first medical contact; STEMI recognition and reperfusion pathway." },
+    { "id": "REF_NICE_NG185", "citation": "NICE guideline NG185. Acute coronary syndromes. National Institute for Health and Care Excellence; published 18 November 2020.", "url": "https://www.nice.org.uk/guidance/ng185", "usedFor": "Assessment and management framework for ACS in UK practice." },
+    { "id": "REF_AHA_ACC_CP_2021", "citation": "Gulati M, Levy PD, Mukherjee D, et al. 2021 AHA/ACC/ASE/CHEST/SAEM/SCCT/SCMR Guideline for the Evaluation and Diagnosis of Chest Pain. Circulation. 2021;144(22):e368–e454. doi:10.1161/CIR.0000000000001029", "url": "https://doi.org/10.1161/CIR.0000000000001029", "usedFor": "Structured evaluation of acute chest pain; high-sensitivity troponin; describing pain as cardiac/possibly cardiac/noncardiac." }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "name": "MedSimAI.Tests",
+  "references": ["MedSimAI","UnityEngine.TestRunner","UnityEditor.TestRunner","Unity.RenderPipelines.Universal.Runtime","Unity.RenderPipelines.Core.Runtime","Unity.XR.Management","Unity.XR.Management.Editor","Unity.XR.OpenXR"],
+  "includePlatforms": ["Editor"],
+  "overrideReferences": true,
+  "precompiledReferences": ["nunit.framework.dll"],
+  "defineConstraints": ["UNITY_INCLUDE_TESTS"]
+}

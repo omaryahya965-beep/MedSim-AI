@@ -1,0 +1,103 @@
+{
+ "preset": "doctor",
+ "missing": [],
+ "face_targets": true,
+ "objects": [
+  {
+   "name": "DrSaraHassan",
+   "type": "ARMATURE",
+   "bones": 53
+  },
+  {
+   "name": "Human",
+   "type": "MESH",
+   "verts": 7790,
+   "shapekeys": 75,
+   "materials": [
+    "Human.body"
+   ]
+  },
+  {
+   "name": "Human.eyebrow010",
+   "type": "MESH",
+   "verts": 124,
+   "shapekeys": 26,
+   "materials": [
+    "Human.eyebrow010"
+   ]
+  },
+  {
+   "name": "Human.eyelashes02",
+   "type": "MESH",
+   "verts": 250,
+   "shapekeys": 26,
+   "materials": [
+    "Human.eyelashes02"
+   ]
+  },
+  {
+   "name": "Human.female_casualsuit01",
+   "type": "MESH",
+   "verts": 2197,
+   "shapekeys": 1,
+   "materials": [
+    "Human.female_casualsuit01"
+   ]
+  },
+  {
+   "name": "Human.low-poly",
+   "type": "MESH",
+   "verts": 96,
+   "shapekeys": 9,
+   "materials": [
+    "Human.low-poly"
+   ]
+  },
+  {
+   "name": "Human.punkduck_winter_coat",
+   "type": "MESH",
+   "verts": 3737,
+   "shapekeys": 1,
+   "materials": [
+    "Human.punkduck_winter_coat"
+   ]
+  },
+  {
+   "name": "Human.rehmanpolanski_hair_bun_brown",
+   "type": "MESH",
+   "verts": 2524,
+   "shapekeys": 22,
+   "materials": [
+    "Human.rehmanpolanski_hair_bun_brown"
+   ]
+  },
+  {
+   "name": "Human.shoes02",
+   "type": "MESH",
+   "verts": 1594,
+   "shapekeys": 1,
+   "materials": [
+    "Human.shoes02"
+   ]
+  },
+  {
+   "name": "Human.teeth_base",
+   "type": "MESH",
+   "verts": 3868,
+   "shapekeys": 20,
+   "materials": [
+    "Human.teeth_base"
+   ]
+  },
+  {
+   "name": "Human.tongue01",
+   "type": "MESH",
+   "verts": 226,
+   "shapekeys": 21,
+   "materials": [
+    "Human.tongue01"
+   ]
+  }
+ ],
+ "fbx": "D:/Medical-Test/Tools/mpfb_out/doctor\\DrSaraHassan.fbx"
+}

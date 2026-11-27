@@ -1,0 +1,58 @@
+patient	36eb0dbf	Hello, doctor. Thank you for coming. This pain is really worrying me.
+patient	82a440d2	I'm Adam Reyes. I'm fifty-eight.
+patient	8d9e4a37	Yes, of course. Please do whatever you need to.
+patient	f1d53898	It started about forty-five minutes ago. I was carrying shopping up the stairs.
+patient	7c2ecbb5	It's a heavy, crushing feeling, like a weight sitting on my chest.
+patient	a04bc898	Right here, in the middle of my chest.
+patient	164a08e3	It goes into my left arm, and my jaw feels tight too.
+patient	5b325b8d	About eight out of ten.
+patient	b393c32a	I've been sweating a lot and I feel sick. A little short of breath, too.
+patient	aa4ca5fd	It hasn't gone away, even sitting still. Resting didn't help.
+patient	4364b3d3	I've had a bit of tightness on hills over the last few weeks, but it always eased off quickly. Never like this.
+patient	a2ee2388	I have high blood pressure and high cholesterol. No diabetes that I know of.
+patient	0e3d6acb	I take amlodipine for my blood pressure and atorvastatin for cholesterol.
+patient	cd8dc972	I'm allergic to penicillin. It gave me a rash.
+patient	7b11cdc7	I smoke about twenty a day. Have done for thirty years.
+patient	6b93e1a0	My father had a heart attack when he was fifty-five.
+patient	4e054e41	Just a couple of beers at the weekend.
+patient	580d2522	I drive buses. I live with my wife.
+patient	c32918b0	I'm sorry, I'm not sure about that.
+patient	60351759	I don't really know, doctor.
+patient	edd06f03	I can't remember, sorry.
+patient	178a9ba3	Sorry, doctor, I don't follow. My chest really hurts.
+instructor	d29c18a7	I'll stay within this training scenario. Let's carry on with the assessment.
+patient	b709ef3d	I don't know how to do that, doctor.
+instructor	aa989bcd	The patient's observations come from the scenario and can't be changed by conversation. Measure them with the instruments.
+patient	dbb055a4	I can only tell you how I actually feel.
+instructor	62c179aa	Patient findings are fixed by the scenario. I can't add new ones.
+patient	900b5896	I was hoping you could tell me, doctor.
+instructor	1a447995	I'd like to hear your reasoning first. What do your findings suggest?
+patient	579c2c20	This is a training simulation and cannot give advice about real people. If someone has chest pain now, call your local emergency number.
+instructor	579c2c20	This is a training simulation and cannot give advice about real people. If someone has chest pain now, call your local emergency number.
+patient	ce790034	I don't know about medicines, sorry.
+instructor	36b9179e	Medication dosing is outside the scope of this prototype. Follow your local guidelines and senior advice.
+instructor	b0be1e8c	Welcome to the emergency department. I'm Doctor Sara Hassan, your supervising physician today. Mr. Reyes has come in with chest pain. Please assess him as you would a real patient: introduce yourself, take a focused history, examine him, and tell me what you would like to do.
+instructor	ce2cf209	You are the junior doctor on shift today, and I will supervise you. Speak to Mr. Reyes as you would to a real patient. Look at the person you want to talk to, hold the talk button, and simply ask your question.
+instructor	93fc5f20	Your stethoscope, blood pressure cuff and pulse oximeter are on the trolley beside the bed, and the ECG cart is near the foot of the bed. The tablet next to you has tests, hints and escalation. When you are ready, introduce yourself to Mr. Reyes.
+instructor	9214cf84	Hold the grip button to pick up instruments. Point and press the trigger to use menus. Hold the primary button to talk, and release it when you are done speaking.
+instructor	b533645c	Good history. Now consider which bedside measurements you need.
+instructor	bd4094eb	You've completed the core examination. What investigation would you prioritise?
+instructor	28c9f930	Here is the ECG. Take a moment to review it carefully.
+instructor	d37b6319	Please summarise your findings for me, and tell me what you think needs to happen next.
+instructor	03f2678b	Thank you. That's an appropriate escalation. I'll support you while the team arrives.
+instructor	806bf5d5	Let's review your session together.
+instructor	c0538367	That's outside what we can cover in this simulation. Please raise it with your clinical tutor.
+instructor	00dbbfcf	You're doing well. Keep going with your assessment.
+instructor	feffc8f5	Thank you. Given those findings, who else needs to be involved, and how urgently?
+instructor	5cb8e20f	Good question. Keep focusing on your assessment. Ask me for a hint any time, or tell me when you're ready to summarise.
+instructor	96e2dc06	Think about the classic features of chest pain. How would you characterise it systematically?
+instructor	9677c47f	Have you explored his cardiovascular risk factors and any allergies?
+instructor	5caec1b2	Which bedside measurements would help you judge how unwell he is right now?
+instructor	ae0d0199	The stethoscope, blood pressure cuff and pulse oximeter are on the trolley beside you.
+instructor	2ad61ecc	Which single investigation should be done within minutes for anyone with suspected cardiac chest pain?
+instructor	5d31910c	Look at the ECG again. What does the pattern suggest, and who needs to know now?
+instructor	851a3b32	I've arranged the 12-lead ECG. The result is on the display.
+instructor	8dd5aad4	I've arranged the High-sensitivity troponin. The result is on the display.
+instructor	e1f68efc	I've arranged the Portable chest X-ray. The result is on the display.
+instructor	98b4a64a	I've arranged the Capillary blood glucose. The result is on the display.
+instructor	9900f051	Formal echocardiogram is not available in this scenario.

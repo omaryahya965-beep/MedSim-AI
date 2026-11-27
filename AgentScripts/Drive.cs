@@ -1,0 +1,10 @@
+using System.Linq; using UnityEngine; using MedSimAI.Core; using MedSimAI.AI; using MedSimAI.Voice; using MedSimAI.Instruments;
+await Wait.Until(() => SessionManager.Instance != null && SessionManager.Instance.State == AppState.MainMenu);
+SessionManager.Instance.StartClinicalSession(true);
+await Wait.Until(() => SessionManager.Instance.State == AppState.Running || SessionManager.Instance.State == AppState.Tutorial);
+VoiceInteractionManager.Instance.Interrupt();
+await VoiceInteractionManager.Instance.Submit(Persona.Patient, "Can you describe what the pain feels like?");
+var cuff = Object.FindAnyObjectByType<BloodPressureController>(); var arm = Object.FindObjectsByType<PlacementZone>(FindObjectsSortMode.None).First(z => z.zoneId == "ARM_UPPER_L"); cuff.PlaceInZone(arm);
+var ox = Object.FindAnyObjectByType<PulseOximeterController>(); var f = Object.FindObjectsByType<PlacementZone>(FindObjectsSortMode.None).First(z => z.zoneId == "FINGER_L"); ox.PlaceInZone(f);
+Object.FindAnyObjectByType<ECGMachineController>().Record();
+return "driven";

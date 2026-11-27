@@ -1,0 +1,110 @@
+# MedSim AI — generate a realistic rigged MPFB2 character and export FBX for Unity.
+# Usage: blender --background --python make_character.py -- <preset> <out_dir>
+import importlib, sys, os, json, bpy
+
+def dyn(pkg, key):
+    for m in list(sys.modules):
+        if m.endswith(pkg):
+            mod = importlib.import_module(m)
+            if hasattr(mod, key):
+                return getattr(mod, key)
+    raise ValueError(pkg)
+
+HumanService = dyn("mpfb.services.humanservice", "HumanService")
+AssetService = dyn("mpfb.services.assetservice", "AssetService")
+ExportService = dyn("mpfb.services.exportservice", "ExportService")
+ObjectService = dyn("mpfb.services.objectservice", "ObjectService")
+TargetService = dyn("mpfb.services.targetservice", "TargetService")
+FaceService = dyn("mpfb.services.faceservice", "FaceService")
+
+PRESETS = {
+    "doctor": {
+        "macro": {"gender": 0.0, "age": 0.6, "muscle": 0.5, "weight": 0.45, "proportions": 0.7, "height": 0.55, "cupsize": 0.45, "firmness": 0.5,
+                  "race": {"caucasian": 0.6, "asian": 0.15, "african": 0.25}},
+        "skin": "young_caucasian_female.mhmat",
+        "assets": [("eyes", "low-poly.mhclo", "Eyes"), ("eyebrows", "eyebrow010.mhclo", "Eyebrows"), ("eyelashes", "eyelashes02.mhclo", "Eyelashes"),
+                   ("teeth", "teeth_base.mhclo", "Teeth"), ("tongue", "tongue01.mhclo", "Tongue"),
+                   ("hair", "rehmanpolanski_hair_bun_brown.mhclo", "Hair"),
+                   ("clothes", "female_casualsuit01.mhclo", "Clothes"), ("clothes", "punkduck_winter_coat.mhclo", "Clothes"), ("clothes", "shoes02.mhclo", "Clothes")],
+        "name": "DrSaraHassan",
+    },
+    "patient": {
+        "macro": {"gender": 1.0, "age": 0.86, "muscle": 0.42, "weight": 0.66, "proportions": 0.6, "height": 0.3, "cupsize": 0.5, "firmness": 0.4,
+                  "race": {"caucasian": 0.55, "asian": 0.1, "african": 0.35}},
+        "skin": "middleage_caucasian_male.mhmat",
+        "assets": [("eyes", "low-poly.mhclo", "Eyes"), ("eyebrows", "eyebrow001.mhclo", "Eyebrows"), ("eyelashes", "eyelashes01.mhclo", "Eyelashes"),
+                   ("teeth", "teeth_base.mhclo", "Teeth"), ("tongue", "tongue01.mhclo", "Tongue"),
+                   ("hair", "short02.mhclo", "Hair"), ("clothes", "toigo_shift_dress.mhclo", "Clothes")],
+        "name": "AdamReyes",
+    },
+}
+
+argv = sys.argv[sys.argv.index("--") + 1:]
+preset_name, out_dir = argv[0], argv[1]
+P = PRESETS[preset_name]
+os.makedirs(out_dir, exist_ok=True)
+report = {"preset": preset_name, "missing": []}
+
+# Clean scene
+bpy.ops.wm.read_factory_settings(use_empty=True)
+
+basemesh = HumanService.create_human(macro_detail_dict=P["macro"])
+skin = AssetService.find_asset_absolute_path(P["skin"], asset_subdir="skins")
+HumanService.set_character_skin(skin, basemesh, skin_type="GAMEENGINE", material_instances=False)
+HumanService.add_builtin_rig(basemesh, "game_engine")  # rig BEFORE assets so clothes get weights
+for sub, fname, atype in P["assets"]:
+    path = AssetService.find_asset_absolute_path(fname, asset_subdir=sub)
+    if path is None:
+        report["missing"].append(fname); print("MISSING", fname); continue
+    HumanService.add_mhclo_asset(path, basemesh, asset_type=atype, material_type="GAMEENGINE")
+
+# Push outer garments slightly outward so inner clothing never pokes through (metres; MPFB applies its scale)
+for _o in bpy.data.objects:
+    if _o.type == "MESH" and "winter_coat" in _o.name:
+        _o.data.calc_normals_split() if hasattr(_o.data, "calc_normals_split") else None
+        for _v in _o.data.vertices:
+            _v.co += _v.normal * 0.005
+        _o.data.update()
+
+# Bake modelling targets into the basis, then load facial targets for runtime lip-sync / blink / expressions.
+TargetService.bake_targets(basemesh)
+try:
+    FaceService.load_targets(basemesh, load_microsoft_visemes=True, load_meta_visemes=False, load_arkit_faceunits=True)
+    FaceService.interpolate_targets(basemesh)
+    report["face_targets"] = True
+except Exception as e:
+    report["face_targets"] = f"failed: {e}"
+    print("FACE TARGETS FAILED", e)
+
+
+export_root = basemesh.parent if basemesh.parent else basemesh  # export originals (copy helper skips grandchildren)
+export_basemesh = basemesh
+ExportService.bake_modifiers_remove_helpers(export_basemesh, bake_masks=True, bake_subdiv=False, remove_helpers=True, also_proxy=True)
+
+bpy.ops.object.select_all(action="DESELECT")
+export_root.select_set(True)
+for child in export_root.children_recursive:
+    child.select_set(True)
+bpy.context.view_layer.objects.active = export_root
+export_root.name = P["name"]
+
+report["objects"] = []
+for o in [export_root] + list(export_root.children_recursive):
+    entry = {"name": o.name, "type": o.type}
+    if o.type == "MESH":
+        entry["verts"] = len(o.data.vertices)
+        entry["shapekeys"] = len(o.data.shape_keys.key_blocks) if o.data.shape_keys else 0
+        entry["materials"] = [m.name for m in o.data.materials if m]
+    if o.type == "ARMATURE":
+        entry["bones"] = len(o.data.bones)
+    report["objects"].append(entry)
+
+fbx = os.path.join(out_dir, P["name"] + ".fbx")
+bpy.ops.export_scene.fbx(filepath=fbx, use_selection=True, add_leaf_bones=False, bake_anim=False,
+                         path_mode="COPY", embed_textures=False, use_mesh_modifiers=False,
+                         mesh_smooth_type="FACE", axis_forward="-Z", axis_up="Y", apply_scale_options="FBX_SCALE_UNITS",
+                         use_armature_deform_only=True)
+report["fbx"] = fbx
+with open(os.path.join(out_dir, P["name"] + "_report.json"), "w") as f:
+    json.dump(report, f, indent=1)
+print("MEDSIM_CHARACTER_OK", json.dumps(report)[:1500])
