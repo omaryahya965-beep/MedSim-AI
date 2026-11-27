@@ -50,7 +50,9 @@ jobs:
           checkName: Unity test results
       - uses: actions/upload-artifact@v4
         if: always()
-        with: { name: unity-test-results, path: ${{ steps.tests.outputs.artifactsPath }} }
+        with:
+          name: unity-test-results
+          path: ${{ steps.tests.outputs.artifactsPath }}
 
   desktop-build:
     name: Surgery scenes + Windows desktop build
