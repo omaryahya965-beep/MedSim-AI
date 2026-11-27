@@ -50,8 +50,11 @@ jobs:
           MOD="$MODULE"; t=""
           # Exact project version first, then the nearest older 6000.3 patch that GameCI has published.
           for n in $(seq 29 -1 0) $(seq 30 60); do
-            cand="ubuntu-6000.3.${n}f1-${MOD}-3"
-            if docker manifest inspect "unityci/editor:$cand" > /dev/null 2>&1; then t="$cand"; break; fi
+            for suf in 3 3.2.2 3.2 3.1.0 3.1; do
+              cand="ubuntu-6000.3.${n}f1-${MOD}-${suf}"
+              if docker manifest inspect "unityci/editor:$cand" > /dev/null 2>&1; then t="$cand"; break; fi
+            done
+            [ -n "$t" ] && break
           done
           [ -n "$t" ] || { echo "::error::No unityci/editor 6000.3.x ${MOD} image found"; exit 1; }
           echo "Using unityci/editor:$t (project is 6000.3.29f1)"; echo "image=unityci/editor:$t" >> "$GITHUB_OUTPUT"
