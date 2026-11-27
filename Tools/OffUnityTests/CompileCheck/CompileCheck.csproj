@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Type-checks Surgery's Unity-side scripts against a tiny UnityEngine stub. Catches typos / API misuse without Unity.
+       It cannot catch Unity-only issues (serialization, scene references, missing packages). Run: dotnet build -->
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <DefineConstants>$(DefineConstants);UNITY_5_3_OR_NEWER;UNITY_EDITOR;OFF_UNITY_STUB</DefineConstants>
+    <NoWarn>CS0649;CS0414;CS0169;CS0067;CS8632</NoWarn>
+    <S>../../../Assets/MedSimAI/Surgery</S>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../UnityStub/*.cs" />
+    <Compile Include="MedSimStub.cs" Condition="'$(IncludeP4Unity)'=='true'" />
+    <Compile Include="$(S)/Shared/**/*.cs" Exclude="$(S)/**/Editor/**" />
+    <!-- Other areas are verified in Unity by their owners; their scripts use APIs this stub does not model. -->
+    <Compile Include="$(S)/AI/**/*.cs;$(S)/Characters/**/*.cs;$(S)/UI/**/*.cs;$(S)/Integration/**/*.cs" Exclude="$(S)/Integration/Editor/**" Condition="'$(IncludeP4Unity)'=='true'" />
+  </ItemGroup>
+</Project>

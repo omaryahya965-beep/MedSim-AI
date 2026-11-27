@@ -8,6 +8,7 @@
 /[Uu]ser[Ss]ettings/
 /[Mm]emoryCaptures/
 *.csproj
+!Tools/OffUnityTests/**/*.csproj
 *.sln
 *.suo
 *.user
