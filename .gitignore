@@ -26,3 +26,6 @@ Backend/medsim-proxy/node_modules/
 Backend/medsim-proxy/data/
 # Staging downloads (raw third-party sources, imported copies live under Assets)
 /AssetStaging/
+# Off-Unity test harness build output
+Tools/OffUnityTests/**/bin/
+Tools/OffUnityTests/**/obj/

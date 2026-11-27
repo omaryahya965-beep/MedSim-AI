@@ -1,0 +1,6 @@
+{
+  "name": "MedSimAI.Surgery.Instruments",
+  "rootNamespace": "MedSimAI.Surgery.Instruments",
+  "references": ["MedSimAI.Surgery.Shared","MedSimAI.Surgery.Shared.Unity","Unity.XR.Interaction.Toolkit"],
+  "autoReferenced": true
+}
