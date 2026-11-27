@@ -26,6 +26,9 @@ const only = process.argv[3]; const lines = [
   ['student_ar_dr_ecg', 'ar', 'coral', 'دكتورة، بدي أعمل ECG للمريض هلّق.'],
   ['student_ar_reassure', 'ar', 'coral', 'ما تخاف يا عمو، إحنا معك ورح نعتني فيك.'],
   ['student_en_cmd', 'en', 'alloy', 'Can we switch back to English please?'],
+  ['student_ar_act_sit', 'ar', 'coral', 'عمو، ممكن تقعد شوي؟'],
+  ['student_ar_act_raise', 'ar', 'coral', 'ارفع إيدك الشمال لو سمحت.'],
+  ['student_ar_dr_stepback', 'ar', 'coral', 'دكتورة، ممكن تبعدي شوي عشان أفحص المريض؟'],
   ['student_ar_onset', 'ar', 'coral', 'مرحبا عمو، أنا طالبة طب. من أيمتى بلش معك الوجع؟'],
 ];
 for (const [name, lang, voice, text] of lines.filter(l => !only || l[0] === only)) {

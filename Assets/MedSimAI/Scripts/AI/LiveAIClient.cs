@@ -13,8 +13,12 @@ namespace MedSimAI.AI
 
     [Serializable] public class LiveContext { public string stage, stateId, discussionId; public string[] events; public string[] missing; }
 
+    /// <summary>A physical action proposed by the AI and validated by the proxy (fixed catalogue; status accepted | denied | clarify | none).</summary>
+    [Serializable] public class LiveAction { public string type = "none", side = "none", instrument = "none", status = "none", reason; }
+
     [Serializable] public class LiveTurnResponse
     {
+        public LiveAction action; public string supervisorIntervention;
         public string persona, heard, text, lang, languageCommand, studentAct, emotion, intent, investigationId, source, rejected, audioId, error, model;
         public bool noSpeech;
         public string[] factIds, concepts, deterministicConcepts;
@@ -174,6 +178,14 @@ namespace MedSimAI.AI
             if (!string.IsNullOrEmpty(token)) www.SetRequestHeader("X-MedSim-Client", token);
             return www;
         }
+
+        /// <summary>Reports what really happened to a physical action, so the AI never contradicts the scene.</summary>
+        public async void PostActionResult(Persona p, LiveAction a, string status)
+        {
+            if (string.IsNullOrEmpty(SessionId) || a == null) return;
+            try { await PostJson("/v1/action-result", new ActionResultReq { sessionId = SessionId, persona = p.ToString(), type = a.type, side = a.side, status = status }, default); } catch { }
+        }
+        [Serializable] class ActionResultReq { public string sessionId, persona, type, side, status; }
 
         public void ReportError(long code, string body) => SetStatus(LiveStatus.Offline, FriendlyError(code, body));
         public void ReportOnline() => SetStatus(LiveStatus.Online);

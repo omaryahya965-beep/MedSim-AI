@@ -243,7 +243,8 @@ namespace MedSimAI.Voice
             {
                 live = true, providerName = "Live AI (native voice)", speech = meta.text, usedFactIds = meta.factIds ?? new string[0], intent = meta.intent,
                 investigationId = string.IsNullOrEmpty(meta.investigationId) ? null : meta.investigationId, escalationRequested = meta.escalationRequested,
-                diagnosisNamed = meta.diagnosisNamed, isQuestion = meta.isQuestion, concepts = meta.concepts ?? new string[0], liveSource = meta.source
+                diagnosisNamed = meta.diagnosisNamed, isQuestion = meta.isQuestion, concepts = meta.concepts ?? new string[0], liveSource = meta.source,
+                action = meta.action, supervisorIntervention = meta.supervisorIntervention
             };
             var turn = AI.Orchestrator.ApplyVoiceTurn(target, meta.heard, resp);
             TurnReady?.Invoke(turn);
@@ -255,6 +256,7 @@ namespace MedSimAI.Voice
             SetState(VoiceState.Speaking);
             if (turn.responseText != meta.text) { stream.Cancel(); speaker.Speak(turn.responseText); } // client safety guard replaced the reply: never voice the original
             else speaker.SpeakStreaming(turn.responseText, stream);
+            MedSimAI.Characters.CharacterActionRouter.Handle(turn); // the body moves while the acknowledgement is spoken
             while (stream.FirstAudioTime < 0 && !stream.Drained && !done) yield return null;
             if (stream.FirstAudioTime > 0) LastFirstAudioMs = (stream.FirstAudioTime - tEnd) * 1000f;
             Debug.Log($"[MedSim] Native voice turn ({target}): understood {LastUnderstoodMs:0} ms, first audio {LastFirstAudioMs:0} ms after end of speech · source {meta.source}{(string.IsNullOrEmpty(meta.rejected) ? "" : " · reply rejected by grounding (" + meta.rejected + ")")}");

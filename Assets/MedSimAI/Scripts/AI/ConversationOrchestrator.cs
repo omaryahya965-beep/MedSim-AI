@@ -168,6 +168,9 @@ namespace MedSimAI.AI
         /// </summary>
         string ApplyLive(Persona target, AIResponse r, ConversationTurn turn, string utterance)
         {
+            turn.action = r.action; turn.supervisorIntervention = r.supervisorIntervention;
+            if (r.action != null && r.action.status != "none" && !string.IsNullOrEmpty(r.action.type) && r.action.type != "none")
+                session.Record("ACTION_REQUESTED", $"{target}:{r.action.type}:{r.action.side}:{r.action.status}"); // logged for the debrief, never scored
             var s = session.Scenario;
             if (target == Persona.Patient)
             {

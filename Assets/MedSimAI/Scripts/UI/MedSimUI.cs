@@ -57,8 +57,7 @@ namespace MedSimAI.UI
         {
             BuildMenu(); BuildTablet(); BuildSubtitles();
             S.StateChanged += OnAppState; S.DebriefReady += OnDebrief;
-            CharacterSpeechController.SubtitleStarted += (c, t) => { bool show = SubtitlesEnabled || AIProviderManager.Instance.Mode != ConversationMode.OnlineAI || AIProviderManager.Instance.Live.Status == LiveStatus.Offline; speakerText.text = show ? $"<b>{c.displayName}</b>" : ""; ArabicShaper.Apply(subtitleText, show ? t : ""); }; // text-only fallback always shows subtitles
-            CharacterSpeechController.SubtitleEnded += c => { };
+            CharacterSpeechController.SubtitleStarted += OnSubtitleStarted; // unsubscribed in OnDestroy (static event outlives the scene)
             ClinicalFeedbackBus.Finding += (title, text) => { findings.Insert(0, $"<b>{title}</b>\n{text}"); RefreshFindings(); Toast($"<b>{title}</b>  {text}"); };
             var v = VoiceInteractionManager.Instance;
             v.StateChanged += _ => RefreshVoice(); v.TargetChanged += _ => RefreshVoice();
@@ -245,7 +244,7 @@ namespace MedSimAI.UI
                     if (c == subtitleCanvas && rt.name != "Bar") continue;
                     rt.anchorMin = rt.anchorMax = c == subtitleCanvas ? new Vector2(0.5f, 0f) : new Vector2(0.5f, 0.5f);
                     rt.pivot = c == subtitleCanvas ? new Vector2(0.5f, 0f) : new Vector2(0.5f, 0.5f);
-                    rt.sizeDelta = c == subtitleCanvas ? new Vector2(1100, 190) : size; rt.anchoredPosition = c == subtitleCanvas ? new Vector2(0, 40) : Vector2.zero;
+                    rt.sizeDelta = c == subtitleCanvas ? new Vector2(1060, PanelH) : size; rt.anchoredPosition = c == subtitleCanvas ? new Vector2(0, 40) : Vector2.zero;
                     rt.localScale = Vector3.one; rt.localRotation = Quaternion.identity;
                 }
             }
@@ -396,16 +395,69 @@ namespace MedSimAI.UI
         // ---------------- Subtitles / voice indicator ----------------
         void BuildSubtitles()
         {
-            subtitleCanvas = UIFactory.WorldCanvas("Subtitles", transform, new Vector2(900, 210));
-            var root = UIFactory.Panel(subtitleCanvas.transform, "Bar", new Color(0.04f, 0.1f, 0.18f, 0.82f));
-            speakerText = UIFactory.Text(root, "", 20, Brand.TealLight, TextAlignmentOptions.TopLeft); UIFactory.Place(speakerText.rectTransform, new Vector2(0, 0.8f), Vector2.one, new Vector2(20, 0), new Vector2(-20, -8));
-            subtitleText = UIFactory.Text(root, "", 27, Brand.White, TextAlignmentOptions.TopLeft); UIFactory.Place(subtitleText.rectTransform, new Vector2(0, 0.36f), new Vector2(1, 0.82f), new Vector2(20, 0), new Vector2(-20, 0));
-            var dot = UIFactory.Panel(root, "Dot", Brand.Muted, new Vector2(22, 22)); dot.anchorMin = dot.anchorMax = new Vector2(0, 0); dot.anchoredPosition = new Vector2(30, 34); voiceDot = dot.GetComponent<Image>();
-            voiceText = UIFactory.Text(root, "", 20, Brand.Muted, TextAlignmentOptions.MidlineLeft); UIFactory.Place(voiceText.rectTransform, Vector2.zero, new Vector2(1, 0.36f), new Vector2(54, 6), new Vector2(-20, 0));
+            // Conversation panel (v0.5). Fixed size (never resizes while speech streams in), with measured rows:
+            //   header (speaker name + status) · character response (max 3 lines, paged in step with the speech) ·
+            //   divider · student transcript (max 2 lines, paged). Text never overlaps and never leaves the panel.
+            subtitleCanvas = UIFactory.WorldCanvas("Subtitles", transform, new Vector2(900, PanelH));
+            var root = UIFactory.Panel(subtitleCanvas.transform, "Bar", new Color(0.035f, 0.07f, 0.12f, 0.78f));
+            RectTransform Row(string n, float top, float height, float left = 24, float right = 24)
+            {
+                var r = new GameObject(n, typeof(RectTransform)).GetComponent<RectTransform>(); r.SetParent(root, false);
+                r.anchorMin = new Vector2(0, 1); r.anchorMax = new Vector2(1, 1); r.pivot = new Vector2(0.5f, 1);
+                r.offsetMin = new Vector2(left, -top - height); r.offsetMax = new Vector2(-right, -top); return r;
+            }
+            TMP_Text Fit(TMP_Text t, RectTransform into, float size, Color c, TextOverflowModes mode, float lineSpacing = 0)
+            {
+                t.rectTransform.SetParent(into, false); t.rectTransform.anchorMin = Vector2.zero; t.rectTransform.anchorMax = Vector2.one; t.rectTransform.offsetMin = t.rectTransform.offsetMax = Vector2.zero;
+                t.fontSize = size; t.color = c; t.enableWordWrapping = true; t.overflowMode = mode; t.lineSpacing = lineSpacing; t.enableAutoSizing = false; t.margin = Vector4.zero; return t;
+            }
+            var header = Row("Header", 12, 30);
+            speakerText = Fit(UIFactory.Text(header, "", 20, Brand.TealLight, TextAlignmentOptions.MidlineLeft), header, 20, Brand.TealLight, TextOverflowModes.Ellipsis); speakerText.fontStyle = FontStyles.Bold;
+            var statusBox = Row("Status", 12, 30, 24, 24);
+            statusText = Fit(UIFactory.Text(statusBox, "", 16, Brand.Muted, TextAlignmentOptions.MidlineRight), statusBox, 16, new Color(0.6f, 0.66f, 0.74f), TextOverflowModes.Ellipsis);
+            statusText.alignment = TextAlignmentOptions.MidlineRight;
+            var dot = UIFactory.Panel(statusBox, "Dot", Brand.Muted, new Vector2(12, 12)); dot.anchorMin = dot.anchorMax = new Vector2(1, 0.5f); dot.anchoredPosition = new Vector2(16, 0); voiceDot = dot.GetComponent<Image>();
+            var body = Row("Response", 48, ResponseH);
+            subtitleText = Fit(UIFactory.Text(body, "", 25, Brand.White, TextAlignmentOptions.TopLeft), body, 25, new Color(0.96f, 0.97f, 0.98f), TextOverflowModes.Page, 4);
+            var pageBox = Row("Page", 48 + ResponseH - 4, 18);
+            pageText = Fit(UIFactory.Text(pageBox, "", 14, Brand.Muted, TextAlignmentOptions.BottomRight), pageBox, 14, new Color(0.55f, 0.6f, 0.68f), TextOverflowModes.Ellipsis);
+            pageText.alignment = TextAlignmentOptions.BottomRight;
+            var div = UIFactory.Panel(Row("Divider", 48 + ResponseH + 16, 1), "Line", new Color(1, 1, 1, 0.09f)); div.anchorMin = Vector2.zero; div.anchorMax = Vector2.one; div.offsetMin = div.offsetMax = Vector2.zero;
+            var student = Row("Student", 48 + ResponseH + 24, StudentH);
+            voiceText = Fit(UIFactory.Text(student, "", 18, Brand.Muted, TextAlignmentOptions.TopLeft), student, 18, new Color(0.72f, 0.77f, 0.85f), TextOverflowModes.Page, 2);
             toastText = UIFactory.Text(subtitleCanvas.transform, "", 22, Brand.TealLight, TextAlignmentOptions.Bottom); UIFactory.Place(toastText.rectTransform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, 8), new Vector2(0, 120));
         }
 
+        void OnSubtitleStarted(CharacterSpeechController c, string t)
+        {
+            if (!this || !subtitleText || !speakerText) return;
+            bool show = SubtitlesEnabled || AIProviderManager.Instance.Mode != ConversationMode.OnlineAI || AIProviderManager.Instance.Live.Status == LiveStatus.Offline; currentSpeaker = c; bool ar = ArabicShaper.ContainsArabic(t); ArabicShaper.Apply(speakerText, show ? LocalName(c, ar) : ""); subtitleText.pageToDisplay = 1; ArabicShaper.Apply(subtitleText, show ? t : ""); subtitleText.ForceMeshUpdate(); 
+        }
+        void OnDestroy() { CharacterSpeechController.SubtitleStarted -= OnSubtitleStarted; }
+
         void Toast(string msg) { if (!toastText) return; toastText.text = msg; toastUntil = Time.unscaledTime + 6f; }
+
+        // ---- conversation panel geometry (canvas units) and paging
+        const float ResponseH = 114f, StudentH = 48f, PanelH = 48 + ResponseH + 24 + StudentH + 12; // 234
+        TMP_Text statusText, pageText; CharacterSpeechController currentSpeaker; float studentPageAt;
+        static string LocalName(CharacterSpeechController c, bool ar) => !ar ? c.displayName : c.persona == Persona.Patient ? "السيد آدم رييس (المريض)" : "د. سارة حسن (المشرفة)";
+
+        /// <summary>Response paging follows the speech: page = progress × pages. Transcript pages rotate every 4 s.</summary>
+        void UpdateConversationPaging()
+        {
+            if (!subtitleText) return;
+            int pages = Mathf.Max(1, subtitleText.textInfo.pageCount);
+            if (pages > 1)
+            {
+                float prog = currentSpeaker && currentSpeaker.IsSpeaking ? currentSpeaker.Progress : 1f;
+                int page = Mathf.Clamp(1 + (int)(prog * pages * 1.08f), 1, pages); // slightly ahead so reading keeps up with listening
+                if (subtitleText.pageToDisplay != page) subtitleText.pageToDisplay = page;
+                if (pageText) pageText.text = $"{page}/{pages}";
+            }
+            else if (pageText && pageText.text.Length > 0) pageText.text = "";
+            int sp = Mathf.Max(1, voiceText ? voiceText.textInfo.pageCount : 1);
+            if (voiceText && sp > 1 && Time.unscaledTime > studentPageAt) { voiceText.pageToDisplay = voiceText.pageToDisplay % sp + 1; studentPageAt = Time.unscaledTime + 4f; }
+        }
 
         TMP_Text languageButtonText; bool voiceHint = true;
         static string LanguageButtonLabel() => "Language: " + AIProviderManager.Instance.LanguageModeLabel;
@@ -414,7 +466,7 @@ namespace MedSimAI.UI
         /// <summary>The student's own words (what the Realtime session heard): Arabic is shaped and shown right-to-left.</summary>
         void ShowTranscript(string t)
         {
-            voiceHint = false;
+            voiceHint = false; voiceText.pageToDisplay = 1; studentPageAt = Time.unscaledTime + 4f;
             if (ArabicShaper.ContainsArabic(t)) ArabicShaper.Apply(voiceText, "أنت: " + t);
             else ArabicShaper.Apply(voiceText, $"<color=#8892B0>You:</color> {t}");
         }
@@ -424,9 +476,15 @@ namespace MedSimAI.UI
         {
             var v = VoiceInteractionManager.Instance; if (!voiceDot || v == null) return;
             string who = v.Target == Persona.Patient ? "Patient" : "Supervisor";
+            if (statusText)
+            {
+                bool arS = ArabicUi;
+                string st = v.State == VoiceState.Listening ? (arS ? "أستمع إليك…" : "Listening…") : v.State == VoiceState.Thinking || v.State == VoiceState.Transcribing ? (arS ? "يفكّر…" : "Thinking…") : v.State == VoiceState.Speaking ? (arS ? "يتحدّث" : "Speaking") : "";
+                ArabicShaper.Apply(statusText, st); statusText.horizontalAlignment = arS ? HorizontalAlignmentOptions.Left : HorizontalAlignmentOptions.Right; // opposite side to the speaker name
+            }
             switch (v.State)
             {
-                case VoiceState.Listening: voiceDot.color = Brand.Danger; voiceHint = true; SetVoiceLine($"• Listening… (talking to {who}) — {(v.Mic == MicMode.HandsFree ? "pause to send" : "release to send")}", "• أستمع إليك… " + (v.Target == Persona.Patient ? "(للمريض)" : "(للطبيبة)")); break;
+                case VoiceState.Listening: voiceDot.color = Brand.Danger; voiceHint = true; SetVoiceLine($"Talking to the {who} — {(v.Mic == MicMode.HandsFree ? "pause to send" : "release to send")}", (v.Target == Persona.Patient ? "تتحدث مع المريض — " : "تتحدث مع الطبيبة — ") + (v.Mic == MicMode.HandsFree ? "توقّف لحظة للإرسال" : "اترك الزر للإرسال")); break;
                 case VoiceState.Transcribing: voiceDot.color = Brand.Warn; voiceHint = true; SetVoiceLine("Transcribing…", "…"); break;
                 case VoiceState.Thinking: voiceDot.color = Brand.Blue; break;
                 case VoiceState.Speaking: voiceDot.color = Brand.Teal; break;
@@ -441,6 +499,7 @@ namespace MedSimAI.UI
         void LateUpdate()
         {
             if (toastText && toastText.text.Length > 0 && Time.unscaledTime > toastUntil) toastText.text = "";
+            UpdateConversationPaging();
             if (Time.frameCount % 30 == 0) RefreshProgress();
             if (perfText && Time.frameCount % 45 == 0 && MedSimAI.Core.PerformanceManager.Instance) { var pm = MedSimAI.Core.PerformanceManager.Instance; perfText.text = $"<color=#8892B0>Measured now: {pm.AverageFrameMs:0.0} ms/frame (≈{1000f / Mathf.Max(1, pm.AverageFrameMs):0} fps), GPU {pm.GpuFrameMs:0.0} ms. Headset target: 11.1 ms (90 Hz).</color>"; }
             // Lazy-follow subtitle bar: ~1.4 m ahead, 0.45 m below eye line; only re-centres when far off-axis (comfort).

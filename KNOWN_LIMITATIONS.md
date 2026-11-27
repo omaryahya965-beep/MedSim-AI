@@ -1,4 +1,11 @@
-# Known Limitations (v0.4, 2026-11-27)
+# Known Limitations (v0.5, 2026-11-27)
+
+**v0.5 notes.**
+- **Embodied actions are procedural** (IK and posture layers), not motion capture. Legs never move, since the patient stays under the blanket.
+- **The default speech model sometimes mishears short colloquial Arabic commands.** Seen once: «عمو، ممكن تقعد شوي؟» was heard as a request to be examined. Repeating the request or using `gpt-realtime-2.1` helps.
+- **No new visual-realism work in v0.5:** skin, hair, eyes, clothing and hands are unchanged.
+- **The centre interaction prompt is English** in Arabic mode.
+- **Echo filter:** a student who deliberately repeats the patient's exact words within 60 s would be ignored.
 
 **v0.4 notes.**
 - **Arabic quality:** the default understanding model (`gpt-realtime-2.1-mini`) still makes occasional slips in the doctor's Arabic and small transcription errors. `MEDSIM_VOICE_UNDERSTAND_MODEL=gpt-realtime-2.1` is better but slower (+0.6–1 s) and about 9× the cost per turn.

@@ -39,6 +39,9 @@ namespace MedSimAI.Characters
             if (mark) path.Enqueue(mark.position);
         }
 
+        /// <summary>Stop where she is (e.g. "wait").</summary>
+        public void Stop() { path.Clear(); if (UseAgent) agent.ResetPath(); }
+
         /// <summary>Turn on the spot to face a point (e.g. the patient, the student, an instrument).</summary>
         public void Face(Vector3 worldPoint) { faceTarget = worldPoint; finalFacing = null; }
 

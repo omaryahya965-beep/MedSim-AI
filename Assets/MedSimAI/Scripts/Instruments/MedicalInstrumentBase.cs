@@ -156,7 +156,7 @@ namespace MedSimAI.Instruments
         protected void SnapTo(PlacementZone z)
         {
             var target = z.snapPoint ? z.snapPoint : z.transform;
-            if (body) { body.isKinematic = true; body.useGravity = false; }
+            if (body) { body.isKinematic = true; body.useGravity = false; savedInterp = body.interpolation; body.interpolation = RigidbodyInterpolation.None; } // interpolation would pin the world pose: attached instruments must follow the moving body
             transform.SetParent(target, true);
             z.Occupied = true; attachedZone = z;
             if (snapRoutine != null) StopCoroutine(snapRoutine);
@@ -168,6 +168,7 @@ namespace MedSimAI.Instruments
         Coroutine snapRoutine;
 
         /// <summary>Short eased snap so placement reads as a physical action rather than a teleport.</summary>
+        RigidbodyInterpolation savedInterp = RigidbodyInterpolation.Interpolate;
         System.Collections.IEnumerator EaseTo(Transform target)
         {
             Vector3 p0 = transform.position; Quaternion r0 = transform.rotation;
@@ -197,7 +198,7 @@ namespace MedSimAI.Instruments
 
         protected void Detach()
         {
-            if (attachedZone) { attachedZone.Occupied = false; attachedZone = null; transform.SetParent(homeParent, true); OnDetached(); }
+            if (attachedZone) { attachedZone.Occupied = false; attachedZone = null; if (body) body.interpolation = savedInterp; transform.SetParent(homeParent, true); OnDetached(); }
         }
 
         public virtual void ResetInstrument()

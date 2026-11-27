@@ -4,6 +4,7 @@
 // fails, approved scenario text is spoken instead. All speech is synthesised at runtime (no pre-recorded dialogue).
 import crypto from 'node:crypto';
 import { validateGrounded, matchConcepts } from './grounding.mjs';
+import { actionSchema, actionPromptRule, validateAction, actionLine, actionContext } from './actions.mjs';
 import { detectLang, scriptLang, detectLanguageCommand, resolveReplyLang, replyLanguageRule, LANGUAGE_ACK } from './language.mjs';
 import { speechFidelity, pcmToWav, RealtimeUnderstanding } from './openai.mjs';
 
@@ -31,6 +32,7 @@ const INSTRUCTOR_INTENTS = ['greeting', 'hint_request', 'investigation_request',
 export function cleanReply(x) {
   return String(x || '').trim().replace(/^[\s"“”'{\[]+/, '').replace(/[\s"“”{}\[\]]+$/, '').replace(/\s{2,}/g, ' ').trim();
 }
+export function echoWords(t) { return String(t || '').toLowerCase().replace(/[ً-ْـ]/g, '').replace(/[إأآ]/g, 'ا').replace(/ة/g, 'ه').replace(/[^\p{L}\p{N}\s]/gu, ' ').split(/\s+/).filter(x => x.length > 1); }
 /** True when the Realtime session reports no intelligible student speech (noise, echo of the characters, silence). */
 export function isNoSpeech(h) {
   const t = String(h || '').trim().toLowerCase();
@@ -130,6 +132,30 @@ export class LiveEngine {
     return { status: 200, json: { persona, heard: utterance, text: reply, lang: cmd, languageCommand: cmd, source: 'language-command', factIds: [], studentAct: 'other', intent: 'smalltalk', investigationId: null, escalationRequested: false, diagnosisNamed: false, isQuestion: false, concepts: [], deterministicConcepts: [], rejected: null, audioId: null, llmMs: 0 } };
   }
 
+  logAction(sess, persona, a) {
+    if (!a || a.status === 'none') return;
+    (sess.actionLog ??= []).push({ persona, type: a.type, side: a.side, status: a.status === 'accepted' ? 'requested (in progress)' : a.status === 'denied' ? 'declined (' + a.reason + ')' : 'needs clarification', t: Date.now() });
+    if (sess.actionLog.length > 12) sess.actionLog.shift();
+  }
+  /** Unity reports what really happened to an action (completed / interrupted / unavailable). */
+  actionResult(sess, body) {
+    const persona = body.persona === 'Patient' ? 'Patient' : 'Instructor';
+    const status = ['completed', 'interrupted', 'unavailable', 'in_progress'].includes(body.status) ? body.status : 'unavailable';
+    const type = String(body.type || '').slice(0, 40);
+    const entry = [...(sess.actionLog || [])].reverse().find(x => x.persona === persona && x.type === type);
+    if (entry) entry.status = status; else this.logAction(sess, persona, { type, side: String(body.side || 'none').slice(0, 12), status: 'accepted' });
+    return { status: 200, json: { ok: true } };
+  }
+
+  /** Remembers what the characters actually said (for echo detection: the microphone picking up a character's voice). */
+  noteCharacterLine(sess, text) { (sess.recentLines ??= []).push({ t: Date.now(), words: echoWords(text) }); if (sess.recentLines.length > 12) sess.recentLines.shift(); }
+  /** True when a "student" transcript is mostly the words a character said in the last 60 s (speaker echo, not the student). */
+  isEcho(sess, heard) {
+    const w = echoWords(heard); if (w.length < 4) return false;
+    for (const l of sess.recentLines || []) { if (Date.now() - l.t > 60000) continue; const bag = new Set(l.words); const hit = w.filter(x => bag.has(x)).length; if (hit / w.length >= 0.6) { console.log(`  [voice] echo of a character line ignored (${hit}/${w.length} words)`); return true; } }
+    return false;
+  }
+
   /** Synthesises speech at runtime and returns an audio id (the client fetches /v1/audio/:id). */
   queueSpeech(persona, text, { lang, style }) {
     const id = crypto.randomUUID();
@@ -183,9 +209,12 @@ Rules:
 - You may express emotion, react to greetings, reassurance, consent requests or examination naturally, but do not add new symptoms or medical details beyond the facts and "how you feel" lines.
 - If asked how you feel now, describe it using the "how you feel" lines (studentAct current_symptoms_question).
 - If nothing you know answers the question, say naturally that you don't know or aren't sure, and choose no fact.
-- Never name or guess a diagnosis, never give test results or measurements, never mention a simulation, AI, scores or grading.`;
+- Never name or guess a diagnosis, never give test results or measurements, never mention a simulation, AI, scores or grading.
+${actionPromptRule('Patient')}
+${actionContext(sess)}`;
     const system = sys(body._understand ? replyLanguageRule('Patient', { lock }) : replyLanguageRule('Patient', { lock, known: lang }));
-    const schema = { type: 'object', additionalProperties: false, required: ['factIds', 'studentAct', 'emotion', 'reply'], properties: {
+    const schema = { type: 'object', additionalProperties: false, required: ['factIds', 'studentAct', 'emotion', 'action', 'reply'], properties: {
+      action: actionSchema('Patient'),
       factIds: { type: 'array', maxItems: 3, items: { type: 'string', enum: S.historyFacts.map(f => f.id) } },
       studentAct: { type: 'string', enum: PATIENT_ACTS },
       emotion: { type: 'string', enum: ['pain', 'worried', 'relieved', 'neutral', 'distressed', 'grateful'] },
@@ -217,10 +246,14 @@ Rules:
         : (['current_symptoms_question', 'reassurance', 'greeting', 'examination_notice'].includes(r.data.studentAct) && stLines.length) ? stLines[0]
         : this.tr(sess, lang, 'unknownAnswers', '0', S.unknownAnswers[0]);
     }
-    sess.history.Patient.push({ role: 'user', content: utterance }, { role: 'assistant', content: reply });
+    const action = validateAction('Patient', r.data.action, { scenario: S, stateId: st?.id, utterance });
+    if (action.status === 'denied' || action.status === 'clarify') { reply = actionLine(action.lineKey, 'Patient', lang) || reply; source = 'action-policy'; }
+    else if (action.status === 'accepted' && source === 'approved-fallback') { reply = lang === 'ar' ? 'حاضر.' : 'Okay.'; source = 'action-ack'; }
+    this.logAction(sess, 'Patient', action);
+    sess.history.Patient.push({ role: 'user', content: utterance }, { role: 'assistant', content: reply }); this.noteCharacterLine(sess, reply);
     const style = PATIENT_STYLE[st?.expression] || PATIENT_STYLE.discomfort;
     const audioId = body.speak === false ? null : this.queueSpeech('Patient', reply, { lang, style });
-    return { status: 200, json: { persona: 'Patient', heard: utterance, text: reply, lang, factIds, studentAct: PATIENT_ACTS.includes(r.data.studentAct) ? r.data.studentAct : 'other', emotion: r.data.emotion, source, rejected: v.ok ? null : v.reason + (v.detail ? ':' + v.detail : ''), audioId, llmMs: Date.now() - t0, model: this.ai.models.chat } };
+    return { status: 200, json: { persona: 'Patient', heard: utterance, text: reply, lang, action, supervisorIntervention: action.status === 'denied' ? 'I_UNSAFE_MOBILISE' : null, factIds, studentAct: PATIENT_ACTS.includes(r.data.studentAct) ? r.data.studentAct : 'other', emotion: r.data.emotion, source, rejected: v.ok ? null : v.reason + (v.detail ? ':' + v.detail : ''), audioId, llmMs: Date.now() - t0, model: this.ai.models.chat } };
   }
 
   // ------------------------------------------------------------------ supervising doctor (student addresses her)
@@ -256,10 +289,14 @@ Rules:
 - diagnosisNamed = true if the student states a diagnosis as their impression; isQuestion = true if they are asking you a question.
 - concepts: which of these reasoning concepts the student's words clearly express: ${(S.reasoningConcepts || []).map(c => `${c.id} (${c.label})`).join('; ')}.
 - If out of scope (real patients, dosing, anything outside the case), say kindly it is outside this simulation and to ask their clinical tutor.
-- Teach by asking, not telling: never give management instructions, never advise waiting for, delaying or withholding treatment, results or escalation.`;
+- Teach by asking, not telling: never give management instructions, never advise waiting for, delaying or withholding treatment, results or escalation.
+${actionPromptRule('Instructor')}
+Approved instrument guidance (what you may show or say in a demonstration):\n${(S.instrumentGuides || []).map(g => '- ' + (g.instrument || '') + ': ' + (g.hint || g.text || JSON.stringify(g))).join('\n') || '- (none)'}
+${actionContext(sess)}`;
     const system = sys(body._understand ? replyLanguageRule('Instructor', { lock }) : replyLanguageRule('Instructor', { lock, known: lang }));
     const conceptIds = (S.reasoningConcepts || []).map(c => c.id);
-    const schema = { type: 'object', additionalProperties: false, required: ['intent', 'investigationId', 'escalationRequested', 'diagnosisNamed', 'isQuestion', 'concepts', 'reply'], properties: {
+    const schema = { type: 'object', additionalProperties: false, required: ['intent', 'investigationId', 'escalationRequested', 'diagnosisNamed', 'isQuestion', 'concepts', 'action', 'reply'], properties: {
+      action: actionSchema('Instructor'),
       intent: { type: 'string', enum: INSTRUCTOR_INTENTS },
       investigationId: { type: ['string', 'null'], enum: [...S.investigations.map(i => i.id), null] },
       escalationRequested: { type: 'boolean' }, diagnosisNamed: { type: 'boolean' }, isQuestion: { type: 'boolean' },
@@ -279,7 +316,7 @@ Rules:
     const d = r.data;
     const intent = INSTRUCTOR_INTENTS.includes(d.intent) ? d.intent : 'smalltalk';
     const investigationId = intent === 'investigation_request' && S.investigations.some(i => i.id === d.investigationId) ? d.investigationId : null;
-    const corpus = [P.summary, ...revealed, ...hints, ...hintsAr, ...this.arCorpus(sess.entry), ...S.investigations.map(i => i.name), ...S.objectives.map(o => o.text), ...(S.hints || []).map(h => h.text), ...(S.interventions || []).flatMap(i => i.lines), ...(S.discussion || []).map(q => q.question),
+    const corpus = [P.summary, ...revealed, ...hints, ...hintsAr, ...this.arCorpus(sess.entry), ...(S.instrumentGuides || []).map(g => JSON.stringify(g)), ...S.investigations.map(i => i.name), ...S.objectives.map(o => o.text), ...(S.hints || []).map(h => h.text), ...(S.interventions || []).flatMap(i => i.lines), ...(S.discussion || []).map(q => q.question),
       S.instructorLines?.outOfScope || '', S.instructorLines?.escalationAck || '', ...(investigationId ? [S.investigations.find(i => i.id === investigationId).name] : []),
       ...(feedback ? [S.expectedReasoning.workingDiagnosis, ...S.expectedReasoning.keyPoints] : [])];
     let reply = cleanReply(d.reply);
@@ -303,9 +340,13 @@ Rules:
       else if (d.isQuestion) reply = ar ? (FB.goodQuestion || 'سؤال منيح. كيف ممكن تعرف هالإشي وإنت عند السرير؟') : 'Good question. How could you find that out at the bedside?';
       else reply = ar ? (FB.whatNext || 'تمام. شو حابب تعمل هلّق؟') : 'Okay. What would you like to do next?';
     }
-    sess.history.Instructor.push({ role: 'user', content: utterance }, { role: 'assistant', content: reply });
+    const action = validateAction('Instructor', d.action, { scenario: S, stateId: st?.id, utterance });
+    if (action.status === 'denied' || action.status === 'clarify') { reply = actionLine(action.lineKey, 'Instructor', lang) || reply; source = 'action-policy'; }
+    else if (action.status === 'accepted' && source === 'approved-fallback') { reply = lang === 'ar' ? 'أكيد.' : 'Sure.'; source = 'action-ack'; }
+    this.logAction(sess, 'Instructor', action);
+    sess.history.Instructor.push({ role: 'user', content: utterance }, { role: 'assistant', content: reply }); this.noteCharacterLine(sess, reply);
     const audioId = body.speak === false ? null : this.queueSpeech('Instructor', reply, { lang, style: INSTRUCTOR_STYLE.default });
-    return { status: 200, json: { persona: 'Instructor', heard: utterance, text: reply, lang, intent, investigationId, escalationRequested: !!d.escalationRequested, diagnosisNamed: !!d.diagnosisNamed, isQuestion: !!d.isQuestion,
+    return { status: 200, json: { persona: 'Instructor', heard: utterance, text: reply, lang, action, intent, investigationId, escalationRequested: !!d.escalationRequested, diagnosisNamed: !!d.diagnosisNamed, isQuestion: !!d.isQuestion,
       concepts: (d.concepts || []).filter(c => conceptIds.includes(c)), deterministicConcepts: matchConcepts(utterance, S.reasoningConcepts || []), source, rejected: v.ok ? null : v.reason + (v.detail ? ':' + v.detail : ''), audioId, llmMs: Date.now() - t0, model: this.ai.models.chat } };
   }
 
@@ -407,7 +448,7 @@ Reply ${lang === 'ar' ? (persona === 'Patient' ? 'in natural spoken Palestinian 
       sch.required = ['spokenLanguage', 'heard', ...(sch.required || [])];
       const r = await rt.understand(pcm, { instructions: system + "\nThe student's latest turn is the audio you just received. First identify the language they spoke (spokenLanguage), then put exactly what they said in \"heard\" in that language's script (empty if nothing intelligible was said) — Arabic speech is transcribed in Arabic, never translated — then classify it and propose your reply.", schema: sch });
       callId = r.callId; understandMs = r.ms;
-      if (isNoSpeech(r.data.heard) || r.data.spokenLanguage === 'none') {
+      if (isNoSpeech(r.data.heard) || r.data.spokenLanguage === 'none' || this.isEcho(sess, r.data.heard)) {
         console.log(`  [voice] no speech: spokenLanguage=${r.data.spokenLanguage} heardChars=${String(r.data.heard || '').length} audioSec=${(pcm.length / 48000).toFixed(2)}`); const e = new Error('no_speech'); e.code = 'no_speech'; throw e; }
       return r;
     };
@@ -438,6 +479,7 @@ Reply ${lang === 'ar' ? (persona === 'Patient' ? 'in natural spoken Palestinian 
   }
 
   async streamSpeech(sess, persona, text, body, { onAudio, signal, t0, tMeta, kind, lang: langHint }) {
+    this.noteCharacterLine(sess, text);
     const lang = scriptLang(text) || langHint || this.langOf(sess, body); // speak in the language the line is actually written in
     const ctx = this.sanitizeContext(sess, body.context);
     const st = this.state(sess, ctx);

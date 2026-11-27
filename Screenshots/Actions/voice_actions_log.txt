@@ -1,0 +1,3 @@
+voice_01_sit_up: heard=«مرحبا، ممكن تفحصني شوي؟» → Mr. Reyes (patient): آه أكيد، اعمل اللي بدك إياه. بتمنى تساعدني، الوجع لسا ثابت ومقلقني. | reply started 1.9s after the clip | action: none completed | sit=0.00 head y=1.22
+voice_02_raise_left_arm: heard=«ارفع إيدك الشمال لو سمحت.» → Mr. Reyes (patient): طيب، هيك؟ بلا ما أحركها زيادة. | reply started 1.4s after the clip | action: patient raise_arm left completed | left arm weight=1.00 left hand y=1.61
+voice_03_doctor_step_back: heard=«دكتورة ممكن تبعدي شوي عشان أبحث المريض» → Dr. Hassan (supervisor): أكيد، رح أبعد شوي. بدي أسألك، شو الفحص اللي ناوية تبدأي فيه أولاً؟ | reply started 2.3s after the clip | action: doctor step_back completed | doctor moved 0.00 m, now 2.20 m from the student

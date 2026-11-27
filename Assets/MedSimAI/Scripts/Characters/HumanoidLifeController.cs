@@ -28,12 +28,14 @@ namespace MedSimAI.Characters
         public bool lyingDown;
         public bool listening;
         public CharacterSpeechController speech;
+        [Header("Embodied actions (set by the action controllers)")]
+        public float breathDepth = 1f; public float breathRateOverride; public bool holdStill; public Transform gazeOverride;
 
         Quaternion headRest, neckRest, chestRest, spineRest, uaRest, laRest; Vector3[] lidRest;
         Vector3 faceFwdLocal; // face-forward direction in head-local space
         float blinkTimer, blinkPhase = -1, saccadeTimer; Vector3 saccadeOffset; Quaternion currentHeadOffset = Quaternion.identity;
         Transform pointTarget; float pointWeight, pointTimer; float painPulse, painTimer;
-        Transform root;
+        Transform root; float breathPhase;
 
         void Start()
         {
@@ -79,8 +81,9 @@ namespace MedSimAI.Characters
             bool talking = speech && speech.IsSpeaking;
 
             // ---- Breathing: small rotations of spine/chest around the body's lateral axis (no scaling) ----
-            float bpm = pain ? breathsPerMinute * 1.35f : breathsPerMinute;
-            float breath = Mathf.Sin(t * bpm / 60f * Mathf.PI * 2f);
+            float bpm = breathRateOverride > 0 ? breathRateOverride : (pain ? breathsPerMinute * 1.35f : breathsPerMinute);
+            breathPhase += dt * bpm / 60f * Mathf.PI * 2f; // phase-continuous, so switching to a deep breath never jumps
+            float breath = Mathf.Sin(breathPhase) * breathDepth;
             Vector3 lateral = root.right;
             if (chest) chest.localRotation = Quaternion.Inverse(chest.parent.rotation) * Quaternion.AngleAxis(-breath * (lyingDown ? 0.9f : 0.7f), lateral) * chest.parent.rotation * chestRest;
             if (spine && !lyingDown)
@@ -93,8 +96,8 @@ namespace MedSimAI.Characters
             if (head)
             {
                 saccadeTimer -= dt;
-                if (saccadeTimer <= 0) { saccadeTimer = Random.Range(0.9f, 2.8f); saccadeOffset = Random.insideUnitSphere * 0.05f; }
-                var target = pointTarget && pointWeight > 0.5f ? pointTarget : lookTarget;
+                if (saccadeTimer <= 0) { saccadeTimer = Random.Range(0.9f, 2.8f); saccadeOffset = Random.insideUnitSphere * (holdStill ? 0.01f : 0.05f); }
+                var target = gazeOverride ? gazeOverride : pointTarget && pointWeight > 0.5f ? pointTarget : lookTarget;
                 Quaternion offset = Quaternion.identity;
                 Vector3 restFwd = head.parent.rotation * headRest * faceFwdLocal;
                 if (target && gazeWeight > 0)
@@ -120,7 +123,7 @@ namespace MedSimAI.Characters
                 }
                 currentHeadOffset = Quaternion.Slerp(currentHeadOffset, offset, dt * headTurnSpeed);
                 float nod = talking ? Mathf.Sin(t * 4.6f) * 1.6f + Mathf.Sin(t * 1.3f) * 1.2f : 0f;
-                float tilt = listening ? 5f : (pain ? Mathf.Sin(t * 0.5f) * 2.5f : 0f);
+                float tilt = holdStill ? 0f : listening ? 5f : (pain ? Mathf.Sin(t * 0.5f) * 2.5f : 0f);
                 var right = Vector3.Cross(root.up, restFwd).normalized;
                 var expressive = Quaternion.AngleAxis(nod, right) * Quaternion.AngleAxis(tilt, restFwd);
                 head.rotation = currentHeadOffset * expressive * head.parent.rotation * headRest;

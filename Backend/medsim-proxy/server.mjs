@@ -238,6 +238,11 @@ export function createServer() {
       }
       if (req.method === 'GET' && route === '/v1/usage') return send(res, 200, ledger.summary());
       const body = await readBody(req);
+      if (req.method === 'POST' && route === '/v1/action-result') {
+        const b = body.length ? JSON.parse(body.toString('utf8')) : {}; const sess = live.get(b.sessionId);
+        if (!sess) return send(res, 404, { error: 'unknown_session' });
+        const r = live.actionResult(sess, b); return send(res, r.status, r.json);
+      }
       if (req.method === 'POST' && route === '/v1/stt') {
         if (live.admit(null)) return send(res, 429, { error: 'rate_limited' });
         const sec = wavSeconds(body);

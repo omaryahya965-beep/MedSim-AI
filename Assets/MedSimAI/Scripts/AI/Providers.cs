@@ -158,7 +158,8 @@ namespace MedSimAI.AI
             {
                 live = true, providerName = Name, speech = r.text, audioId = r.audioId, usedFactIds = r.factIds ?? new string[0], intent = r.intent,
                 investigationId = string.IsNullOrEmpty(r.investigationId) ? null : r.investigationId, escalationRequested = r.escalationRequested,
-                diagnosisNamed = r.diagnosisNamed, isQuestion = r.isQuestion, concepts = r.concepts ?? new string[0], liveSource = r.source
+                diagnosisNamed = r.diagnosisNamed, isQuestion = r.isQuestion, concepts = r.concepts ?? new string[0], liveSource = r.source,
+                action = r.action, supervisorIntervention = r.supervisorIntervention
             };
         }
     }

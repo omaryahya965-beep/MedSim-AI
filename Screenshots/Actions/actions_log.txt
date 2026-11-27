@@ -1,0 +1,16 @@
+rest: hand L y=0.90 R y=1.09 head=(1.22,1.64) zone→upper arm 0.143 m
+A01_sit_up: started=True result=P:sit_up:none after 2.5s | hand L y=0.85 R y=1.07 head=(1.37,1.46) | zone ARM_UPPER_L→upper arm 0.143 m, cuff→zone 0.000 m
+A02_raise_left_arm_with_cuff: started=True result=P:raise_arm:left after 1.3s | hand L y=1.68 R y=1.08 head=(1.37,1.46) | zone ARM_UPPER_L→upper arm 0.143 m, cuff→zone 0.000 m
+A03_lower_arms: started=True result=P:lower_arm:both after 1.4s | hand L y=0.85 R y=1.07 head=(1.37,1.45) | zone ARM_UPPER_L→upper arm 0.143 m, cuff→zone 0.000 m
+A04_extend_right_arm_to_student: started=True result=P:extend_arm:right after 1.4s | hand L y=0.86 R y=1.33 head=(1.37,1.45) | zone ARM_UPPER_L→upper arm 0.143 m, cuff→zone 0.000 m
+A05_point_to_pain: started=True result=P:point_to_pain:right after 0.4s | hand L y=0.85 R y=1.11 head=(1.37,1.45) | zone ARM_UPPER_L→upper arm 0.143 m, cuff→zone 0.000 m
+A06_turn_to_left: started=True result=P:turn_to_side:left after 2.2s | hand L y=0.81 R y=1.11 head=(1.35,1.47) | zone ARM_UPPER_L→upper arm 0.143 m, cuff→zone 0.000 m
+A07_open_mouth: started=True result=P:open_mouth:none after 0.9s | hand L y=0.81 R y=1.11 head=(1.35,1.46) | zone ARM_UPPER_L→upper arm 0.143 m, cuff→zone 0.000 m
+A08_deep_breath: started=True result=P:deep_breath:none after 13.3s | hand L y=0.81 R y=1.09 head=(1.35,1.46) | zone ARM_UPPER_L→upper arm 0.143 m, cuff→zone 0.000 m
+A09_rest: started=True result=P:rest:none after 2.4s | hand L y=0.90 R y=1.09 head=(1.23,1.63) | zone ARM_UPPER_L→upper arm 0.143 m, cuff→zone 0.000 m
+D01_come_to_student: started=True result=D:come_to_student after 4.2s | doctor at (2.07,0.17) distance to student 1.00 m, to bed centre 1.92 m
+D02_stand_beside_student: started=True result=D:stand_beside_student after 1.6s | doctor at (1.72,1.12) distance to student 0.80 m, to bed centre 1.43 m
+D03_approach_patient: started=True result=D:approach_patient after 7.3s | doctor at (-0.75,1.29) distance to student 2.04 m, to bed centre 1.12 m
+D04_step_back: started=True result=D:step_back after 2.9s | doctor at (-0.80,-0.46) distance to student 2.20 m, to bed centre 1.75 m
+D05_demonstrate_bp_cuff: started=True result=D:demonstrate_instrument after 1.1s | doctor at (-0.80,-0.46) distance to student 2.20 m, to bed centre 1.75 m
+D06_return_to_observation: started=True result=D:return_to_observation after 0.9s | doctor at (-0.80,-0.46) distance to student 2.20 m, to bed centre 1.75 m

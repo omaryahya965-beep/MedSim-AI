@@ -36,6 +36,9 @@ Run `D:\VRBuilds\MedSim_Desktop\MedSimAI.exe` (start the AI proxy first). Contro
 | Pause menu (tablet on/off, subtitles, language EN/AR, comfort and height, restart) | Left menu button (`Esc` on desktop) |
 | Teleport / snap turn | Thumbstick |
 
+## v0.5: Conversation panel and embodied AI
+The conversation panel never overlaps or overflows: long replies page in step with the speech, and Arabic is right-to-left. Ask the patient to sit up, raise or extend an arm, breathe deeply, open his mouth or show where it hurts, and ask the doctor to come, step back or check the patient. They do it, within the scenario's safety policy. See **EMBODIED_AI_AND_CONVERSATION_UI.md**. Recovery point: git tag `v0.4-stable`, plus builds in `D:VRBuildsBackup_v0.4_9ccc8f6`.
+
 ## v0.4: Arabic, complete speech, VR movement
 Speak Arabic or English: both characters follow you. Say «احكي عربي» or "speak English" to fix the language for both. Lines now play to the very end. VR: left stick moves, right stick turns or teleports, and the pause menu adjusts height (default +55 cm). See **ARABIC_AUDIO_VR.md**, including the manual checklist.
 

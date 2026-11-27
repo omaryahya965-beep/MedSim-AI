@@ -1,0 +1,6 @@
+01_short_arabic: name='ﺍﻟﺴﻴﺪ ﺁﺩﻡ ﺭﻳﻴﺲ )ﺍﻟﻤﺮﻳﺾ(' response pages=1 showing 1 inside=True rtl=True align=Right | transcript pages=1 inside=True rtl=True | rows overlap=False
+02_long_arabic_page1: name='ﺍﻟﺴﻴﺪ ﺁﺩﻡ ﺭﻳﻴﺲ )ﺍﻟﻤﺮﻳﺾ(' response pages=2 showing 1 inside=True rtl=True align=Right | transcript pages=2 inside=True rtl=True | rows overlap=False
+03_long_arabic_page2_midspeech: name='ﺍﻟﺴﻴﺪ ﺁﺩﻡ ﺭﻳﻴﺲ )ﺍﻟﻤﺮﻳﺾ(' response pages=2 showing 2 inside=True rtl=True align=Right | transcript pages=2 inside=True rtl=True | rows overlap=False
+04_mixed_ar_en_numbers: name='ﺩ. ﺳﺎﺭﺓ ﺣﺴﻦ )ﺍﻟﻤﺸﺮﻓﺔ(' response pages=1 showing 1 inside=True rtl=True align=Right | transcript pages=1 inside=True rtl=True | rows overlap=False
+05_long_english: name='Dr. Hassan (supervisor)' response pages=2 showing 1 inside=True rtl=False align=Left | transcript pages=1 inside=True rtl=False | rows overlap=False
+06_english_short: name='Mr. Reyes (patient)' response pages=1 showing 1 inside=True rtl=False align=Left | transcript pages=1 inside=True rtl=False | rows overlap=False

@@ -27,6 +27,8 @@ namespace MedSimAI.Characters
         bool hasClip;
 
         public bool IsSpeaking { get; private set; }
+        /// <summary>0..1 position in the current line (drives subtitle paging).</summary>
+        public float Progress => progress;
         public float MouthOpen { get; private set; }
         public string CurrentViseme { get; private set; } = "sil_00";
         public static event Action<CharacterSpeechController, string> SubtitleStarted;

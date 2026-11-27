@@ -165,6 +165,7 @@ namespace MedSimAI.Voice
             catch (OperationCanceledException) { SetState(VoiceState.Idle); return; }
             catch (Exception e) { Error?.Invoke(e.Message); SetState(VoiceState.Idle); return; }
             TurnReady?.Invoke(turn);
+            MedSimAI.Characters.CharacterActionRouter.Handle(turn);
             _ = SpeakAsync(target, turn.responseText, turn.audioId); // returns once tracking is done; speech continues
         }
 

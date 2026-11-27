@@ -216,3 +216,43 @@ test('Arabic: director lines use the approved Arabic wording and fall back to it
   assert.equal(r.json.source, 'approved-fallback');
   assert.match(r.json.text, /الحساسية/, 'approved Arabic intervention');
 });
+
+test('echo: a "student" transcript that repeats what a character just said is ignored (speaker echo, not the student)', async () => {
+  const ai = fakeAI({ factIds: ['H_RADIATION'], studentAct: 'history_question', emotion: 'pain', reply: 'بينزل على إيدي الشمال، وحاسس فكّي مشدود كمان.' }); ai.ledger = { record() { }, guard() { } };
+  const eng = new LiveEngine({ ai, scenarios }); const sess = newSession(eng, 'ar');
+  eng.noteCharacterLine(sess, 'الوجع لسا موجود، تقيل بنص صدري، بينزل على إيدي الشمال، وحاسس فكّي مشدود كمان.');
+  eng.understandingFor = () => ({ understand: async () => ({ data: { spokenLanguage: 'arabic', heard: 'الوجع لسا موجود تقيل بنص صدري بينزل على إيدي الشمال', factIds: [], studentAct: 'other', emotion: 'pain', reply: 'x' }, callId: 'c', ms: 5 }), noteSpoken() { } });
+  let meta = null;
+  await eng.voiceTurn(sess, 'Patient', Buffer.alloc(9600), { language: 'ar', context: ctx() }, { onMeta: m => meta = m, onAudio() { } });
+  assert.equal(meta.noSpeech, true, 'echo of the patient line is not treated as the student');
+  // a genuine new question with a couple of shared words still goes through
+  eng.understandingFor = () => ({ understand: async () => ({ data: { spokenLanguage: 'arabic', heard: 'وهل الوجع بيزيد لما تتحرك أو تتنفس بعمق؟', factIds: [], studentAct: 'history_question', emotion: 'pain', reply: 'بينزل على إيدي الشمال، وحاسس فكّي مشدود كمان.' }, callId: 'c', ms: 5 }), noteSpoken() { } });
+  meta = null; await eng.voiceTurn(sess, 'Patient', Buffer.alloc(9600), { language: 'ar', context: ctx() }, { onMeta: m => meta = m, onAudio() { } });
+  assert.notEqual(meta.noSpeech, true);
+});
+
+test('embodied actions: accepted actions pass through; standing/walking is declined by the authored policy; unclear side asks; results are reported back to the AI', async () => {
+  const mk = data => { const ai = fakeAI(data); ai.ledger = { record() { }, guard() { } }; return new LiveEngine({ ai, scenarios }); };
+  let eng = mk({ factIds: [], studentAct: 'other', emotion: 'neutral', action: { type: 'raise_arm', side: 'left', instrument: 'none' }, reply: 'حاضر.' });
+  let sess = newSession(eng, 'ar');
+  let r = await eng.patientTurn(sess, { utterance: 'ارفع إيدك الشمال', language: 'ar', context: ctx() });
+  assert.equal(r.json.action.status, 'accepted'); assert.equal(r.json.action.type, 'raise_arm'); assert.equal(r.json.action.side, 'left');
+  eng.actionResult(sess, { persona: 'Patient', type: 'raise_arm', side: 'left', status: 'completed' });
+  assert.match(eng.actionResult.length >= 0 && (await import('./lib/actions.mjs')).actionContext(sess), /raise_arm \(left\) — completed/);
+
+  eng = mk({ factIds: [], studentAct: 'other', emotion: 'pain', action: { type: 'stand_up', side: 'none', instrument: 'none' }, reply: 'Sure, I will stand up.' });
+  sess = newSession(eng, 'en');
+  r = await eng.patientTurn(sess, { utterance: 'Can you stand up and walk to the door?', language: 'en', context: ctx() });
+  assert.equal(r.json.action.status, 'denied'); assert.equal(r.json.supervisorIntervention, 'I_UNSAFE_MOBILISE');
+  assert.doesNotMatch(r.json.text, /stand up/i, 'never claims an action that will not happen'); assert.match(r.json.text, /can't get up/);
+
+  eng = mk({ factIds: [], studentAct: 'other', emotion: 'neutral', action: { type: 'raise_arm', side: 'unspecified', instrument: 'none' }, reply: 'حاضر.' });
+  sess = newSession(eng, 'ar');
+  r = await eng.patientTurn(sess, { utterance: 'ارفع إيدك', language: 'ar', context: ctx() });
+  assert.equal(r.json.action.status, 'clarify'); assert.match(r.json.text, /اليمين ولا الشمال/);
+
+  eng = mk({ intent: 'smalltalk', investigationId: null, escalationRequested: false, diagnosisNamed: false, isQuestion: false, concepts: [], action: { type: 'step_back', side: 'none', instrument: 'none' }, reply: 'أكيد، بتأخر شوي.' });
+  sess = newSession(eng, 'ar');
+  r = await eng.instructorTurn(sess, { utterance: 'دكتورة ممكن تبعدي شوي عشان أفحص المريض؟', language: 'ar', context: ctx() });
+  assert.equal(r.json.action.status, 'accepted'); assert.equal(r.json.action.type, 'step_back');
+});

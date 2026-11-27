@@ -209,3 +209,18 @@ Lip sync is calibrated on the runtime voices.
 | Builds | Desktop and PCVR rebuilt at the same paths, 0 errors; secret scans clean |
 
 Details and the manual checklist: ARABIC_AUDIO_VR.md.
+
+---
+# v0.5: Conversation panel and embodied AI (2026-11-27)
+| Suite | Result |
+|---|---|
+| Unity EditMode | **98 / 98** |
+| Unity PlayMode | **24 / 24**. New: `EmbodiedActionPlayTests` (arm raise with the cuff following, rest, sit up; doctor safe spots), `ConversationPanelPlayTests` (VR panel: long Arabic and English inside their rows, no overlap) |
+| Proxy | **32 / 32**. New: echo filtering; action validation (accepted / denied / clarify), results reported back |
+| Conversation panel screenshots plus programmatic checks (`AgentScripts/ConversationUiShots.cs`) | 6/6 cases inside their rows, no overlap; long Arabic pages 1/2 → 2/2 with the speech |
+| Mocked embodied actions (`AgentScripts/ActionShots.cs`) | 15/15 completed; cuff drift 0.000 m during arm movement |
+| Natural instructions, real API (`tools/action-harness.mjs`) | **23/23** |
+| Spoken instructions, real Realtime voice (`AgentScripts/ActionVoiceE2E.cs`) | 2/3 executed; 1 misheard by the mini speech model |
+| Builds | Desktop and PCVR rebuilt, 0 errors; secret scans clean; v0.4 builds backed up |
+
+The standalone exe was **not** re-run with the self-test this round: someone was using this PC during testing. Details: EMBODIED_AI_AND_CONVERSATION_UI.md.

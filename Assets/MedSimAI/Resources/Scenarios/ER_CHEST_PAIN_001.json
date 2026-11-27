@@ -1231,6 +1231,34 @@
         "unlessEvents": [],
         "unlessAll": false
       }
+    },
+    {
+      "severity": "safety",
+      "priority": 85,
+      "graceSeconds": 0,
+      "cooldownSeconds": 60,
+      "maxRepeats": 2,
+      "repeatAfterSeconds": 0,
+      "cancelEvents": [],
+      "focus": "patient",
+      "purpose": "Student asked the acute cardiac patient to get up or walk (declined by the action policy).",
+      "id": "I_UNSAFE_MOBILISE",
+      "trigger": {
+        "type": "event",
+        "eventId": "ACTION_DENIED_UNSAFE",
+        "count": 1,
+        "withinSeconds": 0,
+        "afterSeconds": 0,
+        "sinceEvent": "",
+        "stage": "",
+        "stateId": "",
+        "requireEvents": [],
+        "unlessEvents": [],
+        "unlessAll": false
+      },
+      "lines": [
+        "Let's keep Mr. Reyes resting on the bed and on the monitor while we assess him."
+      ]
     }
   ],
   "supervisorPolicy": {
@@ -1478,5 +1506,19 @@
         "C_NO_WAIT_TROPONIN"
       ]
     }
-  ]
+  ],
+  "actionPolicy": {
+    "note": "DRAFT — embodied actions: what the simulated patient/doctor may do on request. Authoritative; the AI only proposes.",
+    "patient": {
+      "alwaysDenied": [
+        "stand_up",
+        "walk"
+      ],
+      "deniedInStates": {},
+      "reason": "Acute chest pain under assessment: the patient stays on the bed, attached to monitoring, until assessed and handed over."
+    },
+    "doctor": {
+      "alwaysDenied": []
+    }
+  }
 }
