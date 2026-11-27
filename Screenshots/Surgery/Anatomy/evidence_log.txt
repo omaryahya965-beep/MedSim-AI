@@ -1,0 +1,43 @@
+01_surgical_patient_complete
+02_patient_on_temporary_table
+03_surgical_drape
+03b_draped_knee_surgeon_view
+04_knee_anatomy_complete
+05_knee_front
+06_knee_lateral
+07_knee_medial_posterior
+08_individual_bones
+09_cartilage_and_menisci
+10_ligaments_with_bones
+10b_ligaments_tendons_menisci_only
+11_exploded_anatomy
+12_implant_components
+13_instrument_collection
+14_instruments_closeup
+14_closeup_oscillating_saw
+14_closeup_needle_driver
+14_closeup_cutting_guide_femoral
+14_closeup_scalpel
+14_closeup_retractor
+14_closeup_skin_stapler
+15_instrument_grip_and_tip_anchors
+16_implant_placement_anchors
+16b_components_seated_at_targets
+17_00_state_intact
+17_01_state_marked
+17_02_state_incised
+17_03_state_exposed
+17_04_state_guides_placed
+17_05_state_resected
+17_06_state_trial_fitted
+17_07_state_implanted
+17_08_state_closed
+18_asset_demonstration_scene
+
+== 2026-11-28 room-fit check (AnatomyRoomFitCheck.cs, Editor Play mode, after merging feature/surgery-complete e4fbd9c) ==
+Find(SurgicalSite_Knee_R) -> patient anchor at (-0.154, 1.318, -0.235)
+room SurgicalSite (-0.140, 1.040, -0.510) vs patient knee (-0.154, 1.318, -0.235) delta (-0.014, 0.278, 0.275) |d|=0.391
+body verts 25776, below deck top by >5mm: 373, lowest body point over deck -21.0 mm
+drape bounds min (-0.523, 0.395, -1.071) max (0.524, 1.489, 0.619)
+tray bounds (-2.755, 0.985, -0.184)-(-2.305, 1.154, 0.424); back table (-2.832, 0.000, -0.504)-(-2.192, 1.057, 0.743)
+shots 19_integration_room_overview, 19b_integration_surgeon_view, 19c_integration_instrument_table
