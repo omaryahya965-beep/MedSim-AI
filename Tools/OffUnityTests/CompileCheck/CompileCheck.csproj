@@ -13,7 +13,8 @@
   <ItemGroup>
     <Compile Include="../UnityStub/*.cs" />
     <Compile Include="MedSimStub.cs" Condition="'$(IncludeP4Unity)'=='true'" />
-    <Compile Include="$(S)/Shared/**/*.cs;$(S)/Environment/**/*.cs;$(S)/Anatomy/**/*.cs;$(S)/Instruments/**/*.cs;$(S)/Mechanics/**/*.cs" />
+    <Compile Include="$(S)/Shared/**/*.cs" Exclude="$(S)/**/Editor/**" />
+    <!-- Other areas are verified in Unity by their owners; their scripts use APIs this stub does not model. -->
     <Compile Include="$(S)/AI/**/*.cs;$(S)/Characters/**/*.cs;$(S)/UI/**/*.cs;$(S)/Integration/**/*.cs" Exclude="$(S)/Integration/Editor/**" Condition="'$(IncludeP4Unity)'=='true'" />
   </ItemGroup>
 </Project>
