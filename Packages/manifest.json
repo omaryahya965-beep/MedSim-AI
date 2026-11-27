@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "com.hecomi.ulipsync": "https://github.com/hecomi/uLipSync.git#upm@3.1.5",
     "com.htc.upm.vive.openxr": "https://github.com/ViveSoftware/VIVE-OpenXR.git?path=com.htc.upm.vive.openxr",
     "com.unity.ai.assistant": "2.22.0-pre.1",
     "com.unity.ai.inference": "2.6.1",

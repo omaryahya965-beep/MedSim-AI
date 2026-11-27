@@ -31,17 +31,62 @@ namespace MedSimAI.Characters
         void OnEnable() { ClinicalFeedbackBus.Finding += OnExam; }
         void OnDisable() { ClinicalFeedbackBus.Finding -= OnExam; }
 
+        [Header("Body reactions (Animator triggers)")]
+        [Tooltip("Minimum seconds between examination reactions.")] public float reactionCooldown = 7f;
+        [Tooltip("Seconds between spontaneous pain shifts: x = min, y = max. Shorter while in distress.")] public Vector2 painShiftInterval = new Vector2(45f, 75f);
+        float lastReaction = -99f, nextPainShift; int examCount; bool wasThinking; PlacementZone[] zones;
+        static readonly int WinceHash = Animator.StringToHash("Wince"), HandToChestHash = Animator.StringToHash("HandToChest"), PainShiftHash = Animator.StringToHash("PainShift"), ThinkHash = Animator.StringToHash("Think"), ConditionHash = Animator.StringToHash("Condition");
+
+        bool CanAnimate => animator && animator.runtimeAnimatorController && animator.isActiveAndEnabled;
+        bool Trigger(int hash) { if (!CanAnimate) return false; animator.SetTrigger(hash); lastReaction = Time.time; return true; }
+        /// <summary>The right hand must stay put while something is attached to that arm, and must not land on a stethoscope.</summary>
+        bool RightHandFree()
+        {
+            zones ??= GetComponentsInChildren<PlacementZone>(true);
+            foreach (var z in zones) if (z && z.Occupied && (z.zoneId.EndsWith("_R") || z.zoneId.StartsWith("CHEST"))) return false;
+            return true;
+        }
+
         void OnExam(string title, string text)
         {
-            // Brief reaction to being examined (cold diaphragm, cuff squeeze).
+            // Brief reaction to being examined (cold diaphragm, cuff squeeze): gaze drops, and a body reaction with a cooldown.
             wince = 1.2f;
             if (life) life.gazeWeight = 0.4f;
+            if (Time.time - lastReaction < reactionCooldown) return;
+            examCount++;
+            // first contact is always the cold-stethoscope flinch; afterwards mostly winces, sometimes the hand goes to the chest
+            if (examCount > 1 && examCount % 3 == 0 && RightHandFree()) Trigger(HandToChestHash); else Trigger(WinceHash);
         }
+
+        void ScheduleNextPainShift()
+        {
+            int cond = CanAnimate ? animator.GetInteger(ConditionHash) : 0;
+            float k = cond >= 2 ? 0.4f : cond == 1 ? 0.55f : 1f;
+            nextPainShift = Time.time + Random.Range(painShiftInterval.x, painShiftInterval.y) * k;
+        }
+
+        void Start() { ScheduleNextPainShift(); nextPainShift = Time.time + Random.Range(18f, 30f); }
 
         protected override void Update()
         {
             base.Update();
             if (wince > 0) { wince -= Time.deltaTime; if (wince <= 0 && life) life.gazeWeight = 1f; }
+            if (!CanAnimate) return;
+            // spontaneous discomfort: shifts in the bed (more often in distress), occasionally a hand to the chest
+            if (Time.time >= nextPainShift)
+            {
+                if (Time.time - lastReaction > 4f && !IsSpeaking)
+                {
+                    bool chest = animator.GetInteger(ConditionHash) >= 1 && Random.value < 0.35f && RightHandFree();
+                    Trigger(chest ? HandToChestHash : PainShiftHash);
+                }
+                ScheduleNextPainShift();
+            }
+            // thinking behaviour while the AI prepares his answer (breath in, glance down)
+            var v = VoiceInteractionManager.Instance;
+            bool thinking = v && v.Target == Persona && v.State == VoiceState.Thinking;
+            if (thinking && !wasThinking) animator.SetTrigger(ThinkHash);
+            wasThinking = thinking;
         }
     }
 }

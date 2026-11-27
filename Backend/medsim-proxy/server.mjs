@@ -220,7 +220,7 @@ function readBody(req) {
     req.on('end', () => res(Buffer.concat(c))); req.on('error', rej); });
 }
 function send(res, status, obj, type = 'application/json') { res.writeHead(status, { 'Content-Type': type, 'Cache-Control': 'no-store' }); res.end(type === 'application/json' ? JSON.stringify(obj) : obj); }
-function errStatus(e) { if (e.code === 'budget_exceeded') return [402, 'budget_exceeded']; if (e.status === 429) return [429, 'provider_rate_limited']; if (e.name === 'TimeoutError' || /timeout/i.test(e.message)) return [504, 'upstream_timeout']; if (e instanceof SyntaxError) return [400, 'bad_json']; return [502, 'upstream_failure']; }
+function errStatus(e) { if (e.code === 'budget_exceeded') return [402, 'budget_exceeded']; if (e.status === 401 || e.status === 403) return [502, 'provider_auth_failed']; if (e.status === 429) return [429, 'provider_rate_limited']; if (e.name === 'TimeoutError' || /timeout/i.test(e.message)) return [504, 'upstream_timeout']; if (e instanceof SyntaxError) return [400, 'bad_json']; return [502, 'upstream_failure']; }
 
 export function createServer() {
   return http.createServer(async (req, res) => {

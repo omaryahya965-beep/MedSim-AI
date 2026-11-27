@@ -90,22 +90,48 @@ namespace MedSimAI.Tests
         }
 
         // ---------- Characters ----------
-        [TestCase("Assets/MedSimAI/Characters/DrSaraHassan/DrSaraHassan.prefab")]
-        [TestCase("Assets/MedSimAI/Characters/AdamReyes/AdamReyes.prefab")]
+        // v0.2: the scene characters are the Rocketbox-based models (the MakeHuman prefabs are no longer used in the scene)
+        [TestCase("Assets/MedSimAI/Characters/v2/Doctor/DrSaraHassan.fbx")]
+        [TestCase("Assets/MedSimAI/Characters/v2/Patient/AdamReyes.fbx")]
         public void Character_IsRiggedHumanoid_WithFacialBlendShapes(string path)
         {
             var go = AssetDatabase.LoadAssetAtPath<GameObject>(path);
             Assert.NotNull(go, path);
             var a = go.GetComponent<Animator>();
             Assert.IsTrue(a.avatar.isValid && a.avatar.isHuman, "valid humanoid avatar");
-            var body = go.GetComponentsInChildren<SkinnedMeshRenderer>().First(r => r.name == "Human");
+            var body = go.GetComponentsInChildren<SkinnedMeshRenderer>().OrderByDescending(r => r.sharedMesh.blendShapeCount).First(); // the face/body mesh (was named "Human" in the MakeHuman export)
             var names = Enumerable.Range(0, body.sharedMesh.blendShapeCount).Select(i => body.sharedMesh.GetBlendShapeName(i)).ToList();
-            foreach (var n in new[] { "eyeBlinkLeft", "eyeBlinkRight", "jawOpen", "browInnerUp", "mouthFrownLeft", "aa_02", "p_b_m_21", "sil_00" }) CollectionAssert.Contains(names, n);
+            foreach (var n in new[] { "eyeBlinkLeft", "eyeBlinkRight", "jawOpen", "browInnerUp", "mouthFrownLeft", "aa_02", "p_b_m_21", "sil_00", "AA_VI_10_aa", "AA_VI_01_PP", "AA_VI_07_SS" }) CollectionAssert.Contains(names, n);
             Assert.IsTrue(go.GetComponentsInChildren<SkinnedMeshRenderer>().All(r => r.bones.Length > 0), "all garments skinned");
             var bounds = go.GetComponentsInChildren<Renderer>().Select(r => r.bounds).Aggregate((x, y) => { x.Encapsulate(y); return x; });
             Assert.That(bounds.size.y, Is.InRange(1.55f, 1.95f), "real-world metric height");
             int verts = go.GetComponentsInChildren<SkinnedMeshRenderer>().Sum(r => r.sharedMesh.vertexCount);
             Assert.Less(verts, 45000, "VR vertex budget per character");
+        }
+
+        // ---------- Characters v0.2: Animator contracts + audio lip sync ----------
+        [TestCase("Assets/MedSimAI/Characters/v2/Animations/DrHassan.controller", new[] { "Speed", "Speaking", "Listening", "Mood", "Point" })]
+        [TestCase("Assets/MedSimAI/Characters/v2/Animations/AdamReyes.controller", new[] { "Condition", "Speaking", "Listening", "Mood", "Point", "Wince", "HandToChest", "PainShift", "Think", "Nod" })]
+        public void AnimatorController_ExposesEveryParameterTheCodeSets(string path, string[] required)
+        {
+            var c = AssetDatabase.LoadAssetAtPath<UnityEditor.Animations.AnimatorController>(path);
+            Assert.NotNull(c, path);
+            var names = c.parameters.Select(p => p.name).ToList();
+            foreach (var r in required) CollectionAssert.Contains(names, r);
+            foreach (var layer in c.layers) foreach (var st in layer.stateMachine.states)
+                if (st.state.motion is AnimationClip clip) Assert.IsTrue(clip.isHumanMotion, st.state.name + " plays a humanoid clip");
+        }
+
+        [TestCase("Assets/MedSimAI/Characters/v2/Doctor/DrSaraHassan.fbx")]
+        [TestCase("Assets/MedSimAI/Characters/v2/Patient/AdamReyes.fbx")]
+        public void AudioLipSync_EveryPhonemeMapsToAnExistingVisemeShape(string path)
+        {
+            var go = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            var body = go.GetComponentsInChildren<SkinnedMeshRenderer>().OrderByDescending(r => r.sharedMesh.blendShapeCount).First();
+            foreach (var kv in ULipSyncVisemeDriver.PhonemeToViseme) Assert.GreaterOrEqual(body.sharedMesh.GetBlendShapeIndex(kv.Value), 0, kv.Key + " -> " + kv.Value);
+            var profile = AssetDatabase.LoadAssetAtPath<uLipSync.Profile>("Packages/com.hecomi.ulipsync/Assets/Profiles/uLipSync-Profile-Sample-Male.asset");
+            Assert.NotNull(profile, "uLipSync sample profile");
+            foreach (var m in profile.mfccs) if (m.name != "-") Assert.IsTrue(ULipSyncVisemeDriver.PhonemeToViseme.ContainsKey(m.name), "profile phoneme " + m.name + " is mapped");
         }
 
         [Test] public void FaceRig_VisemeMapping_CoversAlphabet()

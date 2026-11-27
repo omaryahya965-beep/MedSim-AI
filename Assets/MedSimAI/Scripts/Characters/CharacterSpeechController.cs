@@ -20,6 +20,11 @@ namespace MedSimAI.Characters
         public float jawOpenDegrees = 14f;
         [Tooltip("Fallback: mouth mesh scaled vertically.")] public Transform mouthScaleTarget;
         [Range(0, 1)] public float visemeStrength = 0.85f;
+        [Tooltip("Set by ULipSyncVisemeDriver: when a line has audio, visemes come from the audio (uLipSync) and the text-timed path is skipped. Text-only lines still use the text-timed path.")]
+        public bool audioDrivenLipSync;
+        /// <summary>True while a line with real audio is playing and an audio-driven lip-sync component owns the mouth.</summary>
+        public bool AudioLipSyncActive => audioDrivenLipSync && IsSpeaking && hasClip;
+        bool hasClip;
 
         public bool IsSpeaking { get; private set; }
         public float MouthOpen { get; private set; }
@@ -49,12 +54,12 @@ namespace MedSimAI.Characters
             routine = null;
             if (source) source.Stop();
             if (IsSpeaking) { IsSpeaking = false; SubtitleEnded?.Invoke(this); SpeechFinished?.Invoke(); } // interrupted lines also finish (stops mouth + waiters)
-            MouthOpen = 0; CurrentViseme = "sil_00";
+            MouthOpen = 0; CurrentViseme = "sil_00"; hasClip = false;
         }
 
         IEnumerator SpeakRoutine(string line, AudioClip clip)
         {
-            IsSpeaking = true; text = line ?? ""; progress = 0;
+            IsSpeaking = true; text = line ?? ""; progress = 0; hasClip = clip != null;
             float duration;
             if (clip != null) { source.clip = clip; source.Play(); duration = clip.length; }
             else { source.clip = null; duration = Mathf.Clamp(text.Length * 0.065f, 1.2f, 20f); }
@@ -81,7 +86,7 @@ namespace MedSimAI.Characters
                 yield return null;
             }
             MouthOpen = 0; CurrentViseme = "sil_00";
-            IsSpeaking = false; routine = null;
+            IsSpeaking = false; routine = null; hasClip = false;
             SubtitleEnded?.Invoke(this);
             SpeechFinished?.Invoke();
         }
@@ -90,7 +95,7 @@ namespace MedSimAI.Characters
         {
             if (face)
             {
-                if (IsSpeaking)
+                if (IsSpeaking && !AudioLipSyncActive)
                 {
                     face.Add(CurrentViseme, visemeStrength * Mathf.Clamp01(0.35f + MouthOpen));
                     face.Add("jawOpen", MouthOpen * 0.28f);

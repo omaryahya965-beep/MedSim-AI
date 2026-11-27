@@ -81,3 +81,24 @@ PaintedPlaster017 (wall paint normal), OfficeCeiling001 (ceiling tiles), Metal00
 
 ### Made in-project for v0.2
 Corridor shell and fixtures, signage, radiator, window, doctor stool, pedal bins, ECG cart frame and lead set, monitor housing details, towel dispenser, sheet-vinyl fleck texture (procedural), and the blanket (Blender cloth simulation over the reclined patient; `Assets/MedSimAI/ThirdParty/MedSim/Blanket`).
+
+## Characters v0.2: Microsoft Rocketbox (replaces the MakeHuman characters in the scene)
+Assets are in `Assets/MedSimAI/Characters/v2/`. Preparation notes and Blender scripts: `AssetStaging/CharacterPrep/README.md`, `D:\Medical-Test\scratch_chars\`.
+
+| Asset | Source | License | Used for | Modifications |
+|---|---|---|---|---|
+| Avatar `Medical_Female_02` (f153) | Microsoft Rocketbox Avatar Library, https://github.com/microsoft/Microsoft-Rocketbox | **MIT**, Copyright (c) 2020 Microsoft | Dr. Sara Hassan | Shirt, trousers, hair and iris recoloured; ID badge card added; clavicles re-parented to Spine2; 74 alias blend shapes added (ARKit and Microsoft viseme names) |
+| Avatar `Male_Adult_05` (m009) | same | MIT | Mr. Reyes: head, face rig, skeleton | Iris recoloured, skin desaturated 12% |
+| Avatar `Male_Adult_09` (m017) | same (downloaded from the repo; not in `AssetStaging/MANIFEST.md`) | MIT | Mr. Reyes: body and bare arms | Grafted onto the `Male_Adult_05` skeleton; skin tone matched; forearm tattoo painted out; T-shirt repainted as skin under the gown |
+| 18 animation clips (`f_idle_*`, `f_gestic_*`, `f_walk_*`, `f_invite_sit`, `f_documents_idle`) | Rocketbox `Assets/Animations` | MIT | Dr. Hassan's Animator | Re-baked onto the avatar skeleton at 30 fps |
+| uLipSync 3.1.5 (`com.hecomi.ulipsync`, UPM git `#upm@3.1.5`), incl. its sample MFCC profiles | hecomi, https://github.com/hecomi/uLipSync | **MIT** | Audio-driven lip sync | None. The package's Unity-chan samples are not imported |
+
+The MIT licence requires the copyright notice and licence text to ship with the build: include `AssetStaging/Rocketbox/LICENSE.md` (Microsoft) and the uLipSync `LICENSE.md` in the credits screen or a licence file.
+
+Research citation if results are published: Gonzalez-Franco et al. 2020, "The Rocketbox Library and the Utility of Freely Available Rigged Avatars", *Frontiers in Virtual Reality*, doi:10.3389/frvir.2020.561558.
+
+**Made for this project in Blender:** hospital gown, wristband, blanket, badge texture, the reclined pose and all 11 patient clips (`Patient_Reclined_*`, `PainShift`, `HandToChest`, `Wince`, `Nod`, `ShakeNo`, `Think`).
+
+**Staged but not used:** Quaternius Universal Animation Library 1 and 2 (CC0 1.0); Rocketbox `Male_Adult_01`, `_11`, `_16` (MIT; arm-donor candidates in `scratch_chars\dl\`).
+
+**No longer used in the scene** (assets remain in the project): the MakeHuman / MPFB2 characters above, including the CC-BY `punkduck_winter_coat`. If those assets are deleted, the CC-BY attribution can be dropped.

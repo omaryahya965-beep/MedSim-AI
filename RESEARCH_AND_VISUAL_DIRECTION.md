@@ -488,3 +488,26 @@ Built by `Assets/MedSimAI/Editor/MedSimRedesignBuilder.cs` (menu **MedSim AI ▸
 - Characters, gown, reclined 40° pose, hands (another agent). The blanket is fitted to the *current* patient mesh: re-run `export_obj.cs` → `blanket.py` after the patient changes.
 - Corridor renderer culling when the door is latched; lever fumble prompt; door closer animation.
 - Curtain cloth model with mesh header, electrodes on the patient, NIBP hose, exam-lamp replacement, roughness-variation map for the floor, exterior parallax object beyond the two stone ledges.
+
+---
+
+## 12. Characters v0.2 — implemented vs. deferred
+
+Installed by `Assets/MedSimAI/Editor/MedSimCharactersV2.cs` (menu **MedSim AI ▸ Characters v2 ▸ Run all**; idempotent). Assets: `Assets/MedSimAI/Characters/v2/`. Blender preparation: `AssetStaging/CharacterPrep/README.md`. Do not re-run the old **MedSimSceneBuilder** character step: it would put the MakeHuman prefabs back.
+
+### Implemented
+| Spec | What was built | Deviation |
+|---|---|---|
+| §6.1 Casting | Dr. Hassan = Rocketbox `Medical_Female_02`. Mr. Reyes = `Male_Adult_05` head and rig on the body of `Male_Adult_09` (bare arms; identical skeleton) | Arm donor chosen in Blender from four candidates |
+| §6.2 Doctor look | Lab coat, stethoscope, recoloured shirt and trousers, brown iris, darker hair, badge card "Dr. S. Hassan / Emergency Medicine / SIMULATION FACULTY" | Tied-back hair only (hijab variant not built); no Arabic on the badge; no pen or fob watch |
+| §6.3 Patient look | Short-sleeved print gown skinned to the body, wristband, grey stubble, 12% desaturated skin; blanket fitted to the pose replaces the environment blanket (same `Blanket_Cellular` material) | Jeans and shoes remain under the blanket; no chest skin under the gown; sweat mask not done |
+| §7.2 Doctor animation | Idle ring (`Idle_Neutral_01/02/03`, `Idle_LookAround`, and the long `Idle_WeightShift` as the observing idle, so no idle repeats back to back); `Speed` blend of `Walk_Slow_Loop` (0.89 m/s) and `Walk_Loop` (1.21 m/s) around `DoctorMovement.walkSpeed` 1.05; `Listen_Neutral_01` with two nods while `Listening`; upper-body talk gestures while `Speaking` (`Talk_Relaxed_01` when `Mood` = Approving) | Observing idle is the weight-shift / hands-on-hips clip, not crossed arms or clasped hands. `Point` pauses talk gestures and leaves the aimed arm to `HumanoidLifeController`; the Rocketbox presentation clips point high and ignore the target. `Clipboard_Idle` is a bent-over-a-desk clip and is not used |
+| §7.3 Patient animation | Reclined pose authored for the 35° backrest; idles per `Condition` (0, 1, 2); `PainShift`, `HandToChest`, `Wince` as full-body triggers; `Nod`, `ShakeNo`, `Think` on a head layer. `PatientInteractionController` fires `Wince` on the first finding and then every third one `HandToChest` (7 s cooldown; never while something is attached to the right arm or chest), `PainShift` every 45–75 s (about twice as often in distress), `Think` when the AI starts preparing his answer | Condition-0 idle has no baked breathing: `HumanoidLifeController` breathes on top. `rub_left_arm`, `cuff_squeeze`, `offer_arm` not built |
+| §6.4 Lip sync | uLipSync 3.1.5 analyses each character's AudioSource; `ULipSyncVisemeDriver` maps its phonemes (A, I, U, E, O, S) to the `AA_VI_*` visemes through `FaceRig`. While a line has audio, the text-timed path in `CharacterSpeechController` is off (`audioDrivenLipSync`); text-only lines still use it. Verified with a local test voice: visemes follow the audio and return to rest within a few frames of `Stop()` | Vowels and sibilants only (the sample MFCC profiles have no other consonants); profiles are the package samples, not calibrated to the TTS voices. ±80 ms sync was not measured |
+| Zones, pillow | The 10 PlacementZones are re-parented to the new bones and re-fitted by raycast on the posed gown and arms; the pillow is moved under the back of the head | — |
+
+### Deferred
+- Hijab variant, Arabic badge text, sweat and pallor material pass, eye bones in the Humanoid avatar (gaze uses the eye-look blend shapes).
+- Hands-clasped observing pose, clipboard prop, Two-Bone IK for the hand on the sternum.
+- Lower body under the blanket (jeans, shoes): never show the patient without the blanket.
+- uLipSync profile calibration against the production TTS voices.

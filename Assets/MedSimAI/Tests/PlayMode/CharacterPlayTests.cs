@@ -54,7 +54,7 @@ namespace MedSimAI.PlayTests
         [UnityTest] public IEnumerator Patient_Blinks_ShowsDiscomfort_AndLipSyncsWhileSpeaking()
         {
             var p = Object.FindAnyObjectByType<PatientInteractionController>();
-            var body = p.GetComponentsInChildren<SkinnedMeshRenderer>().First(r => r.name == "Human");
+            var body = p.GetComponentsInChildren<SkinnedMeshRenderer>().OrderByDescending(r => r.sharedMesh.blendShapeCount).First(); // face/body mesh (named "Human" in the old MakeHuman export)
             int blinkL = body.sharedMesh.GetBlendShapeIndex("eyeBlinkLeft"), brow = body.sharedMesh.GetBlendShapeIndex("browInnerUp");
             float maxBlink = 0, t = 0;
             while (t < 7f) { maxBlink = Mathf.Max(maxBlink, body.GetBlendShapeWeight(blinkL)); t += Time.deltaTime; yield return null; }
