@@ -263,7 +263,8 @@ namespace MedSimAI.Surgery.Environment.Editor
             mat.SetColor("_BaseColor", new Color(.48f, .68f, .72f, .19f));
             mat.SetFloat("_Smoothness", .82f);
             mat.SetFloat("_Surface", 1);
-            mat.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+            mat.SetFloat("_BlendModePreserveSpecular", 1);
+            mat.SetFloat("_SrcBlend", (float)BlendMode.One);
             mat.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
             mat.SetFloat("_ZWrite", 0);
             mat.SetFloat("_Cull", (float)CullMode.Off);
