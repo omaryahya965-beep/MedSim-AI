@@ -1,0 +1,443 @@
+{
+ "inst.skin_marker": {
+  "name": "Skin marker",
+  "category": "marking",
+  "movable": [
+   "Cap"
+  ],
+  "tris": 1836,
+  "size_mm": [
+   12.4,
+   14.1,
+   138.0
+  ],
+  "parts": [
+   "Body",
+   "Cap",
+   "CapClip",
+   "EndPlug",
+   "Nib"
+  ],
+  "parents": {
+   "AttachmentPoint": "",
+   "Body": "",
+   "Cap": "",
+   "CapClip": "",
+   "EndPlug": "",
+   "GripPoint": "",
+   "InteractionPoint": "",
+   "Nib": "",
+   "ResetAnchor": "",
+   "Tip": ""
+  }
+ },
+ "inst.scalpel": {
+  "name": "Scalpel (No.3 handle, No.10 blade)",
+  "category": "cutting",
+  "movable": [
+   "Blade (replaceable)"
+  ],
+  "tris": 776,
+  "size_mm": [
+   12.8,
+   3.0,
+   157.9
+  ],
+  "parts": [
+   "Blade",
+   "Handle",
+   "Rib0",
+   "Rib1",
+   "Rib10",
+   "Rib11",
+   "Rib2",
+   "Rib3",
+   "Rib4",
+   "Rib5",
+   "Rib6",
+   "Rib7",
+   "Rib8",
+   "Rib9"
+  ],
+  "parents": {
+   "AttachmentPoint": "",
+   "Blade": "",
+   "GripPoint": "",
+   "Handle": "",
+   "Rib0": "Handle",
+   "Rib1": "Handle",
+   "Rib10": "Handle",
+   "Rib11": "Handle",
+   "Rib2": "Handle",
+   "Rib3": "Handle",
+   "Rib4": "Handle",
+   "Rib5": "Handle",
+   "Rib6": "Handle",
+   "Rib7": "Handle",
+   "Rib8": "Handle",
+   "Rib9": "Handle",
+   "InteractionPoint": "",
+   "ResetAnchor": "",
+   "Tip": ""
+  }
+ },
+ "inst.retractor": {
+  "name": "Hohmann retractor",
+  "category": "retraction",
+  "movable": [],
+  "tris": 6528,
+  "size_mm": [
+   16.0,
+   31.0,
+   223.0
+  ],
+  "parts": [
+   "Blade",
+   "Handle"
+  ],
+  "parents": {
+   "AttachmentPoint": "",
+   "Blade": "",
+   "GripPoint": "",
+   "Handle": "",
+   "InteractionPoint": "",
+   "ResetAnchor": "",
+   "Tip": ""
+  }
+ },
+ "inst.cutting_guide_femoral": {
+  "name": "Femoral cutting guide (generic distal block)",
+  "category": "guide",
+  "movable": [],
+  "tris": 7756,
+  "size_mm": [
+   62.0,
+   26.2,
+   163.0
+  ],
+  "parts": [
+   "Block",
+   "Collar",
+   "Grip0",
+   "Grip1",
+   "Grip2",
+   "Grip3",
+   "Grip4",
+   "Grip5",
+   "Handle"
+  ],
+  "parents": {
+   "AttachmentPoint": "",
+   "Block": "",
+   "Collar": "",
+   "Grip0": "",
+   "Grip1": "",
+   "Grip2": "",
+   "Grip3": "",
+   "Grip4": "",
+   "Grip5": "",
+   "GripPoint": "",
+   "Handle": "",
+   "InteractionPoint": "",
+   "ResetAnchor": "",
+   "SeatPoint": "",
+   "SlotPlane": "",
+   "Tip": ""
+  }
+ },
+ "inst.cutting_guide_tibial": {
+  "name": "Tibial cutting guide (generic block)",
+  "category": "guide",
+  "movable": [],
+  "tris": 7756,
+  "size_mm": [
+   56.0,
+   26.2,
+   163.0
+  ],
+  "parts": [
+   "Block",
+   "Collar",
+   "Grip0",
+   "Grip1",
+   "Grip2",
+   "Grip3",
+   "Grip4",
+   "Grip5",
+   "Handle"
+  ],
+  "parents": {
+   "AttachmentPoint": "",
+   "Block": "",
+   "Collar": "",
+   "Grip0": "",
+   "Grip1": "",
+   "Grip2": "",
+   "Grip3": "",
+   "Grip4": "",
+   "Grip5": "",
+   "GripPoint": "",
+   "Handle": "",
+   "InteractionPoint": "",
+   "ResetAnchor": "",
+   "SeatPoint": "",
+   "SlotPlane": "",
+   "Tip": ""
+  }
+ },
+ "inst.oscillating_saw": {
+  "name": "Oscillating saw (powered)",
+  "category": "powered_cutting",
+  "movable": [
+   "Pivot_Blade/Blade (oscillates about local Y)",
+   "Trigger"
+  ],
+  "tris": 2996,
+  "size_mm": [
+   42.0,
+   154.0,
+   159.0
+  ],
+  "parts": [
+   "Battery",
+   "Grip",
+   "Head",
+   "Housing",
+   "Blade",
+   "Trigger"
+  ],
+  "parents": {
+   "AttachmentPoint": "",
+   "Battery": "",
+   "Grip": "",
+   "GripPoint": "",
+   "Head": "",
+   "Housing": "",
+   "InteractionPoint": "",
+   "Pivot_Blade": "",
+   "Blade": "Pivot_Blade",
+   "ResetAnchor": "",
+   "Tip": "",
+   "Trigger": ""
+  }
+ },
+ "inst.drill": {
+  "name": "Surgical drill (powered, 3.2 mm bit)",
+  "category": "powered_drilling",
+  "movable": [
+   "Pivot_Chuck (Chuck + Bit spin about local Z)",
+   "Trigger"
+  ],
+  "tris": 2336,
+  "size_mm": [
+   42.0,
+   154.0,
+   174.0
+  ],
+  "parts": [
+   "Battery",
+   "Grip",
+   "Housing",
+   "Bit",
+   "Chuck",
+   "Trigger"
+  ],
+  "parents": {
+   "AttachmentPoint": "",
+   "Battery": "",
+   "Grip": "",
+   "GripPoint": "",
+   "Housing": "",
+   "InteractionPoint": "",
+   "Pivot_Chuck": "",
+   "Bit": "Pivot_Chuck",
+   "Chuck": "Pivot_Chuck",
+   "ResetAnchor": "",
+   "Tip": "",
+   "Trigger": ""
+  }
+ },
+ "inst.mallet": {
+  "name": "Surgical mallet (polymer faces)",
+  "category": "impaction",
+  "movable": [],
+  "tris": 2540,
+  "size_mm": [
+   94.0,
+   41.0,
+   233.5
+  ],
+  "parts": [
+   "FaceL",
+   "FaceR",
+   "Handle",
+   "Head"
+  ],
+  "parents": {
+   "AttachmentPoint": "",
+   "FaceL": "",
+   "FaceR": "",
+   "GripPoint": "",
+   "Handle": "",
+   "Head": "",
+   "InteractionPoint": "",
+   "ResetAnchor": "",
+   "Tip": ""
+  }
+ },
+ "inst.impactor": {
+  "name": "Impactor (polymer impaction head)",
+  "category": "impaction",
+  "movable": [],
+  "tris": 2220,
+  "size_mm": [
+   40.0,
+   40.0,
+   254.0
+  ],
+  "parts": [
+   "Grip",
+   "ImpactionHead",
+   "Shaft",
+   "StrikePlate"
+  ],
+  "parents": {
+   "AttachmentPoint": "",
+   "Grip": "",
+   "GripPoint": "",
+   "ImpactionHead": "",
+   "InteractionPoint": "",
+   "ResetAnchor": "",
+   "Shaft": "",
+   "StrikePlate": "",
+   "StrikePoint": "",
+   "Tip": ""
+  }
+ },
+ "inst.needle_driver": {
+  "name": "Needle driver (Mayo-Hegar pattern)",
+  "category": "suturing",
+  "movable": [
+   "Pivot_JawUpper (rotates about local Z)",
+   "Pivot_JawLower (rotates about local Z)"
+  ],
+  "tris": 5172,
+  "size_mm": [
+   65.4,
+   5.6,
+   146.7
+  ],
+  "parts": [
+   "BoxLockScrew",
+   "JawLower",
+   "JawLower_Insert",
+   "JawLower_Ratchet",
+   "JawUpper",
+   "JawUpper_Insert",
+   "JawUpper_Ratchet"
+  ],
+  "parents": {
+   "AttachmentPoint": "",
+   "BoxLockScrew": "",
+   "GripPoint": "",
+   "InteractionPoint": "",
+   "Pivot_BoxLock": "",
+   "Pivot_JawLower": "",
+   "JawLower": "Pivot_JawLower",
+   "JawLower_Insert": "Pivot_JawLower",
+   "JawLower_Ratchet": "Pivot_JawLower",
+   "Pivot_JawUpper": "",
+   "JawUpper": "Pivot_JawUpper",
+   "JawUpper_Insert": "Pivot_JawUpper",
+   "JawUpper_Ratchet": "Pivot_JawUpper",
+   "ResetAnchor": "",
+   "Tip": ""
+  }
+ },
+ "inst.skin_stapler": {
+  "name": "Skin stapler (disposable)",
+  "category": "closure",
+  "movable": [
+   "Pivot_Trigger (rotates about local X)"
+  ],
+  "tris": 940,
+  "size_mm": [
+   22.0,
+   57.6,
+   128.0
+  ],
+  "parts": [
+   "Body",
+   "Nose",
+   "Trigger",
+   "TopCover"
+  ],
+  "parents": {
+   "AttachmentPoint": "",
+   "Body": "",
+   "GripPoint": "",
+   "InteractionPoint": "",
+   "Nose": "",
+   "Pivot_Trigger": "",
+   "Trigger": "Pivot_Trigger",
+   "ResetAnchor": "",
+   "Tip": "",
+   "TopCover": ""
+  }
+ },
+ "inst.forceps": {
+  "name": "Adson forceps (toothed) \u2014 EXTRA, id not in contract",
+  "category": "grasping",
+  "movable": [
+   "Pivot_ArmL",
+   "Pivot_ArmR (close about local Y)"
+  ],
+  "tris": 1848,
+  "size_mm": [
+   11.8,
+   8.0,
+   150.0
+  ],
+  "parts": [
+   "ArmL",
+   "ArmR"
+  ],
+  "parents": {
+   "AttachmentPoint": "",
+   "GripPoint": "",
+   "InteractionPoint": "",
+   "Pivot_ArmL": "",
+   "ArmL": "Pivot_ArmL",
+   "Pivot_ArmR": "",
+   "ArmR": "Pivot_ArmR",
+   "ResetAnchor": "",
+   "Tip": ""
+  }
+ },
+ "inst.suction": {
+  "name": "Yankauer suction \u2014 EXTRA, id not in contract",
+  "category": "suction",
+  "movable": [],
+  "tris": 3876,
+  "size_mm": [
+   14.0,
+   38.3,
+   270.0
+  ],
+  "parts": [
+   "BulbTip",
+   "Handle",
+   "Tube"
+  ],
+  "parents": {
+   "AttachmentPoint": "",
+   "BulbTip": "",
+   "GripPoint": "",
+   "Handle": "",
+   "InteractionPoint": "",
+   "ResetAnchor": "",
+   "Tip": "",
+   "Tube": ""
+  }
+ }
+}
