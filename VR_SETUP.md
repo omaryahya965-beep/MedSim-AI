@@ -58,6 +58,18 @@ This uses the same method as VR Target Arena's `PlayerHeightOffset`. XR Origin's
 - Floor tracking stays enabled and the rig root stays on the floor, so teleport and recentring preserve the lift.
 - The tracked camera pose is never overridden, and the world is never rescaled.
 
+## 4b. v0.3 changes relevant to VR
+- **Voice:**
+  - Native voice works the same in VR. Hold **A/X** to talk; the headset microphone ("VIVE Virtual Audio Device") is selected automatically.
+  - Interrupt a character by pressing A/X while they speak.
+  - Hands-free mode is available in the pause menu.
+- **XR start-up recovery:**
+  - If OpenXR start-up does not finish within 45 s (seen when SteamVR is running without a headset), the app relaunches itself in Desktop Mode (log: `xr_watchdog.log`).
+  - If a launch never finished XR start-up, the next launch starts in Desktop Mode and says why.
+  - To force VR, launch with `-vr`; to force Desktop, launch with `-desktop`.
+- **Unchanged:** the rig, the +0.40 m height lift and the VIVE Focus 3 profile.
+- **Verified without wearing the headset:** with SteamVR 2.18.4 and VIVE Streaming running, the PCVR exe reached "Display mode: VR (headset display running)" with no hang. The image and controls in the headset are **not yet verified by a person**.
+
 ## 5. How to test (PCVR)
 **Run the built player, not the Editor:** `D:\VRBuilds\MedSim_PCVR\MedSimAI.exe`, with SteamVR and VBS running. The Comfort & Graphics panel shows live frame time. The target is ≤ 11.1 ms (90 Hz).
 

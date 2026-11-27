@@ -170,3 +170,29 @@ All were reviewed. The environment and character agents each did review→fix pa
 | PCVR build (manual XR start-up + automatic fallback) | Built with 0 errors; secret scan clean. **Not run with the headset.** |
 
 **Root cause of the earlier "player stalls without headset":** SteamVR, registered as the active OpenXR runtime, blocks the OpenXR plugin's start-up queries when no headset is connected. This was verified by launching the build with no OpenXR runtime available (`XR_RUNTIME_JSON` pointed at a missing file), which started normally.
+
+---
+# v0.3 — Native Realtime voice and final polish (2026-11-27)
+| Suite | Result |
+|---|---|
+| Unity EditMode | **78 / 78**. New `NativeVoiceTests` (6): streaming buffer, framed header split across chunks, cancel, voice-turn tracking, ECG via voice, dosing guard |
+| Unity PlayMode | **19 / 19**. New `XrRecoveryPlayTests`: a pending XR start-up from the previous launch leads to Desktop with a notice, and the flag is cleared |
+| Proxy (`node --test`) | **25 / 25**. New: no-speech audio gets no reply, no history and no audio; reply clean-up |
+| Native voice end-to-end in Unity, real API (`AgentScripts/NativeVoiceE2E.cs`) | Pass. 10 turns EN and AR; transcripts and subtitles correct; facts, ECG and escalation tracked; STEMI not confirmed (approved fallback); interruption stops speech in one frame; **0 spurious captures** in a hands-free echo soak with the real microphone and speakers |
+| Standalone Desktop exe self-test (`-medsimSelfTest`, real OS input through SendInput) | Pass. All keys and mouse received; 239 fps; voice turn first audio 1.88 s; **acoustic loopback through the real microphone**: heard correctly, reply 1.55 s after the clip ended. See DESKTOP_MODE.md |
+| Desktop build `D:/VRBuilds/MedSim_Desktop/MedSimAI.exe` | Built with 0 errors; OpenXR loader excluded (`xrLoaderInBuild=0`) |
+| PCVR build `D:/Medical-Test/Builds/MedSimAI_PCVR_v0.2/MedSimAI.exe` | Built with 0 errors. With SteamVR 2.18.4 and VIVE Streaming running, it reached "Display mode: VR (headset display running)", responsive, no hang. **Not checked by a person in the headset.** |
+
+Visual polish was checked on screenshots in `Screenshots/Polish/`:
+- Legs, jeans and shoes are removed, so nothing shows through the blanket and there are no dark patches.
+- The blanket is a procedural drape generated from the pose, with a folded top sheet.
+- The wrist twist is fixed and the elbow is slightly flexed.
+- Corridor signage is legible from 2 m, and the corridor and room are evenly lit.
+
+Lip sync is calibrated on the runtime voices.
+
+**Human checks still needed:**
+- the microphone with your own voice (checklist in NATIVE_VOICE.md);
+- the VIVE Focus 3 in the headset;
+- Arabic pronunciation by a native speaker;
+- clinical review.

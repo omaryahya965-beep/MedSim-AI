@@ -23,7 +23,9 @@ namespace MedSimAI.Voice
     {
         public const string MicModePref = "medsim.micMode";
         const int Rate = StreamingVoice.Rate, Frame = 480; // 20 ms frames at 24 kHz
-        public MicMode Mic { get; private set; } = MicMode.PushToTalk;
+        MicMode nvMic;
+        public MicMode Mic { get { if (!nvInit) { nvInit = true; nvMic = (MicMode)PlayerPrefs.GetInt(MicModePref, (int)MicMode.PushToTalk); } return nvMic; } private set { nvInit = true; nvMic = value; } }
+        float nvPttReleased = -100f;
         public event Action<MicMode> MicModeChanged;
         /// <summary>End of student speech → reply understood (ms) and → first audio received (ms), last voice turn.</summary>
         public float LastUnderstoodMs { get; private set; } = -1;
@@ -70,10 +72,11 @@ namespace MedSimAI.Voice
         }
         public void ReopenMic() { NativeCloseMic(); }
 
-        void NativeEnsureMic()
+        /// <summary>Hands-free keeps the microphone open (in memory only); push-to-talk opens it only while the talk button is held.</summary>
+        void NativeEnsureMic(bool onDemand = false)
         {
-            if (!nvInit) { nvInit = true; Mic = (MicMode)PlayerPrefs.GetInt(MicModePref, (int)MicMode.PushToTalk); }
             if (nvClip || Mic == MicMode.Muted || Microphone.devices.Length == 0) return;
+            if (Mic == MicMode.PushToTalk && !onDemand) return;
             nvDevice = PickMicDevice();
             nvClip = Microphone.Start(nvDevice, true, 20, Rate);
             Debug.Log($"[MedSim] Microphone open (in memory only): {(nvDevice ?? "system default")} · mode {Mic}");
@@ -87,6 +90,7 @@ namespace MedSimAI.Voice
             if (!LiveOn) return;
             NativeEnsureMic();
             if (!nvClip) return;
+            if (Mic == MicMode.PushToTalk && !nvPtt && !nvCapturing && Time.time - nvPttReleased > 3f) { NativeCloseMic(); return; } // release the microphone between push-to-talk turns
             int pos = Microphone.GetPosition(nvDevice); if (pos < 0) return;
             int n = pos - nvLastPos; if (n < 0) n += nvClip.samples; if (n <= 0) return;
             if (nvRead.Length < n) nvRead = new float[n];
@@ -152,7 +156,8 @@ namespace MedSimAI.Voice
 
         bool NativeBeginPushToTalk()
         {
-            NativeEnsureMic();
+            if (Mic == MicMode.Muted) { Error?.Invoke("Microphone is muted — unmute it in the pause menu (or press M)"); return true; }
+            NativeEnsureMic(true);
             if (!nvClip) { Error?.Invoke("No microphone detected"); return true; }
             nvPtt = true;
             if (!nvCapturing) NativeBeginCapture();
@@ -161,6 +166,7 @@ namespace MedSimAI.Voice
 
         bool NativeEndPushToTalk()
         {
+            nvPttReleased = Time.time;
             if (!nvPtt && !nvCapturing) return true;
             nvPtt = false;
             if (nvCapturing) NativeEndCapture();

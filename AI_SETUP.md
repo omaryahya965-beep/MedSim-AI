@@ -1,4 +1,6 @@
-# AI Setup — Live AI for the doctor and the patient (v0.2)
+# AI Setup — Live AI for the doctor and the patient (v0.3)
+
+> **v0.3: native voice.** Spoken turns no longer use the separate speech-to-text request. The student's audio goes to a persistent Realtime session (`gpt-realtime-2.1-mini`, override with `MEDSIM_VOICE_UNDERSTAND_MODEL`) through `POST /v1/voice`. The reply is grounded as before and streamed back as speech. Typed and tablet questions still use `/v1/turn`. See **NATIVE_VOICE.md**.
 
 Both characters understand natural speech and answer with **runtime-generated, scenario-grounded speech** from OpenAI. Every call goes through the local **MedSim proxy** (`Backend/medsim-proxy`). The OpenAI key never reaches Unity, builds, logs or the repository.
 
@@ -59,7 +61,8 @@ This writes `%USERPROFILE%\AppData\LocalLow\MedSim AI\MedSim AI\medsim_ai_config
 | Purpose | Model | Endpoint | Price (official pages, read 2026-11-27) |
 |---|---|---|---|
 | Understanding + reply generation, both personas (strict JSON schema) | `gpt-6-luna` | `/v1/responses` with `text.format: json_schema strict`, `reasoning.effort: none` | $0.10 / $0.50 per 1M input/output tokens |
-| Speech-to-text, English + Arabic | `gpt-transcribe` | `/v1/audio/transcriptions` | $0.0045 / min |
+| Native voice understanding (v0.3): hears the student's audio, classifies it and proposes a reply | `gpt-realtime-2.1-mini` | Realtime API: one persistent session per persona, a forced `respond` function call, and text-only output | about $0.001 per turn |
+| Speech-to-text (legacy path, still used for typed-question fallback tooling) | `gpt-transcribe` | `/v1/audio/transcriptions` | $0.0045 / min |
 | Runtime speech | `gpt-realtime-2.1-mini` | Realtime API over a server-side WebSocket; out-of-band responses (`conversation: "none"`) | Audio output $20 per 1M tokens (about $0.002–0.004 per spoken line in our measurements) |
 | Speech fallback (exact text) | `gpt-4o-mini-tts` | `/v1/audio/speech` (**deprecated; shuts down 2027-01-06**) | about $0.015 / min |
 
@@ -93,3 +96,6 @@ If the proxy is down, the key is invalid, the budget is exhausted, or a call tim
 ## 8. Tests
 - Offline, no key, no cost: `node --test server.test.mjs live.test.mjs`
 - Live, billed against the budget: `node tools/live-harness.mjs patient instructor arabic states speech failure`, with the proxy running.
+- Native voice, billed: `node tools/voice-harness.mjs` (EN, AR, interruption) and `node tools/doctor-replay.mjs` (doctor turns with the grounding verdict).
+- Unity Play mode, native voice end to end: `AgentScripts/NativeVoiceE2E.cs`.
+- Standalone exe: `MedSimAI.exe -medsimSelfTest "<…>/data/student-audio"`.

@@ -36,6 +36,9 @@ Run `D:\VRBuilds\MedSim_Desktop\MedSimAI.exe` (start the AI proxy first). Contro
 | Pause menu (tablet on/off, subtitles, language EN/AR, comfort and height, restart) | Left menu button (`Esc` on desktop) |
 | Teleport / snap turn | Thumbstick |
 
+## Native voice (v0.3)
+Speak naturally: hold **T** on desktop or **A/X** in VR (press **M** for hands-free). Replies stream back in about 2 s, and you can interrupt. Subtitles and transcripts are unchanged. See **NATIVE_VOICE.md**, including the microphone checklist.
+
 ## Documentation
 - **Desktop Mode:** [DESKTOP_MODE](DESKTOP_MODE.md)
 - **Design:** [RESEARCH_AND_VISUAL_DIRECTION](RESEARCH_AND_VISUAL_DIRECTION.md) · [ARCHITECTURE](ARCHITECTURE.md) · [INTELLIGENT_SUPERVISOR](INTELLIGENT_SUPERVISOR.md) · [DYNAMIC_PATIENT_STATE](DYNAMIC_PATIENT_STATE.md)

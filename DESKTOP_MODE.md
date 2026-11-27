@@ -19,7 +19,8 @@ Play the complete MedSim AI experience on a laptop or desktop without a headset.
 | E | Interact: open/close the door, record the ECG, sanitise hands, pick up |
 | Left click | Pick up an instrument, then apply it where you aim on the patient |
 | Right click | Put the held instrument back on the trolley |
-| Hold T | Talk through the laptop microphone to the person you are looking at (doctor or patient) |
+| Hold T | Talk to the person you are looking at (doctor or patient). Native voice: the reply streams back in about 2 s. Holding T while a character speaks interrupts them. |
+| M | Microphone mode: push-to-talk (default) → hands-free (just speak) → muted |
 | Esc | Pause menu: tablet, subtitles, language, display mode, restart, exit. The mouse cursor is released. |
 | F1 / H | Show or hide the controls panel |
 
@@ -84,6 +85,29 @@ Unity's XR Interaction Simulator was evaluated and not chosen. It simulates cont
   - escalation, discussion and an AI-spoken debrief, with the cursor released for the report.
 - **Standalone desktop build:** launched with SteamVR running. It opened full screen at native 1920×1080, selected Desktop Mode, and showed the Live AI welcome with HUD and subtitles (`Screenshots/DesktopMode/B03_standalone_desktop_build.png`).
 
+## Verified in the standalone exe (v0.3, 2026-11-27)
+
+Run: `D:\VRBuilds\MedSim_Desktop\MedSimAI.exe -medsimSelfTest <student-audio>`, with real OS input sent through Win32 `SendInput`. The log is in `%USERPROFILE%\AppData\LocalLow\MedSim AI\MedSim AI\selftest\`.
+
+- **Start-up:** Desktop Mode chosen immediately. The build contains no XR loader (`xrLoaderInBuild=0`), so it does not depend on SteamVR or OpenXR.
+- **Real keyboard and mouse:**
+  - W, D, E, left click, T and Esc all reached the game, and mouse look worked.
+  - The player walked 1.26 m and turned 27°.
+  - T switched to Listening and opened the default microphone on demand.
+  - Esc paused.
+- **Frame timing at 1920×1080, 240 Hz panel, v-sync on, RTX 3050 Laptop:**
+
+  | Where | Average | p95 | p99 | Worst frame | GPU time |
+  |---|---|---|---|---|---|
+  | Corridor | 4.18 ms (239 fps) | 4.19 ms | 4.23 ms | 8.4 ms | 1.54 ms |
+  | Room | 4.19 ms (238 fps) | 4.18 ms | 4.27 ms | 21.1 ms | 1.64 ms |
+
+  The single 21.1 ms frame was one stall, not sustained.
+- **GPU memory** (`nvidia-smi`, whole GPU): 2054 MiB before launch, at most 2484 MiB while running. That is about **0.43 GB** for MedSim, out of 4096 MiB.
+- **Native voice turn:** heard "Are you allergic to any medications?", understood in 1.08 s, first audio at 1.88 s.
+- **Acoustic loopback (automated audio, not a human):** a synthetic "Hello Doctor Hassan, nice to meet you" was played through the laptop speakers. The real microphone and hands-free VAD captured 2.67 s, the transcript was correct, and the doctor replied 1.55 s after the clip ended.
+- **Screenshots** at native resolution: `exe_corridor.png` and `exe_room.png`. HUD, subtitles and prompts are unchanged.
+
 **Not verified:**
-- The laptop microphone with a real human voice (STT was tested with recorded speech).
+- The laptop microphone with a real human voice. Use the checklist in NATIVE_VOICE.md.
 - VR Mode via the new manual XR start-up on the actual VIVE Focus 3. If VR Mode fails to start on the headset, re-enable *Project Settings → XR Plug-in Management → Windows → Initialize XR on Startup* (one checkbox) and rebuild the PCVR build.

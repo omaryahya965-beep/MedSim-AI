@@ -1,4 +1,6 @@
-# Architecture (v0.2)
+# Architecture (v0.3)
+
+> **v0.3 voice path (replaces the STT branch below for spoken turns):** mic (in memory, push-to-talk or hands-free VAD) → `LiveAIClient.VoiceTurn` → proxy `/v1/voice` → persistent **Realtime understanding session** per persona. It returns `heard` plus the same structured fields as `/v1/turn` through a forced function call. The same deterministic grounding then applies, the JSON header goes to Unity (`ConversationOrchestrator.ApplyVoiceTurn` runs the same deterministic tracking on `heard`), and the Realtime voice actor's PCM streams to a `StreamingVoice` AudioClip that plays while it arrives. Character-initiated lines use `/v1/say-stream`. Interruptions abort the HTTP stream, and the proxy sends `response.cancel`. Details: NATIVE_VOICE.md.
 
 ```
  Student (VIVE Focus 3: voice push-to-talk, hands/controllers, physical door & instruments)

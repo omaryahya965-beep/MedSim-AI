@@ -160,3 +160,32 @@ Each now has a regression test.
 - **Arabic pronunciation:** not assessed by a native speaker.
 - **Real student speech:** synthetic student audio was used for the STT tests.
 - **Clinical correctness:** none of the AI-phrased content has been reviewed by a clinician.
+
+---
+## v0.3: native Realtime voice (2026-11-27)
+
+All utterances were synthetic student clips: **automated audio, not a human voice**. They were injected into the same function the microphone capture calls, except for the exe loopback, which went acoustically through the speakers into the real microphone.
+
+| # | Student (heard by Realtime) | Reply | Source | Understood | First audio |
+|---|---|---|---|---|---|
+| 1 | "Hello Mr. Reyes, I am a medical student working with Dr. Hassan. Can you tell me when the pain started?" | "It started about forty-five minutes ago. I was carrying shopping up the stairs." | ai | 2.16 s | 2.88 s |
+| 2 | "Are you allergic to any medications?" | "I'm allergic to penicillin. It gave me a rash." | ai | 0.97 s | 1.57 s |
+| 3 | "Doctor Hassan, can I get an ECG for him please?" | "An ECG request is valid—I'll arrange it. What in his history makes the ECG the next step…?" (ECG recorded) | ai | 2.06 s | 2.76 s |
+| 4 | "I think he is having a heart attack." | "That's a strong impression—what key features are you grouping together to support it?…" | ai | 1.65 s | 2.17 s |
+| 5 | "Do you think this could be a STEMI?" | "What do you think it is, and what supports that?" | approved-fallback (`diagnosis_disclosure:stemi`) | 1.09 s | 1.69 s |
+| 6 | "I would like to call the cardiology registrar and activate the cath lab now." | "Okay, that's a clear request—I'll support that escalation…" (escalation recorded) | ai | 1.78 s | 2.38 s |
+| 7 | «مرحبا عمو، أنا طالبة طب. من متى بدأ معك الوجع؟» | «بدأ قبل حوالي خمس وأربعين دقيقة. كنت أحمل أغراض التسوق صاعداً الدرج.» | ai | 1.23 s | 1.97 s |
+| 8 | Interruption while the doctor was speaking | speech stopped in 0–1 ms; proxy logged `(interrupted)` | — | — | — |
+| 9 | Exe: "Are you allergic to any medications?" | "I'm allergic to penicillin. It gave me a rash." | ai | 1.08 s | 1.88 s |
+| 10 | Exe acoustic loopback: "Hello Dr Hassan, nice to meet you." (heard through the real laptop microphone) | "Nice to meet you too. What would you like to focus on first…?" | ai | 1.93 s after VAD end | reply 1.55 s after the clip ended |
+
+**Defects found by live testing and fixed:**
+- In hands-free mode, the laptop microphone picked up the characters' voices from the speakers and sent "<unknown>" or "…" turns, which the patient answered. Fixed:
+  - "no intelligible speech" now produces no reply, no history and no audio;
+  - barge-in is echo-gated;
+  - the noise floor adapts upward;
+  - end-of-speech is measured relative to the utterance's own level.
+- A stray "“}" at the end of a doctor reply was removed (`cleanReply`).
+- Unity used the first listed microphone (the laptop array) even in VR. It now uses the headset microphone in VR and the Windows default on desktop. This likely explains the three approved-fallback doctor turns in the earlier in-headset session.
+
+**Cost:** about $0.0025 per voice turn. Ledger total $0.84 of $2.00 after v0.3, so **$1.16 remains**.

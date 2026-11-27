@@ -22,6 +22,11 @@ namespace MedSimAI.XR
     public class DisplayModeManager : MonoBehaviour
     {
         public const string PrefKey = "medsim.displayMode";
+        /// <summary>Set while OpenXR start-up is in progress; still set at the next launch = the previous start-up hung or crashed.</summary>
+        public const string XrPendingKey = "medsim.xrInitPending";
+        public const float XrWatchdogSeconds = 45f;
+        /// <summary>Non-empty when this launch fell back to Desktop because VR start-up failed last time (shown to the user).</summary>
+        public static string RecoveryNotice { get; private set; } = "";
         public static DisplayModeManager Instance { get; private set; }
         public static DisplayMode Mode { get; private set; } = DisplayMode.Detecting;
         public static event Action<DisplayMode> ModeChanged;
@@ -47,6 +52,7 @@ namespace MedSimAI.XR
 
         static DisplayModePreference Requested()
         {
+            if (HasArg("-xrRecovered")) RecoveryNotice = "VR start-up was not responding, so MedSim AI restarted in Desktop Mode. Check the headset connection (SteamVR / VIVE Streaming) and relaunch to try VR again.";
             if (ForcedPreference.HasValue) return ForcedPreference.Value;
             foreach (var a in Environment.GetCommandLineArgs())
             {
@@ -73,17 +79,61 @@ namespace MedSimAI.XR
             var mgr = XRGeneralSettings.Instance ? XRGeneralSettings.Instance.Manager : null;
             // If XR was already started (e.g. "Initialize on Startup" re-enabled), respect it.
             if (mgr != null && mgr.isInitializationComplete && XRSettings.isDeviceActive) { Set(DisplayMode.VR, "XR already running"); yield break; }
-            if (req == DisplayModePreference.Desktop || mgr == null) { Set(DisplayMode.Desktop, mgr == null ? "no XR settings" : "desktop requested"); yield break; }
+            if (req == DisplayModePreference.Desktop || mgr == null) { PlayerPrefs.SetInt(XrPendingKey, 0); Set(DisplayMode.Desktop, mgr == null ? "no XR settings" : "desktop requested"); yield break; }
+            // Recovery: the previous launch never finished OpenXR start-up (runtime blocked, e.g. SteamVR without a headset,
+            // or the app was killed). Start in Desktop this time; an explicit -vr launch or the VR preference retries.
+            bool explicitVr = req == DisplayModePreference.VR && HasArg("-vr");
+            if (PlayerPrefs.GetInt(XrPendingKey, 0) == 1 && !explicitVr)
+            {
+                PlayerPrefs.SetInt(XrPendingKey, 0); PlayerPrefs.Save();
+                RecoveryNotice = "VR start-up did not finish last time (the OpenXR runtime did not respond). Started in Desktop Mode. Check the headset connection (SteamVR / VIVE Streaming) and relaunch, or start with -vr to retry.";
+                Set(DisplayMode.Desktop, "recovered: previous OpenXR start-up did not complete"); yield break;
+            }
+            PlayerPrefs.SetInt(XrPendingKey, 1); PlayerPrefs.Save();
+            var watchdog = StartWatchdog();
 
             if (mgr.activeLoader == null) yield return mgr.InitializeLoader();
-            if (mgr.activeLoader == null) { Set(DisplayMode.Desktop, "no OpenXR runtime/headset (loader failed)"); yield break; }
+            if (mgr.activeLoader == null) { EndWatchdog(watchdog); Set(DisplayMode.Desktop, "no OpenXR runtime/headset (loader failed)"); yield break; }
             mgr.StartSubsystems();
             float until = Time.realtimeSinceStartup + (req == DisplayModePreference.VR ? forcedVrSeconds : autoDetectSeconds);
             while (Time.realtimeSinceStartup < until && !DisplayRunning()) yield return null;
+            EndWatchdog(watchdog);
             if (DisplayRunning()) { Set(DisplayMode.VR, "headset display running"); yield break; }
             mgr.StopSubsystems(); mgr.DeinitializeLoader();
             Set(DisplayMode.Desktop, "XR started but no headset display");
         }
+
+        static bool HasArg(string a) { foreach (var x in Environment.GetCommandLineArgs()) if (string.Equals(x, a, StringComparison.OrdinalIgnoreCase) || string.Equals(x, "-" + a, StringComparison.OrdinalIgnoreCase)) return true; return false; }
+
+        /// <summary>
+        /// OpenXR start-up runs synchronously inside the runtime and can block the main thread indefinitely (seen with
+        /// SteamVR running but no headset). In a player build, a background watchdog relaunches the app in Desktop Mode
+        /// if start-up has not finished after XrWatchdogSeconds. (Never in the Editor.)
+        /// </summary>
+        class Watchdog { public volatile bool done; }
+        static Watchdog StartWatchdog()
+        {
+            var w = new Watchdog();
+            if (Application.isEditor) return w;
+            string exe = null; try { exe = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName; } catch { }
+            var log = Application.persistentDataPath + "/xr_watchdog.log";
+            var th = new System.Threading.Thread(() =>
+            {
+                var t0 = DateTime.UtcNow;
+                while (!w.done && (DateTime.UtcNow - t0).TotalSeconds < XrWatchdogSeconds) System.Threading.Thread.Sleep(250);
+                if (w.done || string.IsNullOrEmpty(exe)) return;
+                try
+                {
+                    System.IO.File.AppendAllText(log, $"{DateTime.Now:u} OpenXR start-up blocked > {XrWatchdogSeconds}s — relaunching in Desktop Mode" + Environment.NewLine);
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(exe, "-desktop -xrRecovered") { UseShellExecute = false });
+                }
+                catch { }
+                System.Diagnostics.Process.GetCurrentProcess().Kill(); // the blocked runtime call cannot be cancelled
+            }) { IsBackground = true, Name = "MedSim XR watchdog" };
+            th.Start();
+            return w;
+        }
+        static void EndWatchdog(Watchdog w) { if (w != null) w.done = true; PlayerPrefs.SetInt(XrPendingKey, 0); PlayerPrefs.Save(); }
 
         static bool DisplayRunning()
         {

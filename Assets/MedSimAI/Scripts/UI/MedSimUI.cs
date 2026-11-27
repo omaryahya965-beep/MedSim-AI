@@ -66,6 +66,7 @@ namespace MedSimAI.UI
             v.Error += e => Toast("<color=#FFB74D>" + e + "</color>");
             v.TurnReady += OnTurn;
             v.MicModeChanged += _ => { if (micButtonText) micButtonText.text = MicLabel(); RefreshVoice(); };
+            if (!string.IsNullOrEmpty(MedSimAI.XR.DisplayModeManager.RecoveryNotice)) { Toast("<color=#FFB74D>" + MedSimAI.XR.DisplayModeManager.RecoveryNotice + "</color>"); toastUntil = Time.unscaledTime + 25f; }
             AIProviderManager.Instance.ModeChanged += _ => RefreshMode();
             Session.Stages.StageChanged += (_, __) => RefreshProgress();
             Session.Tracker.Recorded += _ => RefreshProgress();
