@@ -3,6 +3,8 @@ using System.Collections;
 using System.Globalization;
 using System.IO;
 using System.Text;
+using MedSimAI.Surgery.Shared;
+using MedSimAI.Surgery.Shared.Unity;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -28,6 +30,13 @@ namespace MedSimAI.Surgery.Environment
         private void Start()
         {
             viewCamera = GetComponent<Camera>();
+            if (!SurgeryEventBusHost.Instance)
+            {
+                var host = new GameObject("Demo Surgery Event Bus").AddComponent<SurgeryEventBusHost>();
+                host.Bus.BeginSession(Guid.NewGuid().ToString("N"));
+                host.Bus.Publish(new SurgeryEvent(SurgeryEventIds.SessionStarted, SurgeryEventSources.Integration));
+            }
+
             string[] args = System.Environment.GetCommandLineArgs();
             int benchmarkArg = Array.IndexOf(args, "-operating-room-benchmark");
             if (benchmarkArg >= 0 && benchmarkArg + 1 < args.Length)
