@@ -11,6 +11,9 @@ on:
     branches: [feature/surgery-complete, feature/surgery-ai-integration]
   pull_request:
     branches: [feature/surgery-complete]
+permissions:
+  contents: read
+  checks: write
 env:
   UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
   UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
