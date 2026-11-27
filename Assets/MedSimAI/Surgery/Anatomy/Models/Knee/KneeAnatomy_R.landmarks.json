@@ -1,0 +1,529 @@
+{
+ "anchors": {
+  "kneeCenter_patient": [
+   -0.1542000025510788,
+   0.397599995136261,
+   -0.2345999926328659
+  ],
+  "femur": {
+   "pivot": [
+    0.00281621515750885,
+    -0.008816242218017578,
+    0.00363081693649292
+   ],
+   "lateral": [
+    -0.9953128695487976,
+    -0.07610942423343658,
+    0.05966198816895485
+   ],
+   "proximal": [
+    0.09670037031173706,
+    -0.7903642654418945,
+    0.6049574017524719
+   ],
+   "anterior": [
+    0.001111741061322391,
+    0.6078912615776062,
+    0.7940194606781006
+   ]
+  },
+  "tibia": {
+   "pivot": [
+    0.009165912866592407,
+    -0.036719709634780884,
+    -0.010652825236320496
+   ],
+   "lateral": [
+    -0.9919117093086243,
+    -0.04036928713321686,
+    0.12033914029598236
+   ],
+   "proximal": [
+    0.0563054084777832,
+    0.7097501754760742,
+    0.7021996974945068
+   ],
+   "anterior": [
+    -0.11375802755355835,
+    0.7032957673072815,
+    -0.7017365097999573
+   ]
+  },
+  "PlacementTarget_implant.femoral_component": {
+   "pos": [
+    0.00281621515750885,
+    -0.008816242218017578,
+    0.00363081693649292
+   ],
+   "up": [
+    0.09670037031173706,
+    -0.7903642654418945,
+    0.6049574017524719
+   ],
+   "forward": [
+    0.001111741061322391,
+    0.6078912615776062,
+    0.7940194606781006
+   ]
+  },
+  "PlacementTarget_implant.femoral_trial": {
+   "pos": [
+    0.00281621515750885,
+    -0.008816242218017578,
+    0.00363081693649292
+   ],
+   "up": [
+    0.09670037031173706,
+    -0.7903642654418945,
+    0.6049574017524719
+   ],
+   "forward": [
+    0.001111741061322391,
+    0.6078912615776062,
+    0.7940194606781006
+   ]
+  },
+  "PlacementTarget_implant.tibial_tray": {
+   "pos": [
+    0.009165912866592407,
+    -0.036719709634780884,
+    -0.010652825236320496
+   ],
+   "up": [
+    0.0563054084777832,
+    0.7097501754760742,
+    0.7021996974945068
+   ],
+   "forward": [
+    -0.11375802755355835,
+    0.7032957673072815,
+    -0.7017365097999573
+   ]
+  },
+  "PlacementTarget_implant.tibial_trial": {
+   "pos": [
+    0.009165912866592407,
+    -0.036719709634780884,
+    -0.010652825236320496
+   ],
+   "up": [
+    0.0563054084777832,
+    0.7097501754760742,
+    0.7021996974945068
+   ],
+   "forward": [
+    -0.11375802755355835,
+    0.7032957673072815,
+    -0.7017365097999573
+   ]
+  },
+  "PlacementTarget_implant.poly_insert": {
+   "pos": [
+    0.00939112901687622,
+    -0.03388071060180664,
+    -0.007844030857086182
+   ],
+   "up": [
+    0.0563054084777832,
+    0.7097501754760742,
+    0.7021996974945068
+   ],
+   "forward": [
+    -0.11375802755355835,
+    0.7032957673072815,
+    -0.7017365097999573
+   ]
+  },
+  "GuideTarget_inst.cutting_guide_femoral": {
+   "pos": [
+    0.0028384029865264893,
+    0.003312408924102783,
+    0.019473090767860413
+   ],
+   "up": [
+    0.09670037031173706,
+    -0.7903642654418945,
+    0.6049574017524719
+   ],
+   "forward": [
+    -0.001111741061322391,
+    -0.6078912615776062,
+    -0.7940194606781006
+   ]
+  },
+  "GuideTarget_inst.cutting_guide_tibial": {
+   "pos": [
+    -0.0023343712091445923,
+    -0.020504742860794067,
+    -0.026119962334632874
+   ],
+   "up": [
+    0.0563054084777832,
+    0.7097501754760742,
+    0.7021996974945068
+   ],
+   "forward": [
+    0.11375802755355835,
+    -0.7032957673072815,
+    0.7017365097999573
+   ]
+  },
+  "PatellaEversion": {
+   "pivot": [
+    -0.011408790946006775,
+    -0.027645468711853027,
+    -0.04422922432422638
+   ],
+   "axis": [
+    0.04264787212014198,
+    0.5754611492156982,
+    0.8167164325714111
+   ],
+   "angleDeg": -50,
+   "offset": [
+    -0.01991959661245346,
+    -0.008816883899271488,
+    -0.008334994316101074
+   ]
+  },
+  "incisionPath": [
+   [
+    0.0017248541116714478,
+    -0.022732555866241455,
+    0.09154029190540314
+   ],
+   [
+    0.0005339086055755615,
+    -0.01534193754196167,
+    0.0811159610748291
+   ],
+   [
+    -0.00065574049949646,
+    -0.007709145545959473,
+    0.0709867775440216
+   ],
+   [
+    -0.0018672645092010498,
+    7.107853889465332e-05,
+    0.061043426394462585
+   ],
+   [
+    -0.0035589784383773804,
+    0.007604509592056274,
+    0.05084101855754852
+   ],
+   [
+    -0.0065337419509887695,
+    0.017043203115463257,
+    0.032638877630233765
+   ],
+   [
+    -0.010231822729110718,
+    0.02672019600868225,
+    0.009778320789337158
+   ],
+   [
+    -0.011486083269119263,
+    0.023701906204223633,
+    -0.0023738890886306763
+   ],
+   [
+    -0.012701749801635742,
+    0.021031558513641357,
+    -0.013179764151573181
+   ],
+   [
+    -0.013282343745231628,
+    0.014770328998565674,
+    -0.022553905844688416
+   ],
+   [
+    -0.01358574628829956,
+    0.006283760070800781,
+    -0.03187362849712372
+   ],
+   [
+    -0.013968929648399353,
+    -0.001318424940109253,
+    -0.04111306369304657
+   ],
+   [
+    -0.014353141188621521,
+    -0.00560307502746582,
+    -0.04754103720188141
+   ]
+  ],
+  "patellaCenter": [
+   -0.008899137377738953,
+   0.006218075752258301,
+   0.003831207752227783
+  ],
+  "tibialTuberosity": [
+   -0.011408790946006775,
+   -0.027645468711853027,
+   -0.04422922432422638
+  ],
+  "distalCutCenter": [
+   0.00281621515750885,
+   -0.008816242218017578,
+   0.00363081693649292
+  ],
+  "tibialCutCenter": [
+   0.009165912866592407,
+   -0.036719709634780884,
+   -0.010652825236320496
+  ]
+ },
+ "report": {
+  "pose": {
+   "structures": [
+    "ACL",
+    "Femur",
+    "Fibula",
+    "Gastrocnemius",
+    "Hamstrings",
+    "IliotibialTract",
+    "InfrapatellarFatPad",
+    "JointCapsule",
+    "LCL",
+    "LateralMeniscus",
+    "MCL",
+    "MedialMeniscus",
+    "MeniscotibialLigaments",
+    "PCL",
+    "Patella",
+    "PatellarRetinacula",
+    "PesAnserinus",
+    "PoplitealLigaments",
+    "Popliteus",
+    "Quadriceps",
+    "SuprapatellarBursa",
+    "Tibia",
+    "TransverseLigament"
+   ],
+   "femoralHeadRadius_mm": 23.7,
+   "za": {
+    "knee": [
+     -0.0762510895729065,
+     0.03251780569553375,
+     0.43152374029159546
+    ],
+    "hip": [
+     -0.08370817452669144,
+     0.004906884394586086,
+     0.8603882789611816
+    ],
+    "ankle": [
+     -0.06905567646026611,
+     0.03879561275243759,
+     0.08528047055006027
+    ]
+   },
+   "kneeFlexDeg_patient": 97.5,
+   "flexAxisPoint_za": [
+    -0.0762510895729065,
+    0.03251780569553375,
+    0.4555237293243408
+   ],
+   "tibiaFemurPenetration_mm": 0.06,
+   "tibiaFemurGap_mm": 0.25,
+   "shankCorrectionDeg": 5.89,
+   "patellaClearance_mm": 1.04,
+   "patellarTendonLength_mm": 50.0,
+   "scale": 0.8571,
+   "shankAxisErrorDeg": 0.0,
+   "tris": {
+    "Fibula": 7584,
+    "Patella": 6592,
+    "MedialMeniscus": 1136,
+    "LateralMeniscus": 1872,
+    "ACL": 6384,
+    "PCL": 3192,
+    "MCL": 752,
+    "LCL": 320,
+    "TransverseLigament": 432,
+    "MeniscotibialLigaments": 872,
+    "PoplitealLigaments": 2552,
+    "PatellarRetinacula": 1936,
+    "JointCapsule": 2944,
+    "InfrapatellarFatPad": 768,
+    "SuprapatellarBursa": 1296,
+    "Quadriceps": 8994,
+    "Gastrocnemius": 4330,
+    "Popliteus": 566,
+    "PesAnserinus": 3492,
+    "Hamstrings": 5832,
+    "IliotibialTract": 6342,
+    "PatellarTendon": 1856,
+    "DistalFemur": 40984,
+    "FemurShaft": 9047,
+    "ProximalTibia": 24786,
+    "TibiaShaft": 2628,
+    "FemoralCartilage": 24464,
+    "TibialCartilage": 7224,
+    "PatellarCartilage": 5240
+   },
+   "trisTotal": 184417,
+   "clearanceBefore": [
+    22831,
+    3.332000937312528e-08
+   ],
+   "pushSeeds": [
+    295,
+    250,
+    194,
+    143,
+    84,
+    47
+   ],
+   "tightened": [
+    1363,
+    1349,
+    1335,
+    1331,
+    1315
+   ],
+   "pushSeeds2": [
+    53,
+    54,
+    58,
+    48,
+    52
+   ],
+   "clearanceAfter": [
+    5355,
+    3.638844036984052e-06
+   ],
+   "finalSeeds": 0
+  },
+  "placeholders": {
+   "distal_resection_mm": 9,
+   "posterior_resection_mm": 9,
+   "chamfer_mm": 10,
+   "component_height_mm": 62,
+   "tibial_resection_mm": 9,
+   "tray_thickness_mm": 4,
+   "insert_thickness_mm": 10,
+   "insert_dish_depth_mm": 3
+  },
+  "frameCheck": {
+   "femurLatDotX": 0.995,
+   "tibiaLatDotX": 0.992
+  },
+  "distalFemurNonManifoldEdges": 0,
+  "femur": {
+   "u0_mm": 9.4,
+   "a_p_mm": -12.9,
+   "a_a_mm": 19.9,
+   "componentTris": 9578
+  },
+  "proximalTibiaNonManifoldEdges": 0,
+  "tibia": {
+   "h0_mm": -33.0,
+   "outlinePts": 260,
+   "trayTris": 2010,
+   "insertTris": 1914
+  },
+  "patellaEversion": {
+   "angleDeg": -50,
+   "lateralShift_m": 0.02,
+   "lift_m": -0.012,
+   "femurPenetratingSamples": 0,
+   "samplesNearOrAboveSkin": 42,
+   "articularFacingAnterior": -0.23
+  },
+  "incisionLength_mm": 163.7,
+  "opening": {
+   "removedFaces": 369,
+   "rimEdges": 112
+  },
+  "implants": {
+   "implant.femoral_component": {
+    "size_mm": [
+     66.4,
+     61.4,
+     50.0
+    ],
+    "tris": 9578
+   },
+   "implant.femoral_trial": {
+    "size_mm": [
+     66.4,
+     61.4,
+     50.0
+    ],
+    "tris": 9578
+   },
+   "implant.tibial_tray": {
+    "size_mm": [
+     67.6,
+     41.5,
+     37.9
+    ],
+    "tris": 2010
+   },
+   "implant.tibial_trial": {
+    "size_mm": [
+     57.6,
+     4.0,
+     37.9
+    ],
+    "tris": 1992
+   },
+   "implant.poly_insert": {
+    "size_mm": [
+     55.6,
+     10.9,
+     36.5
+    ],
+    "tris": 1914
+   }
+  },
+  "kneeObjects": {
+   "ACL": 3192,
+   "ClosureLine": 36,
+   "DistalFemur": 20491,
+   "DistalFemur_Resected": 11627,
+   "FemoralCartilage": 12232,
+   "FemoralComponent": 9578,
+   "FemoralTrial": 9578,
+   "FemurShaft": 9047,
+   "Fibula": 3792,
+   "Gastrocnemius": 4223,
+   "GuidePins_Femur": 36,
+   "GuidePins_Tibia": 36,
+   "Hamstrings": 5694,
+   "IliotibialTract": 6266,
+   "IncisionLine": 36,
+   "InfrapatellarFatPad": 384,
+   "JointCapsule": 1472,
+   "KneeSkin": 2992,
+   "KneeSkin_Open": 2847,
+   "LateralMeniscus": 936,
+   "LCL": 160,
+   "MCL": 376,
+   "MedialMeniscus": 568,
+   "MeniscotibialLigaments": 436,
+   "Patella": 3296,
+   "PatellarCartilage": 2620,
+   "PatellarRetinacula": 968,
+   "PatellarTendon": 928,
+   "PCL": 1596,
+   "PesAnserinus": 3400,
+   "PolyInsert": 1914,
+   "PoplitealLigaments": 1276,
+   "Popliteus": 566,
+   "ProximalTibia": 12392,
+   "ProximalTibia_Resected": 8412,
+   "Quadriceps": 8810,
+   "SiteMarking": 44,
+   "SkinStaples": 420,
+   "SuprapatellarBursa": 648,
+   "TibialCartilage": 3612,
+   "TibialTray": 2010,
+   "TibialTrial": 1992,
+   "TibiaShaft": 2628,
+   "TransverseLigament": 216
+  }
+ }
+}

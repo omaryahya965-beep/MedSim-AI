@@ -1,0 +1,18 @@
+Knee anatomy meshes (KneeAnatomy_R.fbx) and the generic implant meshes derived from them
+(Assets/MedSimAI/Surgery/Instruments/Models/Implants/*.fbx) are adapted works of:
+
+  "Z-Anatomy - The libre 3D atlas of anatomy" (Gauthier Kervyn et al.), https://github.com/Z-Anatomy
+  Licence: Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
+  https://creativecommons.org/licenses/by-sa/4.0/
+
+which is itself derived from:
+
+  "BodyParts3D, (c) The Database Center for Life Science (DBCLS)", https://dbarchive.biosciencedbc.jp/en/bodyparts3d/
+  Current licence of the database: Creative Commons Attribution 4.0 International (CC BY 4.0)
+  (Z-Anatomy credits the earlier release as CC BY-SA 2.1 Japan.)
+
+Modifications by MedSim AI (2026): right-knee structures extracted; posed to 97.5 degrees of flexion;
+scaled and fitted to the surgical patient; refined (subdivision, decimation of the shafts); cartilage
+rebuilt as a 2 mm layer; muscles sectioned; illustrative resection variants and generic implant shapes
+generated with boolean operations; patellar tendon added procedurally. EDUCATIONAL USE ONLY.
+DRAFT - NOT CLINICALLY VALIDATED. These adapted meshes are distributed under CC BY-SA 4.0.
