@@ -1,8 +1,8 @@
 using Unity.AI.Navigation;
 using UnityEngine;
 using UnityEngine.AI;
-using static MedSimAI.Surgery.Environment.Editor.RoomGeometry;
 using UnityEngine.Rendering.Universal;
+using static MedSimAI.Surgery.Environment.Editor.RoomGeometry;
 
 namespace MedSimAI.Surgery.Environment.Editor
 {

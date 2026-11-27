@@ -128,6 +128,8 @@ namespace MedSimAI.Surgery.Environment.Tests
             var surface = instance.GetComponent<NavMeshSurface>();
             Assert.That(surface.navMeshData, Is.Not.Null);
             surface.AddData();
+            Assert.That(NavMesh.SamplePosition(Find("PatientRoot").position, out _, .15f, NavMesh.AllAreas),
+                Is.False, "The operating table is a navigation obstacle.");
             foreach (string destination in new[] { "SurgeonPosition", "AssistantPosition" })
             {
                 Assert.That(NavMesh.SamplePosition(Find("PlayerSpawn").position, out var start, .27f, NavMesh.AllAreas));

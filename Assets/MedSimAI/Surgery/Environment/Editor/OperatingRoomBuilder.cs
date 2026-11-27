@@ -135,6 +135,18 @@ namespace MedSimAI.Surgery.Environment.Editor
 
         private static void BakeNavigation(Transform room)
         {
+            Transform walkable = room.Find("Architecture/Walkable Floor");
+            int nonWalkableArea = NavMesh.GetAreaFromName("Not Walkable");
+            foreach (Collider collider in room.GetComponentsInChildren<Collider>())
+            {
+                if (collider.transform.IsChildOf(walkable) ||
+                    collider.GetComponentInParent<NavMeshObstacle>())
+                    continue;
+                var modifier = collider.gameObject.AddComponent<NavMeshModifier>();
+                modifier.overrideArea = true;
+                modifier.area = nonWalkableArea;
+            }
+
             var surface = room.gameObject.AddComponent<NavMeshSurface>();
             surface.collectObjects = CollectObjects.Children;
             surface.useGeometry = NavMeshCollectGeometry.PhysicsColliders;
