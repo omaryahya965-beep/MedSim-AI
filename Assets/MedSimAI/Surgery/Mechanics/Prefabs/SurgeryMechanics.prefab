@@ -50,7 +50,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1000000001}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8b8915f6457bb7c7e0ddad65e5074c28, type: 3}
+  m_Script: {fileID: 11500000, guid: 8d4f0b5e2a6c7b9d1e3f405162738495, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MedSimAI.Surgery.Shared.Unity.SurgeryEventBusHost
   logToConsole: 1
