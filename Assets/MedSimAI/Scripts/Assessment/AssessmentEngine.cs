@@ -108,6 +108,19 @@ namespace MedSimAI.Assessment
 
     public static class FeedbackComposer
     {
+        /// <summary>Deterministic spoken debrief (used only when Live AI cannot phrase one). Grounded in the session record.</summary>
+        public static string ComposeSpoken(ScenarioData s, AssessmentResult r)
+        {
+            var met = r.criteria.Where(c => c.met).Select(c => c.description.TrimEnd('.').ToLowerInvariant()).Take(2).ToList();
+            var sb = new System.Text.StringBuilder();
+            if (met.Count > 0) sb.Append("You did well: you ").Append(string.Join(", and you ", met.Select(m => m.Replace("introduced self", "introduced yourself")))).Append(". ");
+            if (r.missedCritical.Count > 0) sb.Append("The most important thing you missed: ").Append(r.missedCritical[0].TrimEnd('.').ToLowerInvariant()).Append(". For this patient that is a safety issue. ");
+            else { var miss = r.criteria.FirstOrDefault(c => !c.met); if (miss != null) sb.Append("Next time, remember: ").Append(miss.description.TrimEnd('.').ToLowerInvariant()).Append(". "); }
+            sb.Append("The key teaching point here: ").Append(s.expectedReasoning.keyPoints[s.expectedReasoning.keyPoints.Length - 1].TrimEnd('.').ToLowerInvariant()).Append(". ");
+            sb.Append("Have a look at the detailed report when you are ready.");
+            return sb.ToString();
+        }
+
         public static string Compose(ScenarioData s, AssessmentResult r, AssessmentResult previous = null)
         {
             var sb = new System.Text.StringBuilder();

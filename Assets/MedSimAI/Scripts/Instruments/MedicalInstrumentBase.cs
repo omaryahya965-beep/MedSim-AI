@@ -47,6 +47,7 @@ namespace MedSimAI.Instruments
         protected virtual void OnGrab(SelectEnterEventArgs a)
         {
             holder = a.interactorObject;
+            RecordEvent(ClinicalEvents.InstrumentPicked, InstrumentId);
             Detach();
             ShowGuidance(true);
             Play(pickupClip);
@@ -58,7 +59,23 @@ namespace MedSimAI.Instruments
             holder = null;
             ShowGuidance(false);
             if (hoverZone) hoverZone.SetHighlight(false, false);
-            if (hoverZone && hoverZone.Accepts(InstrumentId) && SupportsSnap) { SnapTo(hoverZone); OnPlaced(hoverZone); }
+            if (hoverZone && hoverZone.Accepts(InstrumentId) && SupportsSnap) { RecordEvent(ClinicalEvents.InstrumentOnPatient, InstrumentId + "@" + hoverZone.zoneId); SnapTo(hoverZone); OnPlaced(hoverZone); }
+            else if (!hoverZone && NearWrongZone()) RecordEvent(ClinicalEvents.ZoneRejected, InstrumentId);
+        }
+
+        /// <summary>Observation event for the SupervisorDirector (not scored). Safe when no session is running.</summary>
+        protected void RecordEvent(string id, string detail)
+        {
+            var m = ClinicalScenarioManager.Instance; if (!m || m.Session == null) return;
+            m.Session.Record(id, detail);
+        }
+
+        /// <summary>True when the probe is on the patient but over a zone that does not accept this instrument.</summary>
+        public bool NearWrongZone()
+        {
+            int n = Physics.OverlapSphereNonAlloc(probePoint.position, probeRadius * 1.5f, hits, zoneMask, QueryTriggerInteraction.Collide);
+            for (int i = 0; i < n; i++) { var z = hits[i].GetComponent<PlacementZone>(); if (z && !z.Accepts(InstrumentId)) return true; }
+            return false;
         }
 
         protected virtual bool SupportsSnap => false;
@@ -140,8 +157,9 @@ namespace MedSimAI.Instruments
         /// <summary>Test/automation hook: performs the same snap + placement flow as releasing the instrument in a zone.</summary>
         public void PlaceInZone(PlacementZone z)
         {
-            if (!z || !z.Accepts(InstrumentId)) return;
-            if (SupportsSnap) { SnapTo(z); OnPlaced(z); }
+            if (!z) return;
+            if (!z.Accepts(InstrumentId)) { RecordEvent(ClinicalEvents.ZoneRejected, InstrumentId); return; }
+            if (SupportsSnap) { RecordEvent(ClinicalEvents.InstrumentOnPatient, InstrumentId + "@" + z.zoneId); SnapTo(z); OnPlaced(z); }
         }
 
         protected void Detach()

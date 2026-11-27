@@ -17,6 +17,7 @@ namespace MedSimAI.PlayTests
     {
         [UnitySetUp] public IEnumerator LoadScene()
         {
+            MedSimAI.AI.AIProviderManager.ForceOffline = true; // automated tests never make billable AI calls
             yield return SceneManager.LoadSceneAsync("MedSim_ER");
             float t = 0; while ((SessionManager.Instance == null || SessionManager.Instance.State != AppState.MainMenu) && t < 10) { t += Time.unscaledDeltaTime; yield return null; }
             Assert.AreEqual(AppState.MainMenu, SessionManager.Instance.State, "Scene should reach the main menu");

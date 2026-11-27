@@ -46,6 +46,12 @@ namespace MedSimAI.AI
         public string investigationId;
         public bool mentionsEscalation;
         public string reply;
+        // v0.2 Live AI (text already validated server-side; speech synthesised at runtime)
+        public bool live;
+        public string audioId;
+        public bool escalationRequested, diagnosisNamed, isQuestion;
+        public string[] concepts = new string[0];
+        public string liveSource;
     }
 
     public enum ResponseSource { ScenarioFact, OfflineScript, AIValidated, AIRejectedFallback, SafetyGuard, ProviderFailureFallback }
@@ -54,6 +60,7 @@ namespace MedSimAI.AI
     {
         public Persona persona; public string studentText; public string responseText; public ResponseSource source; public string note;
         public InvestigationOutcome investigation;
+        public string audioId; // runtime-generated speech to fetch from the proxy (null → text-only fallback)
     }
 
     public class InvestigationOutcome { public string id, name, result, imageKey; public bool available; }

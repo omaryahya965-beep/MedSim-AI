@@ -10,39 +10,49 @@ namespace MedSimAI.AI
     /// <summary>Non-secret runtime config. Read from persistentDataPath/medsim_ai_config.json (never contains provider API keys).</summary>
     [Serializable] public class AIRuntimeConfig
     {
-        public string proxyEndpoint = "";      // e.g. https://your-proxy.example.org
-        public string clientSessionToken = ""; // short-lived token issued by your proxy, NOT a provider key
-        public bool preferOnline = false;
-        public int timeoutMs = 12000;
+        public string proxyEndpoint = "";      // e.g. http://127.0.0.1:8787 (the MedSim proxy on this PC)
+        public string clientSessionToken = ""; // shared secret for the proxy (MEDSIM_CLIENT_TOKEN), NOT a provider key
+        public bool preferOnline = true;
+        public int timeoutMs = 25000;
         public string language = "en";
     }
 
+    /// <summary>
+    /// Owns the conversation pipeline. Live AI (OpenAI behind the MedSim proxy) is the primary path: both characters
+    /// generate replies and runtime speech. If the proxy is unreachable the app says so and continues TEXT-ONLY with
+    /// deterministic scenario text — it never plays pre-recorded dialogue or pretends to be Live AI.
+    /// </summary>
     [DefaultExecutionOrder(-90)]
     public class AIProviderManager : MonoBehaviour
     {
+        /// <summary>Set by automated tests so they never make billable provider calls.</summary>
+        public static bool ForceOffline;
         public static AIProviderManager Instance { get; private set; }
         public ConversationOrchestrator Orchestrator { get; private set; }
         public AIRuntimeConfig Config { get; private set; }
-        public ITextToSpeechProvider OnlineTts { get; private set; }
-        public ITextToSpeechProvider OfflineTts { get; } = new PrerenderedVoiceLibrary();
-        public ISpeechToTextProvider OnlineStt { get; private set; }
+        public LiveAIClient Live { get; private set; }
         public MedSimAI.Clinical.LanguagePack Language { get; private set; }
         public ConversationMode Mode => Orchestrator.UseOnline ? ConversationMode.OnlineAI : ConversationMode.OfflineScripted;
         public event Action<ConversationMode> ModeChanged;
+        public event Action<LiveStatus, string> LiveStatusChanged;
 
-        public string ModeLabel => Mode == ConversationMode.OnlineAI ? "LIVE AI (validated, scenario-grounded)" : "OFFLINE SCRIPTED DEMO";
+        public string ModeLabel => Mode == ConversationMode.OnlineAI
+            ? (Live.Status == LiveStatus.Offline ? "AI CONNECTION PROBLEM — " + Live.LastError : "LIVE AI")
+            : (ForceOffline ? "TEST MODE — text only" : "AI OFFLINE — text only (no voice)");
 
         void Awake()
         {
             Instance = this;
-            Config = LoadConfig();
+            Config = ForceOffline ? new AIRuntimeConfig { preferOnline = false } : LoadConfig();
             var session = ClinicalScenarioManager.Instance.Session;
-            IAIProvider online = string.IsNullOrEmpty(Config.proxyEndpoint) ? null : new GroundedProxyProvider(Config.proxyEndpoint, Config.clientSessionToken, () => ClinicalScenarioManager.Instance.Session, Mathf.CeilToInt(Config.timeoutMs / 1000f));
+            Live = new LiveAIClient(ForceOffline ? "" : Config.proxyEndpoint, Config.clientSessionToken, Mathf.CeilToInt(Config.timeoutMs / 1000f)) { Language = Config.language };
+            Live.StatusChanged += (s, e) => { LiveStatusChanged?.Invoke(s, e); ModeChanged?.Invoke(Mode); };
+            IAIProvider online = Live.Configured ? new LiveProvider(Live, () => ClinicalScenarioManager.Instance.Session) : null;
             Orchestrator = new ConversationOrchestrator(session, new OfflineScriptedProvider(session), online)
             { UseOnline = Config.preferOnline && online != null, TimeoutMs = Config.timeoutMs, Language = Config.language };
-            if (online != null) { OnlineTts = new ProxyTextToSpeech(Config.proxyEndpoint, Config.clientSessionToken); OnlineStt = new ProxySpeechToText(Config.proxyEndpoint, Config.clientSessionToken); }
             Language = MedSimAI.Clinical.LanguagePack.Load(session.Scenario, Config.language);
             ClinicalScenarioManager.Instance.SessionReset += Orchestrator.Reset;
+            if (!Live.Configured && !ForceOffline) Debug.LogWarning("[MedSim] Live AI not configured (see AI_SETUP.md). Characters will be text-only.");
         }
 
         public bool OnlineAvailable => Orchestrator.Online != null;
@@ -53,13 +63,18 @@ namespace MedSimAI.AI
             ModeChanged?.Invoke(Mode);
         }
 
-        public void SetLanguage(string lang) { Config.language = lang; Orchestrator.Language = lang; Language = MedSimAI.Clinical.LanguagePack.Load(ClinicalScenarioManager.Instance.Scenario, lang); ModeChanged?.Invoke(Mode); }
+        public void SetLanguage(string lang)
+        {
+            Config.language = lang; Orchestrator.Language = lang; Live.Language = lang;
+            Language = MedSimAI.Clinical.LanguagePack.Load(ClinicalScenarioManager.Instance.Scenario, lang); ModeChanged?.Invoke(Mode);
+        }
+
+        public static string ConfigPath => Path.Combine(Application.persistentDataPath, "medsim_ai_config.json");
 
         static AIRuntimeConfig LoadConfig()
         {
-            var path = Path.Combine(Application.persistentDataPath, "medsim_ai_config.json");
-            try { if (File.Exists(path)) return JsonUtility.FromJson<AIRuntimeConfig>(File.ReadAllText(path)) ?? new AIRuntimeConfig(); }
-            catch (Exception e) { Debug.LogWarning("[MedSim] AI config unreadable, using offline mode: " + e.Message); }
+            try { if (File.Exists(ConfigPath)) return JsonUtility.FromJson<AIRuntimeConfig>(File.ReadAllText(ConfigPath)) ?? new AIRuntimeConfig(); }
+            catch (Exception e) { Debug.LogWarning("[MedSim] AI config unreadable, using text-only mode: " + e.Message); }
             return new AIRuntimeConfig();
         }
     }

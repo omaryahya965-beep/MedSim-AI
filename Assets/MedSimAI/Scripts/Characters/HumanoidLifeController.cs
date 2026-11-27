@@ -23,6 +23,7 @@ namespace MedSimAI.Characters
         [Range(0, 1)] public float gazeWeight = 1f;
         public bool useEyeLookShapes = true;
         public float breathsPerMinute = 14f;
+        [Tooltip("Scales the discomfort expression (authored patient condition).")] public float painIntensity = 1f;
         public CharacterMood mood = CharacterMood.Neutral;
         public bool lyingDown;
         public bool listening;
@@ -131,7 +132,7 @@ namespace MedSimAI.Characters
                     case CharacterMood.Discomfort:
                         painTimer -= dt; if (painTimer <= 0) { painTimer = Random.Range(4f, 9f); painPulse = 1f; }
                         painPulse = Mathf.MoveTowards(painPulse, 0, dt * 0.6f);
-                        float p = 0.55f + 0.45f * painPulse;
+                        float p = (0.55f + 0.45f * painPulse) * painIntensity;
                         faceRig.Add("browInnerUp", 0.45f * p); faceRig.Add("browDownLeft", 0.1f * p); faceRig.Add("browDownRight", 0.1f * p);
                         faceRig.Add("eyeSquintLeft", 0.08f * p); faceRig.Add("eyeSquintRight", 0.08f * p);
                         if (!talking) { faceRig.Add("mouthFrownLeft", 0.3f * p); faceRig.Add("mouthFrownRight", 0.3f * p); faceRig.Add("mouthStretchLeft", 0.12f * painPulse); faceRig.Add("mouthStretchRight", 0.12f * painPulse); }

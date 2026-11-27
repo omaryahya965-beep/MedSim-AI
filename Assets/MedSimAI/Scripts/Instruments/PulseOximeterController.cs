@@ -39,7 +39,7 @@ namespace MedSimAI.Instruments
             routine = null;
         }
 
-        protected override void OnDetached() { if (routine != null) { StopCoroutine(routine); routine = null; } if (deviceDisplay) deviceDisplay.text = ""; if (monitor) monitor.HideSpO2(); }
+        protected override void OnDetached() { if (routine != null) { StopCoroutine(routine); routine = null; RecordEvent(ClinicalEvents.InstrumentRemovedEarly, InstrumentId); } if (deviceDisplay) deviceDisplay.text = ""; if (monitor) monitor.HideSpO2(); }
         public override void ResetInstrument() { base.ResetInstrument(); if (deviceDisplay) deviceDisplay.text = ""; }
     }
 }

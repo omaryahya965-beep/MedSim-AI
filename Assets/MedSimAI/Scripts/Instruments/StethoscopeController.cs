@@ -29,6 +29,7 @@ namespace MedSimAI.Instruments
                 {
                     if (!cache.TryGetValue(zone.zoneId, out var r))
                     {
+                        if (cache.Count == 0) RecordEvent(ClinicalEvents.InstrumentOnPatient, InstrumentId + "@" + zone.zoneId);
                         r = Session.PerformExam(InstrumentId, zone.zoneId); // recorded once per zone
                         cache[zone.zoneId] = r;
                         if (r.success) { ClinicalFeedbackBus.Publish("Auscultation — " + zone.displayName, r.finding); Haptic(0.4f, 0.08f); }
@@ -40,8 +41,15 @@ namespace MedSimAI.Instruments
                     }
                 }
             }
-            else { dwellZone = null; dwell = 0; StopSound(); }
+            else
+            {
+                dwellZone = null; dwell = 0; StopSound();
+                // Diaphragm resting on the patient at a non-auscultation site (e.g. the arm) for a while → wrong placement.
+                if (NearWrongZone()) { wrongDwell += Time.deltaTime; if (wrongDwell > 1.2f) { wrongDwell = -6f; RecordEvent(ClinicalEvents.ZoneRejected, InstrumentId); } }
+                else if (wrongDwell > 0) wrongDwell = 0;
+            }
         }
+        float wrongDwell;
 
         float nextBeat;
         void HeartbeatHaptics(int hr)

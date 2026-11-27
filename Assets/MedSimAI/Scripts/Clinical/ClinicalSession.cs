@@ -45,7 +45,10 @@ namespace MedSimAI.Clinical
         public void Reset() { Current = ClinicalStage.Introduction; }
     }
 
-    /// <summary>Authoritative patient state. Only explicit scenario transitions can change it.</summary>
+    /// <summary>
+    /// Authoritative patient state. Only explicit scenario transitions can change it: the legacy event transitions and
+    /// (v0.2.0) the authored condition state machine (patientStates + stateTransitions). The AI only ever reads it.
+    /// </summary>
     public class PatientState
     {
         readonly ScenarioData scenario;
@@ -53,9 +56,36 @@ namespace MedSimAI.Clinical
         readonly HashSet<string> appliedTransitions = new HashSet<string>();
         public IReadOnlyCollection<string> AppliedTransitions => appliedTransitions;
         public event Action<Vitals> VitalsChanged;
+        /// <summary>(from, to, authored message)</summary>
+        public event Action<PatientStateDef, PatientStateDef, string> ConditionChanged;
+        public PatientStateDef Condition { get; private set; }
+        public string ConditionId => Condition?.id;
+        readonly List<string> conditionPath = new List<string>();
+        public IReadOnlyList<string> ConditionPath => conditionPath;
 
-        public PatientState(ScenarioData s) { scenario = s; current = s.vitals.Clone(); }
+        public PatientState(ScenarioData s) { scenario = s; Reset(); }
         public Vitals Vitals => current.Clone(); // defensive copy: callers cannot mutate
+
+        /// <summary>Evaluates authored condition transitions. eventId == null → time-based check. Returns the authored message if the condition changed.</summary>
+        internal string EvaluateConditionTransitions(string eventId, float now, Func<string, bool> has)
+        {
+            if (Condition == null || scenario.stateTransitions == null) return null;
+            foreach (var t in scenario.stateTransitions)
+            {
+                if (t.trigger == null || t.from == null || Array.IndexOf(t.from, Condition.id) < 0 || t.to == Condition.id) continue;
+                bool fire;
+                if (t.trigger.type == "event") fire = eventId != null && eventId == t.trigger.eventId;
+                else if (t.trigger.type == "time") fire = now >= t.trigger.afterSeconds && !(t.trigger.unlessEvents ?? new string[0]).Any(has);
+                else fire = false;
+                if (!fire) continue;
+                var next = scenario.FindState(t.to); if (next == null) continue;
+                var prev = Condition; Condition = next; conditionPath.Add(next.id);
+                if (!next.inheritVitals && next.vitals != null) { current = next.vitals.Clone(); VitalsChanged?.Invoke(Vitals); }
+                ConditionChanged?.Invoke(prev, next, t.message);
+                return string.IsNullOrEmpty(t.message) ? "" : t.message;
+            }
+            return null;
+        }
 
         internal string ApplyTransitionsFor(string eventId)
         {
@@ -74,7 +104,13 @@ namespace MedSimAI.Clinical
             return message;
         }
 
-        public void Reset() { current = scenario.vitals.Clone(); appliedTransitions.Clear(); }
+        public void Reset()
+        {
+            appliedTransitions.Clear(); conditionPath.Clear();
+            Condition = scenario.FindState(scenario.initialStateId);
+            current = Condition != null && !Condition.inheritVitals && Condition.vitals != null ? Condition.vitals.Clone() : scenario.vitals.Clone();
+            if (Condition != null) conditionPath.Add(Condition.id);
+        }
     }
 
     public struct ClinicalActionEvent { public string eventId; public float time; public string detail; }
@@ -169,7 +205,25 @@ namespace MedSimAI.Clinical
             Tracker.Record(eventId, Now, detail);
             var msg = Patient.ApplyTransitionsFor(eventId);
             if (msg != null) SystemMessage?.Invoke(msg);
+            CheckCondition(eventId);
         }
+
+        void CheckCondition(string eventId)
+        {
+            var before = Patient.ConditionId;
+            var m = Patient.EvaluateConditionTransitions(eventId, Now, Tracker.Has);
+            if (m != null)
+            {
+                Tracker.Record(ClinicalEvents.State(Patient.ConditionId), Now, before);
+                if (m.Length > 0) SystemMessage?.Invoke(m);
+            }
+        }
+
+        /// <summary>Periodic update (time-based authored transitions). Called by ClinicalScenarioManager ~2x per second, never per frame AI.</summary>
+        public void Tick() { if (Stages.Current != ClinicalStage.Debriefing && Stages.Current != ClinicalStage.SupervisorFeedback) CheckCondition(null); }
+
+        /// <summary>Analysis of the last statement made to the supervisor (deterministic).</summary>
+        public StatementAnalysis.Result LastStatement { get; private set; }
 
         void EnsureAssessmentStage(ClinicalStage preferred)
         {
@@ -193,10 +247,14 @@ namespace MedSimAI.Clinical
         public InvestigationResult? ProcessInstructorStatement(string utterance)
         {
             InvestigationResult? inv = null;
+            var a = StatementAnalysis.Analyse(Scenario, utterance);
+            LastStatement = a;
             var match = HistoryMatcher.MatchInvestigation(Scenario, utterance);
-            if (match != null) inv = RequestInvestigation(match.id);
-            if (Stages.Current != ClinicalStage.Introduction && HistoryMatcher.MentionsAny(utterance, Scenario.escalationKeywords))
-                Escalate(utterance);
+            if (match != null && !(a.isQuestion && a.diagnosticQuestion)) inv = RequestInvestigation(match.id);
+            if (Stages.Current != ClinicalStage.Introduction && a.escalationRequested) Escalate(utterance);
+            if (a.diagnosisNamed && !Tracker.Has(ClinicalEvents.DiagnosisNamed)) Record(ClinicalEvents.DiagnosisNamed, utterance);
+            if (a.diagnosticQuestion) Record(ClinicalEvents.DiagnosticQuestion, utterance);
+            if (Stages.Current == ClinicalStage.ClinicalReasoning) RecordReasoning(utterance, a.concepts, false);
             return inv;
         }
 
@@ -257,10 +315,28 @@ namespace MedSimAI.Clinical
         {
             if (Stages.Current != ClinicalStage.ClinicalReasoning) Stages.TryTransition(ClinicalStage.ClinicalReasoning);
             if (Stages.Current != ClinicalStage.ClinicalReasoning) return false;
-            Record(ClinicalEvents.SummaryGiven, summary);
-            if (HistoryMatcher.MentionsAny(summary, Scenario.escalationKeywords) && !Tracker.Has(ClinicalEvents.EscalationRequested))
-                Record(ClinicalEvents.EscalationRequested, summary);
+            var a = StatementAnalysis.Analyse(Scenario, summary);
+            LastStatement = a;
+            if (a.escalationRequested) Escalate(summary);
+            if (a.diagnosisNamed && !Tracker.Has(ClinicalEvents.DiagnosisNamed)) Record(ClinicalEvents.DiagnosisNamed, summary);
+            RecordReasoning(summary, a.concepts, false);
             return true;
+        }
+
+        public const string AiTag = "AI_INTENT:";
+
+        /// <summary>
+        /// Records reasoning concepts. Deterministic matches are authoritative. AI-only matches are recorded with the AI tag
+        /// (shown as "AI-interpreted — for instructor review"). SUMMARY_GIVEN requires at least two DETERMINISTIC concepts.
+        /// </summary>
+        public void RecordReasoning(string utterance, IEnumerable<string> concepts, bool viaAI)
+        {
+            if (Scenario.reasoningConcepts == null) { if (!Tracker.Has(ClinicalEvents.SummaryGiven)) Record(ClinicalEvents.SummaryGiven, utterance); return; }
+            Record(ClinicalEvents.ReasoningGiven, (viaAI ? AiTag : "") + utterance);
+            foreach (var id in concepts ?? Enumerable.Empty<string>())
+                if (Scenario.FindConcept(id) != null && !Tracker.Has(ClinicalEvents.Concept(id))) Record(ClinicalEvents.Concept(id), (viaAI ? AiTag : "") + utterance);
+            int deterministic = Tracker.Log.Where(e => e.eventId.StartsWith("CONCEPT:") && (e.detail == null || !e.detail.StartsWith(AiTag))).Select(e => e.eventId).Distinct().Count();
+            if (deterministic >= 2 && !Tracker.Has(ClinicalEvents.SummaryGiven)) Record(ClinicalEvents.SummaryGiven, utterance);
         }
 
         public void Escalate(string detail = "button") { if (!Tracker.Has(ClinicalEvents.EscalationRequested)) Record(ClinicalEvents.EscalationRequested, detail); }

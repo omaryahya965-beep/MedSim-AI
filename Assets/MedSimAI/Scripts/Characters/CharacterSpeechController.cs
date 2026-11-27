@@ -48,7 +48,7 @@ namespace MedSimAI.Characters
             if (routine != null) StopCoroutine(routine);
             routine = null;
             if (source) source.Stop();
-            if (IsSpeaking) { IsSpeaking = false; SubtitleEnded?.Invoke(this); }
+            if (IsSpeaking) { IsSpeaking = false; SubtitleEnded?.Invoke(this); SpeechFinished?.Invoke(); } // interrupted lines also finish (stops mouth + waiters)
             MouthOpen = 0; CurrentViseme = "sil_00";
         }
 

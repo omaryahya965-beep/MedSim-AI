@@ -138,14 +138,29 @@ namespace MedSimAI.AI
         }
     }
 
-    /// <summary>Offline TTS: plays pre-rendered approved lines from Resources/Audio/Voice/{persona}/{hash}.wav if present.</summary>
-    public class PrerenderedVoiceLibrary : ITextToSpeechProvider
+    /// <summary>
+    /// Live AI provider (v0.2): the proxy generates a natural, scenario-grounded reply for the addressed persona, validates
+    /// it deterministically against the authoritative scenario and starts runtime speech synthesis. No pre-recorded dialogue.
+    /// </summary>
+    public class LiveProvider : IAIProvider
     {
-        public string Name => "Pre-rendered voice";
-        public bool IsAvailable => true;
-        public static string KeyFor(string text) => ((uint)OfflineScriptedProvider.StableHash(text.Trim())).ToString("x8");
-        public Task<AudioClip> SynthesizeAsync(string text, Persona persona, string language, CancellationToken ct)
-            => Task.FromResult(Resources.Load<AudioClip>($"Audio/Voice/{persona.ToString().ToLowerInvariant()}/{KeyFor(text)}"));
+        readonly LiveAIClient client; readonly Func<ClinicalSession> session;
+        public static string DiscussionId; // set by SessionManager during the clinical discussion
+        public LiveProvider(LiveAIClient client, Func<ClinicalSession> session) { this.client = client; this.session = session; }
+        public string Name => "Live AI (OpenAI via MedSim proxy)";
+        public bool IsOnline => true;
+        public async Task<AIResponse> GenerateAsync(AIRequest req, CancellationToken ct)
+        {
+            if (string.IsNullOrEmpty(client.SessionId) && !await client.StartSession(session().Scenario, ct)) throw new Exception(client.LastError ?? "Live AI unavailable");
+            var r = await client.Turn(req.context.persona, req.studentUtterance, LiveAIClient.ContextOf(session(), DiscussionId), ct);
+            if (r == null || string.IsNullOrEmpty(r.text)) throw new Exception("Live AI returned no text");
+            return new AIResponse
+            {
+                live = true, providerName = Name, speech = r.text, audioId = r.audioId, usedFactIds = r.factIds ?? new string[0], intent = r.intent,
+                investigationId = string.IsNullOrEmpty(r.investigationId) ? null : r.investigationId, escalationRequested = r.escalationRequested,
+                diagnosisNamed = r.diagnosisNamed, isQuestion = r.isQuestion, concepts = r.concepts ?? new string[0], liveSource = r.source
+            };
+        }
     }
 
     public static class WavUtility

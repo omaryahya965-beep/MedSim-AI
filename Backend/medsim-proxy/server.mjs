@@ -1,34 +1,41 @@
-// MedSim AI â secure, scenario-grounded AI proxy (Node 18+, no dependencies).
+// MedSim AI - secure, scenario-grounded AI proxy (Node 22+, no dependencies).
 //
-// Clinical grounding model:
+// v0.2 Live AI (lib/live.mjs): two independent personas generate natural replies at runtime; every generated line is
+// checked by deterministic grounding rules (lib/grounding.mjs) against authoritative scenario text before it is spoken,
+// and all character speech is synthesised at runtime (Realtime API; no pre-recorded dialogue). Spending is capped
+// in-app (lib/ledger.mjs). Provider keys come from the environment or a secrets file outside the repo (lib/secrets.mjs).
+//
+// Legacy classification-only endpoint /v1/converse (kept for compatibility and its tests):
 //  * The authoritative scenario (and optional translation) is loaded and validated SERVER-SIDE from disk.
-//    Client-supplied facts are never trusted; the client only sends scenarioId/version, persona, the utterance,
-//    the current stage and which findings have already been revealed.
-//  * The LLM does NOT write clinical content. It returns a constrained JSON object (Structured Outputs):
-//      patient    -> { factIds: [enum of approved fact ids], leadIn: short empathetic phrase, offTopic }
-//      instructor -> { intent: enum, investigationId: enum|null, mentionsEscalation, reply }
-//    Medically meaningful speech is rendered from approved scenario text. Free text (leadIn / reply) passes
-//    a server-side validator (no numbers, no diagnosis before feedback, no dosing, no citations, length caps).
-//  * API keys live only in environment variables and are never logged or returned.
+//  * The LLM returns a constrained JSON object (Structured Outputs) and approved text is rendered.
+//  * API keys are never logged or returned.
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { loadSecrets, redact } from './lib/secrets.mjs';
+import { Ledger } from './lib/ledger.mjs';
+import { OpenAIClient } from './lib/openai.mjs';
+import { LiveEngine } from './lib/live.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
+const SECRETS = loadSecrets();
 const CFG = {
   port: Number(process.env.PORT || 8787),
-  clientToken: process.env.MEDSIM_CLIENT_TOKEN || '',
+  host: process.env.MEDSIM_HOST || '127.0.0.1',
+  clientToken: SECRETS.clientToken,
   scenarioDir: process.env.MEDSIM_SCENARIO_DIR || path.resolve(HERE, '../../Assets/MedSimAI/Resources/Scenarios'),
-  openaiKey: process.env.OPENAI_API_KEY || '',
+  openaiKey: SECRETS.openaiKey,
   chatModel: process.env.MEDSIM_CHAT_MODEL || 'gpt-6-luna',
   sttModel: process.env.MEDSIM_STT_MODEL || 'gpt-transcribe',
-  ttsModel: process.env.MEDSIM_TTS_MODEL || 'gpt-4o-mini-tts',   // deprecated by OpenAI; shutdown 2027-01-06 â see AI_SETUP.md
-  voicePatient: process.env.MEDSIM_VOICE_PATIENT || 'ash',
-  voiceInstructor: process.env.MEDSIM_VOICE_INSTRUCTOR || 'marin',
-  timeoutMs: Number(process.env.MEDSIM_UPSTREAM_TIMEOUT_MS || 15000),
+  ttsModel: process.env.MEDSIM_TTS_MODEL || 'gpt-realtime-2.1-mini',
+  ttsFallbackModel: process.env.MEDSIM_TTS_FALLBACK_MODEL || 'gpt-4o-mini-tts', // /v1/audio/speech shuts down 2027-01-06
+  timeoutMs: Number(process.env.MEDSIM_UPSTREAM_TIMEOUT_MS || 20000),
+  budgetUsd: Number(process.env.MEDSIM_BUDGET_USD || 2),
   maxBody: 4 * 1024 * 1024,
 };
+export const ledger = new Ledger({ budgetUsd: CFG.budgetUsd });
+export const ai = new OpenAIClient({ apiKey: CFG.openaiKey, ledger, timeoutMs: CFG.timeoutMs, models: { chat: CFG.chatModel, stt: CFG.sttModel, tts: CFG.ttsModel, ttsFallback: CFG.ttsFallbackModel } });
 
 // ------------------------------------------------------------------ scenario loading (authoritative)
 const scenarios = new Map(); // id -> { data, translations: {ar: {...}} }
@@ -195,28 +202,16 @@ export async function converse(body) {
   return { status: 400, json: { error: 'bad_persona' } };
 }
 
-async function tts(text, voice, lang) {
-  if (!CFG.openaiKey) throw new Error('provider not configured');
-  const r = await withTimeout(fetch('https://api.openai.com/v1/audio/speech', {
-    method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${CFG.openaiKey}` },
-    body: JSON.stringify({ model: CFG.ttsModel, voice: voice === 'patient' ? CFG.voicePatient : CFG.voiceInstructor, input: text.slice(0, 600), response_format: 'wav',
-      instructions: voice === 'patient' ? `A 58-year-old man in pain, speaking slowly and a little breathlessly${lang === 'ar' ? ', in Arabic' : ''}.` : `A calm, warm senior emergency physician teaching a student${lang === 'ar' ? ', in Arabic' : ''}.` }),
-  }), CFG.timeoutMs);
-  if (!r.ok) throw new Error('tts upstream ' + r.status);
-  return Buffer.from(await r.arrayBuffer());
+// ------------------------------------------------------------------ Live AI (v0.2)
+export const live = new LiveEngine({ ai, scenarios });
+
+function wavSeconds(buf) {
+  try { if (buf.toString('ascii', 0, 4) !== 'RIFF') return buf.length / 32000; const rate = buf.readUInt32LE(24), ch = buf.readUInt16LE(22), bits = buf.readUInt16LE(34); return (buf.length - 44) / (rate * ch * bits / 8); } catch { return 0; }
 }
-async function stt(wav, lang) {
-  if (!CFG.openaiKey) throw new Error('provider not configured');
-  const fd = new FormData();
-  fd.append('file', new Blob([wav], { type: 'audio/wav' }), 'utterance.wav');
-  fd.append('model', CFG.sttModel);
-  if (CFG.sttModel === 'gpt-transcribe') fd.append('languages[]', lang === 'ar' ? 'ar' : 'en'); else fd.append('language', lang === 'ar' ? 'ar' : 'en');
-  // Vocabulary hint improves recognition of clinical terms and Palestinian/Levantine Arabic colloquial speech.
-  fd.append('prompt', lang === 'ar' ? 'طالب طب يتحدث باللهجة الفلسطينية مع مريض عن ألم الصدر.' : 'Medical student taking a chest pain history: ECG, troponin, STEMI, cardiology, auscultation, SpO2.');
-  const r = await withTimeout(fetch('https://api.openai.com/v1/audio/transcriptions', { method: 'POST', headers: { Authorization: `Bearer ${CFG.openaiKey}` }, body: fd }), CFG.timeoutMs);
-  if (!r.ok) throw new Error('stt upstream ' + r.status);
-  const j = await r.json(); return { text: String(j.text || '') }; // audio is not stored
-}
+const STT_PROMPT = {
+  en: 'A medical student talking to a patient with chest pain and to a supervising doctor: ECG, troponin, STEMI, cardiology, cath lab, auscultation, SpO2, blood pressure, allergies, penicillin, amlodipine, atorvastatin.',
+  ar: 'طالب طب يتحدث باللهجة الفلسطينية مع مريض عنده ألم في الصدر ومع الطبيبة المشرفة: تخطيط القلب، ضغط الدم، حساسية، أدوية، قسطرة، طبيب القلب.',
+};
 
 // ------------------------------------------------------------------ HTTP
 function readBody(req) {
@@ -225,28 +220,54 @@ function readBody(req) {
     req.on('end', () => res(Buffer.concat(c))); req.on('error', rej); });
 }
 function send(res, status, obj, type = 'application/json') { res.writeHead(status, { 'Content-Type': type, 'Cache-Control': 'no-store' }); res.end(type === 'application/json' ? JSON.stringify(obj) : obj); }
+function errStatus(e) { if (e.code === 'budget_exceeded') return [402, 'budget_exceeded']; if (e.status === 429) return [429, 'provider_rate_limited']; if (e.name === 'TimeoutError' || /timeout/i.test(e.message)) return [504, 'upstream_timeout']; if (e instanceof SyntaxError) return [400, 'bad_json']; return [502, 'upstream_failure']; }
 
 export function createServer() {
   return http.createServer(async (req, res) => {
-    const started = Date.now(); let route = req.url.split('?')[0];
+    const started = Date.now(); const route = req.url.split('?')[0];
     try {
-      if (route === '/health') return send(res, 200, { ok: true, scenarios: [...scenarios.keys()], providerConfigured: !!CFG.openaiKey, chatModel: CFG.chatModel, sttModel: CFG.sttModel, ttsModel: CFG.ttsModel });
-      if (CFG.clientToken && req.headers['x-medsim-client'] !== CFG.clientToken) return send(res, 401, { error: 'unauthorized' });
+      if (route === '/health') return send(res, 200, { ok: true, scenarios: [...scenarios.keys()], providerConfigured: !!CFG.openaiKey, chatModel: CFG.chatModel, sttModel: CFG.sttModel, ttsModel: CFG.ttsModel, budgetRemainingUsd: Number(ledger.remaining().toFixed(4)) });
+      if (!CFG.clientToken || req.headers['x-medsim-client'] !== CFG.clientToken) return send(res, 401, { error: 'unauthorized' });
       const url = new URL(req.url, 'http://x');
+      if (req.method === 'GET' && route.startsWith('/v1/audio/')) {
+        const a = await live.audioFor(route.slice('/v1/audio/'.length));
+        if (!a) return send(res, 404, { error: 'unknown_audio' });
+        if (a.status !== 'ready') return send(res, a.error === 'budget_exceeded' ? 402 : 502, { error: a.error || 'tts_unavailable' });
+        res.writeHead(200, { 'Content-Type': 'audio/wav', 'Cache-Control': 'no-store', 'X-MedSim-TTS-Engine': a.engine || '', 'X-MedSim-TTS-Fidelity': String(a.fidelity ?? '') });
+        return res.end(a.wav);
+      }
+      if (req.method === 'GET' && route === '/v1/usage') return send(res, 200, ledger.summary());
       const body = await readBody(req);
-      if (req.method === 'POST' && route === '/v1/converse') { const r = await converse(JSON.parse(body.toString('utf8'))); return send(res, r.status, r.json); }
-      if (req.method === 'POST' && route === '/v1/tts') return send(res, 200, await tts(body.toString('utf8'), url.searchParams.get('voice'), url.searchParams.get('lang')), 'audio/wav');
-      if (req.method === 'POST' && route === '/v1/stt') return send(res, 200, await stt(body, url.searchParams.get('lang')));
+      if (req.method === 'POST' && route === '/v1/stt') {
+        if (live.admit(null)) return send(res, 429, { error: 'rate_limited' });
+        const sec = wavSeconds(body);
+        if (sec > 30) return send(res, 413, { error: 'audio_too_long' });
+        const lang = url.searchParams.get('lang') === 'ar' ? 'ar' : 'en';
+        const r = await ai.transcribe(body, { lang, durationSec: sec, prompt: STT_PROMPT[lang] });
+        return send(res, 200, { text: r.text, ms: r.ms, model: CFG.sttModel }); // audio is not stored
+      }
+      const json = body.length ? JSON.parse(body.toString('utf8')) : {};
+      if (req.method === 'POST' && route === '/v1/session/start') { const r = live.start(json); return send(res, r.status, r.json); }
+      if (req.method === 'POST' && route === '/v1/session/end') { const r = live.end(json.sessionId); return send(res, r.status, r.json); }
+      if (req.method === 'POST' && (route === '/v1/turn' || route === '/v1/say')) {
+        const sess = live.get(json.sessionId);
+        if (!sess) return send(res, 404, { error: 'unknown_session' });
+        const lim = live.admit(sess); if (lim) return send(res, 429, { error: lim });
+        const r = route === '/v1/say' ? await live.say(sess, json) : json.persona === 'Patient' ? await live.patientTurn(sess, json) : json.persona === 'Instructor' ? await live.instructorTurn(sess, json) : { status: 400, json: { error: 'bad_persona' } };
+        return send(res, r.status, r.json);
+      }
       return send(res, 404, { error: 'not_found' });
     } catch (e) {
-      // Never log request bodies, audio or keys. Error message only.
-      console.error(`[${route}] ${e.message}`);
-      return send(res, 502, { error: 'upstream_failure' });
-    } finally { console.log(`${req.method} ${route} ${Date.now() - started}ms`); }
+      // Never log request bodies, audio or keys. Error class and redacted message only.
+      console.error(`[${route}] ${redact(e.message)}`);
+      const [st, code] = errStatus(e);
+      return send(res, st, { error: code });
+    } finally { if (route !== '/health') console.log(`${req.method} ${route} ${Date.now() - started}ms`); }
   });
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   loadScenarios();
-  createServer().listen(CFG.port, () => console.log(`MedSim proxy :${CFG.port} scenarios=[${[...scenarios.keys()]}] provider=${CFG.openaiKey ? 'configured' : 'NOT configured'} chat=${CFG.chatModel}`));
+  if (!CFG.clientToken) console.warn('MEDSIM_CLIENT_TOKEN is not set: every API route will refuse requests (401).');
+  createServer().listen(CFG.port, CFG.host, () => console.log(`MedSim proxy http://${CFG.host}:${CFG.port} scenarios=[${[...scenarios.keys()]}] provider=${CFG.openaiKey ? 'configured (' + SECRETS.source + ')' : 'NOT configured'} chat=${CFG.chatModel} stt=${CFG.sttModel} tts=${CFG.ttsModel} budget=$${CFG.budgetUsd} spent=$${ledger.spent.toFixed(4)}`));
 }

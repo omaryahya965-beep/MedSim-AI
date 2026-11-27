@@ -17,6 +17,15 @@ namespace MedSimAI.Characters
             _ = VoiceInteractionManager.Instance.SpeakAsync(Persona.Instructor, text);
         }
 
+        /// <summary>Non-verbal cue: mood + optional point/look toward the relevant object (equipment, patient, door).</summary>
+        public void Gesture(CharacterMood mood, Transform target)
+        {
+            if (life) { life.mood = mood; if (target) life.PointAt(target, 2.4f); }
+            if (target) TriggerPoint();
+        }
+
+        public void PointAtDoor(Transform handle) { if (life && handle) { life.PointAt(handle, 2.6f); } TriggerPoint(); }
+
         void OnEnable() { ClinicalFeedbackBus.Finding += OnFinding; }
         void OnDisable() { ClinicalFeedbackBus.Finding -= OnFinding; }
         void OnFinding(string title, string text) { if (life) life.mood = CharacterMood.Attentive; }

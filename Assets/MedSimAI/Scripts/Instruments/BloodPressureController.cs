@@ -55,7 +55,12 @@ namespace MedSimAI.Instruments
             cycle = null;
         }
 
-        protected override void OnDetached() { if (cycle != null) { StopCoroutine(cycle); cycle = null; } if (sfx) sfx.Stop(); }
+        protected override void OnDetached()
+        {
+            if (cycle != null) { StopCoroutine(cycle); cycle = null; RecordEvent(ClinicalEvents.InstrumentRemovedEarly, InstrumentId); if (monitor) monitor.SetNibpStatus(""); }
+            if (sfx) sfx.Stop();
+        }
+        public bool Measuring => cycle != null;
         public override void ResetInstrument() { base.ResetInstrument(); if (deviceDisplay) deviceDisplay.text = "--/--"; }
     }
 }

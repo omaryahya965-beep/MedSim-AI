@@ -45,11 +45,11 @@ namespace MedSimAI.AI
             if (target == Persona.Patient) session.ProcessStudentQuestion(utterance);
             else
             {
+                // Deterministic: investigations, explicit escalation, diagnosis named vs asked, reasoning concepts (no word-count credit).
                 var inv = session.ProcessInstructorStatement(utterance);
                 if (inv.HasValue) turn.investigation = new InvestigationOutcome { id = inv.Value.investigationId, name = inv.Value.name, result = inv.Value.result, imageKey = inv.Value.imageKey, available = inv.Value.available };
-                if (session.Stages.Current == ClinicalStage.ClinicalReasoning && !session.Tracker.Has(ClinicalEvents.SummaryGiven) && utterance.Split(' ').Length >= 8)
-                    session.SubmitReasoning(utterance);
             }
+            session.Record(ClinicalEvents.StudentSpoke, target.ToString());
 
             // 2. Safety guard.
             var guard = InputGuard.Classify(utterance);
@@ -60,7 +60,7 @@ namespace MedSimAI.AI
             }
 
             // 3. Investigation results are spoken from scenario data verbatim, never generated.
-            if (turn.investigation != null)
+            if (turn.investigation != null && !(UseOnline && Online != null))
             {
                 turn.responseText = turn.investigation.available ? ScriptedLines.InvestigationArranged(turn.investigation.name) : ScriptedLines.InvestigationUnavailable(turn.investigation.name);
                 turn.source = ResponseSource.ScenarioFact;
@@ -80,6 +80,14 @@ namespace MedSimAI.AI
                     var done = await Task.WhenAny(task, Task.Delay(TimeoutMs, ct));
                     if (done != task) throw new TimeoutException("AI provider timed out");
                     resp = await task;
+                    if (resp != null && resp.live)
+                    {
+                        turn.responseText = ApplyLive(target, resp, turn, utterance);
+                        turn.audioId = resp.audioId;
+                        turn.source = resp.liveSource == "ai" ? ResponseSource.AIValidated : ResponseSource.ScenarioFact;
+                        turn.note = resp.liveSource;
+                        return Finish(target, turn);
+                    }
                     if (resp != null && resp.grounded)
                     {
                         // Structured classification: render clinical speech locally from approved content.
@@ -151,6 +159,36 @@ namespace MedSimAI.AI
                     var check = validator.Validate(new AIResponse { speech = r.reply, usedFactIds = new string[0] }, ctx);
                     return !string.IsNullOrWhiteSpace(r.reply) && check.valid ? r.reply.Trim() : ScriptedLines.InstructorGeneric;
             }
+        }
+
+        /// <summary>
+        /// Applies a Live AI turn. Deterministic tracking already ran; here AI-only recognitions are added with the
+        /// AI_INTENT tag (shown in the debrief as "AI-interpreted — for instructor review"). Text was validated server-side
+        /// against the authoritative scenario; the client re-checks that it contains no dosing or forbidden content.
+        /// </summary>
+        string ApplyLive(Persona target, AIResponse r, ConversationTurn turn, string utterance)
+        {
+            var s = session.Scenario;
+            if (target == Persona.Patient)
+            {
+                foreach (var id in (r.usedFactIds ?? new string[0]).Distinct())
+                    if (s.FindFact(id) != null && !session.Tracker.Has(ClinicalEvents.Fact(id))) session.Record(ClinicalEvents.Fact(id), AiIntentTag + utterance);
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(r.investigationId) && turn.investigation == null && s.FindInvestigation(r.investigationId) != null)
+                {
+                    var res = session.RequestInvestigation(r.investigationId);
+                    turn.investigation = new InvestigationOutcome { id = res.investigationId, name = res.name, result = res.result, imageKey = res.imageKey, available = res.available };
+                }
+                if (r.escalationRequested && session.Stages.Current != ClinicalStage.Introduction && !session.Tracker.Has(ClinicalEvents.EscalationRequested))
+                    session.Record(ClinicalEvents.EscalationRequested, AiIntentTag + utterance);
+                if (session.Stages.Current == ClinicalStage.ClinicalReasoning && r.concepts != null && r.concepts.Length > 0)
+                    session.RecordReasoning(utterance, r.concepts.Where(c => !session.Tracker.Has(ClinicalEvents.Concept(c))), true);
+            }
+            var text = (r.speech ?? "").Trim();
+            if (InputGuard.Classify(text) == GuardCategory.Dosing) text = target == Persona.Patient ? s.unknownAnswers[0] : s.instructorLines.outOfScope;
+            return text;
         }
 
         ConversationTurn Finish(Persona p, ConversationTurn t)

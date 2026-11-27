@@ -57,7 +57,7 @@ namespace MedSimAI.UI
         {
             BuildMenu(); BuildTablet(); BuildSubtitles();
             S.StateChanged += OnAppState; S.DebriefReady += OnDebrief;
-            CharacterSpeechController.SubtitleStarted += (c, t) => { speakerText.text = $"<b>{c.displayName}</b>"; ArabicShaper.Apply(subtitleText, t); };
+            CharacterSpeechController.SubtitleStarted += (c, t) => { bool show = SubtitlesEnabled || AIProviderManager.Instance.Mode != ConversationMode.OnlineAI || AIProviderManager.Instance.Live.Status == LiveStatus.Offline; speakerText.text = show ? $"<b>{c.displayName}</b>" : ""; ArabicShaper.Apply(subtitleText, show ? t : ""); }; // text-only fallback always shows subtitles
             CharacterSpeechController.SubtitleEnded += c => { };
             ClinicalFeedbackBus.Finding += (title, text) => { findings.Insert(0, $"<b>{title}</b>\n{text}"); RefreshFindings(); Toast($"<b>{title}</b>  {text}"); };
             var v = VoiceInteractionManager.Instance;
@@ -117,13 +117,16 @@ namespace MedSimAI.UI
             UIFactory.Button(sc, "Back", () => Show(mainPanel), Brand.Teal, 26, 66);
 
             pausePanel = Section(root, "Pause");
-            var pc = UIFactory.VStack(pausePanel, "Pause", 16, 0); UIFactory.Place(pc, new Vector2(0.3f, 0.15f), new Vector2(0.7f, 0.85f));
-            UIFactory.Text(pc, "<b>Paused</b>", 54, Brand.White, TextAlignmentOptions.Center);
-            UIFactory.Button(pc, "Resume", () => S.Pause(false), Brand.Teal, 28, 80);
-            UIFactory.Button(pc, "Comfort & Graphics", () => { comfortReturn = pausePanel; Show(comfortPanel); }, Brand.NavyLight, 26, 72);
-            UIFactory.Button(pc, "Restart Scenario", () => S.Restart(), Brand.NavyLight, 26, 72);
-            UIFactory.Button(pc, "Main Menu", () => S.ReturnToMenu(), Brand.NavyLight, 26, 72);
-            UIFactory.Button(pc, "Exit Simulation", () => S.ExitSimulation(), Brand.NavyLight, 26, 72);
+            var pc = UIFactory.VStack(pausePanel, "Pause", 12, 0); UIFactory.Place(pc, new Vector2(0.27f, 0.06f), new Vector2(0.73f, 0.94f));
+            UIFactory.Text(pc, "<b>Paused</b>", 50, Brand.White, TextAlignmentOptions.Center);
+            pauseStatusText = UIFactory.Text(pc, "", 22, Brand.TealLight, TextAlignmentOptions.Center);
+            UIFactory.Button(pc, "Resume", () => S.Pause(false), Brand.Teal, 28, 74);
+            UIFactory.Button(pc, "Show / hide clinical tablet", () => { TabletEnabled = !TabletEnabled; OnAppState(S.State); }, Brand.NavyLight, 24, 64);
+            UIFactory.Button(pc, "Subtitles on / off", () => { SubtitlesEnabled = !SubtitlesEnabled; }, Brand.NavyLight, 24, 64);
+            UIFactory.Button(pc, "Language: English / العربية", () => { AIProviderManager.Instance.SetLanguage(AIProviderManager.Instance.Config.language == "ar" ? "en" : "ar"); RefreshMode(); RefreshPause(); }, Brand.NavyLight, 24, 64);
+            UIFactory.Button(pc, "Comfort & Graphics", () => { comfortReturn = pausePanel; Show(comfortPanel); }, Brand.NavyLight, 24, 64);
+            UIFactory.Button(pc, "Restart Scenario", () => S.Restart(), Brand.NavyLight, 24, 64);
+            UIFactory.Button(pc, "Exit Simulation", () => S.ExitSimulation(), Brand.NavyLight, 24, 64);
 
             debriefPanel = Section(root, "Debrief");
             debriefHeader = UIFactory.Text(debriefPanel, "", 40, Brand.White); UIFactory.Place(debriefHeader.rectTransform, new Vector2(0.03f, 0.86f), new Vector2(0.97f, 0.98f));
@@ -193,6 +196,17 @@ namespace MedSimAI.UI
             var rt = (RectTransform)go.transform; rt.anchorMin = rt.anchorMax = anchor; rt.sizeDelta = Vector2.one * size;
         }
 
+        /// <summary>The clinical tablet is an optional secondary interface (voice and physical actions are primary).</summary>
+        public static bool TabletEnabled;
+        public static bool SubtitlesEnabled = true;
+        TMP_Text pauseStatusText;
+        void RefreshPause()
+        {
+            if (!pauseStatusText) return;
+            var ai = AIProviderManager.Instance;
+            pauseStatusText.text = $"{ai.ModeLabel}  ·  {(ai.Config.language == "ar" ? "العربية" : "English")}  ·  {(S.trainingMode ? "Training" : "Assessment")}\n<size=80%><color=#FFB74D>{ClinicalScenarioManager.Instance.Scenario.ValidationBanner}</color></size>";
+        }
+
         void Show(RectTransform panel)
         {
             foreach (var p in new[] { loadingPanel, mainPanel, pausePanel, debriefPanel, settingsPanel, comfortPanel }) p.gameObject.SetActive(p == panel);
@@ -205,11 +219,11 @@ namespace MedSimAI.UI
             {
                 case AppState.Loading: Show(loadingPanel); break;
                 case AppState.MainMenu: Show(mainPanel); break;
-                case AppState.Paused: Show(pausePanel); break;
+                case AppState.Paused: Show(pausePanel); RefreshPause(); break;
                 case AppState.Debrief: Show(debriefPanel); break;
                 default: Show(null); break;
             }
-            tabletCanvas.gameObject.SetActive(s == AppState.Running || s == AppState.Tutorial);
+            tabletCanvas.gameObject.SetActive(TabletEnabled && (s == AppState.Running || s == AppState.Tutorial || s == AppState.Discussion));
             RefreshProgress();
         }
 
@@ -221,7 +235,7 @@ namespace MedSimAI.UI
             foreach (var o in r.objectives) sb.AppendLine($"{(o.complete ? "<color=#64FFDA>•</color>" : o.met > 0 ? "<color=#FFB74D>•</color>" : "<color=#FF8A80>•</color>")} {o.text}  <color=#8892B0>({o.met}/{o.total})</color>");
             sb.AppendLine();
             sb.AppendLine("<b><color=#64FFDA>Checklist</color></b>");
-            foreach (var c in r.criteria) sb.AppendLine($"{(c.met ? "<color=#64FFDA>•</color>" : "<color=#FF8A80>•</color>")} {c.description}{(c.critical ? " <color=#FFB74D>[safety-critical]</color>" : "")}{(c.met ? $" <color=#8892B0>@ {c.time:0}s</color>" : "")}{(c.viaAIIntent ? " <color=#42A5F5>[recognised via AI intent]</color>" : "")}  <size=80%><color=#8892B0>{c.category}</color></size>");
+            foreach (var c in r.criteria) sb.AppendLine($"{(c.met ? "<color=#64FFDA>•</color>" : "<color=#FF8A80>•</color>")} {c.description}{(c.critical ? " <color=#FFB74D>[safety-critical]</color>" : "")}{(c.met ? $" <color=#8892B0>@ {c.time:0}s</color>" : "")}{(c.viaAIIntent ? " <color=#42A5F5>[AI-interpreted — for instructor review]</color>" : "")}  <size=80%><color=#8892B0>{c.category}</color></size>");
             sb.AppendLine();
             sb.Append(text);
             debriefText.text = sb.ToString();
