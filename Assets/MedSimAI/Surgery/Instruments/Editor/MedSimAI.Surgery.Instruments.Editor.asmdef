@@ -1,0 +1,5 @@
+{
+  "name": "MedSimAI.Surgery.Instruments.Editor",
+  "references": ["MedSimAI.Surgery.Instruments","MedSimAI.Surgery.Shared","MedSimAI.Surgery.Shared.Unity","Unity.XR.Interaction.Toolkit"],
+  "includePlatforms": ["Editor"]
+}

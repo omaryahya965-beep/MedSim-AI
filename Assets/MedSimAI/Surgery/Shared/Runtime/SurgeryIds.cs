@@ -8,7 +8,7 @@ namespace MedSimAI.Surgery.Shared
     public static class SurgeryContract
     {
         /// <summary>Bumped on any breaking change to ids, payloads or interfaces.</summary>
-        public const string CONTRACT_VERSION = "1.0.0";
+        public const string CONTRACT_VERSION = "1.1.0";
         public const string SCENARIO_ID_TKA = "OR_TKA_TRAINING_001";
         public const string CLINICAL_SCENARIO_ID = "ER_CHEST_PAIN_001";
         public const string VALIDATION_BANNER = "DRAFT — NOT CLINICALLY VALIDATED";
@@ -165,6 +165,26 @@ namespace MedSimAI.Surgery.Shared
         public const string StudentOperatingPosition = "ANCHOR_StudentOperatingPosition"; // P1
 
         public static string InstrumentSlot(string instrumentId) => InstrumentSlotPrefix + instrumentId;
+    }
+
+    /// <summary>
+    /// Contract 1.1: accepted alternative transform names for anchors (Person 1's environment uses these names under
+    /// IntegrationAnchors). SurgeryAnchor.Find resolves an id by its SurgeryAnchor component first, then by these names.
+    /// </summary>
+    public static class AnchorAliases
+    {
+        static readonly System.Collections.Generic.Dictionary<string, string[]> map = new System.Collections.Generic.Dictionary<string, string[]>
+        {
+            [AnchorIds.PlayerSpawn] = new[] { "PlayerSpawn" },
+            [AnchorIds.PatientRoot] = new[] { "PatientRoot" },
+            [AnchorIds.SurgicalSiteKneeR] = new[] { "SurgicalSite" },
+            [AnchorIds.InstrumentTable] = new[] { "InstrumentTable" },
+            [AnchorIds.RobotBase] = new[] { "RobotBase" },
+            [AnchorIds.OverheadMonitor] = new[] { "MonitorPosition" },
+            [AnchorIds.StudentOperatingPosition] = new[] { "SurgeonPosition" },   // the operator's (student's) working position, patient's right
+            [AnchorIds.AssistantHome] = new[] { "AssistantPosition" },
+        };
+        public static string[] For(string anchorId) => map.TryGetValue(anchorId, out var a) ? a : new string[0];
     }
 
     /// <summary>Character identifiers for the surgical module (independent from the ER Patient/Instructor personas).</summary>
