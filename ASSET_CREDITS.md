@@ -34,7 +34,11 @@ MakeHuman FAQ: "All core assets … are shared under CC0"; models may be used in
 - Offline English voices: Windows SAPI *Microsoft David Desktop* (patient) and *Microsoft Zira Desktop* (supervisor). Check Microsoft's terms before commercial redistribution.
 
 ## Not used
-Mixamo, Asset Store or Sketchfab content (all require an account), and untrusted scripts. I found no account-free, permissively licensed, high-detail medical equipment models (see KNOWN_LIMITATIONS).
+Mixamo, the Unity Asset Store, and paid Fab or Asset Store packs (they need an account or a purchase), plus any downloaded scripts. *(Phase 1 note, superseded in v0.2:)* the CC-BY Sketchfab models listed below were obtained without an account from the public Objaverse mirror. Each one's licence was checked, and all require attribution.
+
+## Live AI runtime services
+- **OpenAI API:** `gpt-6-luna`, `gpt-transcribe`, `gpt-realtime-2.1-mini` and `gpt-4o-mini-tts`, used at runtime for character understanding and speech. Accessed through the MedSim proxy; the OpenAI terms of use apply.
+- **No pre-recorded or third-party voice recordings** of characters are included.
 
 ---
 
