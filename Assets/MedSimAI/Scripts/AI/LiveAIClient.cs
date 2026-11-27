@@ -15,7 +15,8 @@ namespace MedSimAI.AI
 
     [Serializable] public class LiveTurnResponse
     {
-        public string persona, text, studentAct, emotion, intent, investigationId, source, rejected, audioId, error, model;
+        public string persona, heard, text, studentAct, emotion, intent, investigationId, source, rejected, audioId, error, model;
+        public bool noSpeech;
         public string[] factIds, concepts, deterministicConcepts;
         public bool escalationRequested, diagnosisNamed, isQuestion;
         public int llmMs;
@@ -146,6 +147,34 @@ namespace MedSimAI.AI
             if (clip) clip.name = "live_" + audioId.Substring(0, 8);
             return clip;
         }
+
+        /// <summary>
+        /// Native voice turn: the student's audio (PCM16 24 kHz mono) goes straight to the proxy's persistent Realtime
+        /// session (no separate speech-to-text request). The validated reply arrives as a JSON header (with what the
+        /// session heard, for transcripts and deterministic assessment) followed by streamed speech for 'voice'.
+        /// </summary>
+        public UnityWebRequest VoiceTurn(Persona p, byte[] pcm24k, LiveContext ctx, MedSimAI.Voice.StreamingVoice voice, Action<LiveTurnResponse> onMeta)
+        {
+            var ctxB64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonUtility.ToJson(ctx))).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+            var url = $"{endpoint}/v1/voice?sessionId={UnityWebRequest.EscapeURL(SessionId)}&persona={p}&lang={Language}&ctx={ctxB64}";
+            var www = new UnityWebRequest(url, "POST") { uploadHandler = new UploadHandlerRaw(pcm24k), downloadHandler = new MedSimAI.Voice.VoiceStreamHandler(voice, json => onMeta?.Invoke(JsonUtility.FromJson<LiveTurnResponse>(json))), timeout = timeoutSeconds + 30 };
+            www.SetRequestHeader("Content-Type", "application/octet-stream");
+            if (!string.IsNullOrEmpty(token)) www.SetRequestHeader("X-MedSim-Client", token);
+            return www;
+        }
+
+        /// <summary>Character-initiated line (welcome, intervention, discussion, debrief) with streamed speech.</summary>
+        public UnityWebRequest SayStream(Persona p, string kind, string baseText, LiveContext ctx, MedSimAI.Voice.StreamingVoice voice, Action<LiveSayResponse> onMeta, string severity = null, DebriefPayload result = null)
+        {
+            var body = JsonUtility.ToJson(new SayReq { sessionId = SessionId, persona = p.ToString(), kind = kind, baseText = baseText ?? "", severity = severity ?? "", language = Language, context = ctx, result = result });
+            var www = new UnityWebRequest(endpoint + "/v1/say-stream", "POST") { uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(body)), downloadHandler = new MedSimAI.Voice.VoiceStreamHandler(voice, json => onMeta?.Invoke(JsonUtility.FromJson<LiveSayResponse>(json))), timeout = timeoutSeconds + 30 };
+            www.SetRequestHeader("Content-Type", "application/json");
+            if (!string.IsNullOrEmpty(token)) www.SetRequestHeader("X-MedSim-Client", token);
+            return www;
+        }
+
+        public void ReportError(long code, string body) => SetStatus(LiveStatus.Offline, FriendlyError(code, body));
+        public void ReportOnline() => SetStatus(LiveStatus.Online);
 
         [Serializable] class SttResp { public string text; }
         public async Task<string> Transcribe(AudioClip clip, CancellationToken ct)

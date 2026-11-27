@@ -48,10 +48,40 @@ namespace MedSimAI.Characters
 
         public void Speak(string line, AudioClip clip = null) { Stop(); routine = StartCoroutine(SpeakRoutine(line, clip)); }
 
+        /// <summary>Speaks runtime speech that is still streaming in (native voice). Ends when the stream has been played out.</summary>
+        public void SpeakStreaming(string line, MedSimAI.Voice.StreamingVoice stream) { Stop(); routine = StartCoroutine(StreamRoutine(line, stream)); }
+        public MedSimAI.Voice.StreamingVoice CurrentStream { get; private set; }
+
+        IEnumerator StreamRoutine(string line, MedSimAI.Voice.StreamingVoice stream)
+        {
+            CurrentStream = stream;
+            IsSpeaking = true; text = line ?? ""; progress = 0; hasClip = true;
+            source.clip = stream.Clip; source.loop = false; source.Play();
+            SubtitleStarted?.Invoke(this, text);
+            float t = 0, est = Mathf.Max(1f, text.Length * 0.06f);
+            while (!stream.Drained)
+            {
+                t += Time.deltaTime; progress = Mathf.Clamp01(t / Mathf.Max(est, stream.ReceivedSeconds));
+                source.GetOutputData(buf, 0); float sum = 0; for (int i = 0; i < buf.Length; i++) sum += buf[i] * buf[i];
+                float amp = Mathf.Clamp01(Mathf.Sqrt(sum / buf.Length) * 9f);
+                int idx = Mathf.Clamp((int)(progress * text.Length), 0, Mathf.Max(0, text.Length - 1));
+                CurrentViseme = amp < 0.06f ? "sil_00" : FaceRig.VisemeFor(text.Length > 0 ? text[idx] : ' ', idx + 1 < text.Length ? text[idx + 1] : ' ');
+                MouthOpen = Mathf.Lerp(MouthOpen, CurrentViseme == "sil_00" ? 0.05f : amp, Time.deltaTime * 18f);
+                if (t > 120f) break; // safety
+                yield return null;
+            }
+            yield return new WaitForSeconds(0.12f); // let the audio buffer tail play out
+            source.Stop(); CurrentStream = null;
+            MouthOpen = 0; CurrentViseme = "sil_00"; IsSpeaking = false; hasClip = false; routine = null;
+            SubtitleEnded?.Invoke(this);
+            SpeechFinished?.Invoke();
+        }
+
         public void Stop()
         {
             if (routine != null) StopCoroutine(routine);
             routine = null;
+            if (CurrentStream != null) { CurrentStream.Cancel(); CurrentStream = null; }
             if (source) source.Stop();
             if (IsSpeaking) { IsSpeaking = false; SubtitleEnded?.Invoke(this); SpeechFinished?.Invoke(); } // interrupted lines also finish (stops mouth + waiters)
             MouthOpen = 0; CurrentViseme = "sil_00"; hasClip = false;

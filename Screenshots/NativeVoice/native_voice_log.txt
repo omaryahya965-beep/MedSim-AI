@@ -1,0 +1,48 @@
+0.0s [mode] display=Desktop desktop=True AI=LIVE AI live=True mic=PushToTalk micDevices=[Microphone Array (Realtek(R) Audio), Microphone (VIVE Virtual Audio Device), CABLE Output (VB-Audio Virtual Cable), Microphone (Realtek(R) Audio)]
+0.0s [info] session already started (state Tutorial), welcome already spoken
+3.5s [student-audio] EN patient intro: SYNTHETIC clip student_en_intro.wav (6.50s) → Patient
+5.7s [transcript] You: Hello Mr. Reyes, I am a medical student working with Dr. Hassan. Can you tell me when the pain started?
+5.7s [subtitle] Mr. Reyes (patient) [streamed live audio live_voice]: It started about forty-five minutes ago. I was carrying shopping up the stairs.
+11.8s [result] EN patient intro: heard="Hello Mr. Reyes, I am a medical student working with Dr. Hassan. Can you tell me when the pain started?" reply="It started about forty-five minutes ago. I was carrying shopping up the stairs." source=voice:ai understood=2156ms firstAudio=2880ms subtitleShown=True 
+11.8s [student-audio] EN patient allergy: SYNTHETIC clip student_en_allergy.wav (2.30s) → Patient
+12.8s [transcript] You: Are you allergic to any medications?
+12.8s [subtitle] Mr. Reyes (patient) [streamed live audio live_voice]: I'm allergic to penicillin. It gave me a rash.
+16.9s [result] EN patient allergy: heard="Are you allergic to any medications?" reply="I'm allergic to penicillin. It gave me a rash." source=voice:ai understood=974ms firstAudio=1573ms subtitleShown=True factAllergy=True
+17.1s [shot] V01_patient_voice_turn
+17.1s [student-audio] EN doctor ECG: SYNTHETIC clip student_en_dr_ecg.wav (3.20s) → Instructor
+19.1s [transcript] You: Doctor Hassan, can I get an ECG for him please?
+19.1s [subtitle] Dr. Hassan (supervisor) [streamed live audio live_voice]: An ECG request is valid—I'll arrange it. What in his history makes the ECG the next step, and what should we focus on finding?
+28.1s [result] EN doctor ECG: heard="Doctor Hassan, can I get an ECG for him please?" reply="An ECG request is valid—I'll arrange it. What in his history makes the ECG the next step, and what should we focus on finding?" source=voice:ai understood=2055ms firstAudio=2757ms subtitleShown=True ecgRequested=True
+28.1s [student-audio] EN doctor MI impression: SYNTHETIC clip student_en_dr_mi.wav (2.55s) → Instructor
+29.7s [transcript] You: I think he is having a heart attack.
+29.7s [subtitle] Dr. Hassan (supervisor) [streamed live audio live_voice]: That’s a strong impression—what key features are you grouping together to support it? Which ECG changes and symptoms would be most convincing to you in this scenario?
+39.5s [result] EN doctor MI impression: heard="I think he is having a heart attack." reply="That’s a strong impression—what key features are you grouping together to support it? Which ECG changes and symptoms would be most convincing to you in this scenario?" source=voice:ai understood=1645ms firstAudio=2172ms subtitleShown=True 
+39.5s [student-audio] EN doctor STEMI question (must not confirm): SYNTHETIC clip student_en_stemi_q.wav (2.05s) → Instructor
+40.6s [transcript] You: Do you think this could be a STEMI?
+40.6s [subtitle] Dr. Hassan (supervisor) [streamed live audio live_voice]: What do you think it is, and what supports that?
+43.9s [result] EN doctor STEMI question (must not confirm): heard="Do you think this could be a STEMI?" reply="What do you think it is, and what supports that?" source=voice:approved-fallback understood=1094ms firstAudio=1687ms subtitleShown=True escalationRecorded=False
+43.9s [student-audio] EN doctor escalation: SYNTHETIC clip student_en_escalate.wav (4.80s) → Instructor
+45.7s [transcript] You: I would like to call the cardiology registrar and activate the cath lab now.
+45.7s [subtitle] Dr. Hassan (supervisor) [streamed live audio live_voice]: Okay, that’s a clear request—I'll support that escalation and help coordinate. Before you place the call, what information will you give them about the ECG and the patient’s symptoms?
+57.0s [result] EN doctor escalation: heard="I would like to call the cardiology registrar and activate the cath lab now." reply="Okay, that’s a clear request—I'll support that escalation and help coordinate. Before you place the call, what information will you give them about the ECG and the patient’s symptoms?" source=voice:ai understood=1775ms firstAudio=2379ms subtitleShown=True escalationRecorded=True
+58.4s [transcript] You: Can you give me a hint?
+58.4s [subtitle] Dr. Hassan (supervisor) [streamed live audio live_voice]: Sure—what stands out when you compare the leads with ST elevation to those with reciprocal changes? And what does that pattern suggest to you about urgency?
+58.9s [subtitle] Dr. Hassan (supervisor) [streamed live audio live_say]: Let’s step back for a moment. Talk me through your assessment—what did you find when you assessed Mr. Reyes?
+59.1s [result] Interruption: doctor speaking → student barge-in → speech stopped=True in 0ms, voiceState=Idle
+60.6s [student-audio] AR patient onset: SYNTHETIC clip student_ar_onset.wav (4.00s) → Patient
+61.8s [transcript] You: مرحبا عمو، أنا طالبة طب. من متى بدأ معك الوجع؟
+61.8s [subtitle] Mr. Reyes (patient) [streamed live audio live_voice]: بدأ قبل حوالي خمس وأربعين دقيقة. كنت أحمل أغراض التسوق صاعداً الدرج.
+68.8s [result] AR patient onset: heard="مرحبا عمو، أنا طالبة طب. من متى بدأ معك الوجع؟" reply="بدأ قبل حوالي خمس وأربعين دقيقة. كنت أحمل أغراض التسوق صاعداً الدرج." source=voice:ai understood=1234ms firstAudio=1969ms subtitleShown=True 
+70.3s [mic] hands-free: micRecording=True level=0.0072
+70.8s [mic] muted: micRecording=False
+72.8s [student-audio] Hands-free soak: patient pain question: SYNTHETIC clip student_en_allergy.wav (2.30s) → Patient
+73.9s [transcript] You: Are you allergic to any medications?
+73.9s [subtitle] Mr. Reyes (patient) [streamed live audio live_voice]: I'm allergic to penicillin. It gave me a rash.
+78.0s [result] Hands-free soak: patient pain question: heard="Are you allergic to any medications?" reply="I'm allergic to penicillin. It gave me a rash." source=voice:ai understood=1105ms firstAudio=1690ms subtitleShown=True 
+78.0s [student-audio] Hands-free soak: doctor hello: SYNTHETIC clip student_en_dr_hello.wav (3.65s) → Instructor
+79.3s [transcript] You: Hello, Dr. Hassan. Nice to meet you.
+79.3s [subtitle] Dr. Hassan (supervisor) [streamed live audio live_voice]: Nice to meet you as well. What was your first concern when you assessed the patient, and what findings have you already gathered?
+86.7s [result] Hands-free soak: doctor hello: heard="Hello, Dr. Hassan. Nice to meet you." reply="Nice to meet you as well. What was your first concern when you assessed the patient, and what findings have you already gathered?" source=voice:ai understood=1309ms firstAudio=1829ms subtitleShown=True 
+88.2s [subtitle] Dr. Hassan (supervisor) [streamed live audio live_say]: What did the ECG show?
+98.7s [result] Hands-free echo soak (mic system default): spurious captures from speaker echo/room noise=0, extra transcripts=0
+98.8s [shot] V02_after_voice_turns

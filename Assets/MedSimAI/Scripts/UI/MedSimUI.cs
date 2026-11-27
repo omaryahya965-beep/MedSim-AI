@@ -65,6 +65,7 @@ namespace MedSimAI.UI
             v.TranscriptReady += t => { voiceText.text = $"<color=#8892B0>You:</color> {t}"; };
             v.Error += e => Toast("<color=#FFB74D>" + e + "</color>");
             v.TurnReady += OnTurn;
+            v.MicModeChanged += _ => { if (micButtonText) micButtonText.text = MicLabel(); RefreshVoice(); };
             AIProviderManager.Instance.ModeChanged += _ => RefreshMode();
             Session.Stages.StageChanged += (_, __) => RefreshProgress();
             Session.Tracker.Recorded += _ => RefreshProgress();
@@ -125,6 +126,8 @@ namespace MedSimAI.UI
             UIFactory.Button(pc, "Subtitles on / off", () => { SubtitlesEnabled = !SubtitlesEnabled; }, Brand.NavyLight, 24, 64);
             UIFactory.Button(pc, "Language: English / العربية", () => { AIProviderManager.Instance.SetLanguage(AIProviderManager.Instance.Config.language == "ar" ? "en" : "ar"); RefreshMode(); RefreshPause(); }, Brand.NavyLight, 24, 64);
             UIFactory.Button(pc, "Comfort & Graphics", () => { comfortReturn = pausePanel; Show(comfortPanel); }, Brand.NavyLight, 24, 64);
+            micButtonText = UIFactory.Button(pc, MicLabel(), () => { VoiceInteractionManager.Instance.CycleMicMode(); if (micButtonText) micButtonText.text = MicLabel(); RefreshVoice(); }, Brand.NavyLight, 22, 60).GetComponentInChildren<TMP_Text>();
+            micDeviceButtonText = UIFactory.Button(pc, MicDeviceLabel(), () => { CycleMicDevice(); if (micDeviceButtonText) micDeviceButtonText.text = MicDeviceLabel(); }, Brand.NavyLight, 20, 54).GetComponentInChildren<TMP_Text>();
             displayModeButtonText = UIFactory.Button(pc, DisplayModeLabel(), () => { MedSimAI.XR.DisplayModeManager.CyclePreference(); if (displayModeButtonText) displayModeButtonText.text = DisplayModeLabel(); }, Brand.NavyLight, 22, 60).GetComponentInChildren<TMP_Text>();
             UIFactory.Button(pc, "Restart Scenario", () => S.Restart(), Brand.NavyLight, 24, 64);
             UIFactory.Button(pc, "Exit Simulation", () => S.ExitSimulation(), Brand.NavyLight, 24, 64);
@@ -229,11 +232,22 @@ namespace MedSimAI.UI
         /// <summary>The clinical tablet is an optional secondary interface (voice and physical actions are primary).</summary>
         public static bool TabletEnabled;
         public static bool SubtitlesEnabled = true;
-        TMP_Text pauseStatusText, displayModeButtonText;
+        TMP_Text pauseStatusText, displayModeButtonText, micButtonText, micDeviceButtonText;
+        static string MicDeviceLabel() { var d = PlayerPrefs.GetString(VoiceInteractionManager.MicDevicePref, ""); return "Mic device: " + (string.IsNullOrEmpty(d) ? "automatic (headset in VR, system default on desktop)" : d); }
+        static void CycleMicDevice()
+        {
+            var devs = Microphone.devices; var cur = PlayerPrefs.GetString(VoiceInteractionManager.MicDevicePref, "");
+            int i = string.IsNullOrEmpty(cur) ? -1 : System.Array.IndexOf(devs, cur);
+            PlayerPrefs.SetString(VoiceInteractionManager.MicDevicePref, i + 1 < devs.Length ? devs[i + 1] : ""); PlayerPrefs.Save();
+            VoiceInteractionManager.Instance.ReopenMic();
+        }
+        static string MicLabel() { var m = VoiceInteractionManager.Instance ? VoiceInteractionManager.Instance.Mic : MicMode.PushToTalk; return "Microphone: " + (m == MicMode.HandsFree ? "hands-free (just speak)" : m == MicMode.Muted ? "muted" : "push-to-talk"); }
         static string DisplayModeLabel() => $"Display: now {MedSimAI.XR.DisplayModeManager.Mode} · next launch {MedSimAI.XR.DisplayModeManager.SavedPreference}";
         void RefreshPause()
         {
             if (!pauseStatusText) return;
+            if (micButtonText) micButtonText.text = MicLabel();
+            if (micDeviceButtonText) micDeviceButtonText.text = MicDeviceLabel();
             var ai = AIProviderManager.Instance;
             pauseStatusText.text = $"{ai.ModeLabel}  ·  {(ai.Config.language == "ar" ? "العربية" : "English")}  ·  {(S.trainingMode ? "Training" : "Assessment")}\n<size=80%><color=#FFB74D>{ClinicalScenarioManager.Instance.Scenario.ValidationBanner}</color></size>";
         }
@@ -374,11 +388,11 @@ namespace MedSimAI.UI
             string who = v.Target == Persona.Patient ? "Patient" : "Supervisor";
             switch (v.State)
             {
-                case VoiceState.Listening: voiceDot.color = Brand.Danger; voiceText.text = $"• Listening… (talking to {who}) — release to send"; break;
+                case VoiceState.Listening: voiceDot.color = Brand.Danger; voiceText.text = $"• Listening… (talking to {who}) — {(v.Mic == MicMode.HandsFree ? "pause to send" : "release to send")}"; break;
                 case VoiceState.Transcribing: voiceDot.color = Brand.Warn; voiceText.text = "Transcribing…"; break;
                 case VoiceState.Thinking: voiceDot.color = Brand.Blue; break;
                 case VoiceState.Speaking: voiceDot.color = Brand.Teal; break;
-                default: voiceDot.color = Brand.Muted; if (string.IsNullOrEmpty(voiceText.text) || voiceText.text.StartsWith("•") || voiceText.text.StartsWith("Trans")) voiceText.text = $"Hold {(MedSimAI.XR.DesktopPlayerController.Active ? "T" : "A/X")} to talk to the <b>{who}</b> · {AIProviderManager.Instance.ModeLabel}"; break;
+                default: voiceDot.color = Brand.Muted; if (string.IsNullOrEmpty(voiceText.text) || voiceText.text.StartsWith("•") || voiceText.text.StartsWith("Trans")) voiceText.text = (v.LiveOn && v.Mic == MicMode.HandsFree ? $"Just speak to the <b>{who}</b> (or hold {(MedSimAI.XR.DesktopPlayerController.Active ? "T" : "A/X")})" : v.LiveOn && v.Mic == MicMode.Muted ? $"Microphone muted · type, or unmute in the pause menu" : $"Hold {(MedSimAI.XR.DesktopPlayerController.Active ? "T" : "A/X")} to talk to the <b>{who}</b>") + $" · {AIProviderManager.Instance.ModeLabel}"; break;
             }
         }
 

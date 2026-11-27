@@ -88,7 +88,9 @@ namespace MedSimAI.AI
     /// </summary>
     public class ResponseValidator : IResponseValidator
     {
-        static readonly string[] DosingPatterns = { @"\b\d+\s?(mg|mcg|µg|ml|units?|iu)\b", @"\bdose\b", @"\bprescrib" };
+        static readonly string[] DosingPatterns = { @"\b\d+\s?(mg|mcg|µg|ml|units?|iu)\b", @"\bdose\b", @"\bprescrib", @"\d+\s?(ملغ|ملغم|مغ|ملي)", "جرعة" };
+        /// <summary>True when a reply contains dosing content (also applied to native-voice replies before they are shown or spoken).</summary>
+        public static bool ContainsDosing(string text) { if (string.IsNullOrEmpty(text)) return false; var t = text.ToLowerInvariant(); foreach (var p in DosingPatterns) if (Regex.IsMatch(t, p)) return true; return false; }
         static readonly string[] StateChangePatterns = { "i have changed", "i've changed", "i set the", "blood pressure is now", "heart rate is now", "i've updated", "i have updated" };
         static readonly string[] DiagnosisTerms = { "stemi", "myocardial infarction", "heart attack", "st elevation", "st-elevation", "acute coronary syndrome", "nstemi", "angina", "pericarditis", "aortic dissection", "pulmonary embol" };
         static readonly string[] ReferencePatterns = { "et al", "doi:", "according to the guideline", "journal of", "http" };

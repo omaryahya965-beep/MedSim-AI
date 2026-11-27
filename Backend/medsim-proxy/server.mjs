@@ -246,8 +246,35 @@ export function createServer() {
         const r = await ai.transcribe(body, { lang, durationSec: sec, prompt: STT_PROMPT[lang] });
         return send(res, 200, { text: r.text, ms: r.ms, model: CFG.sttModel }); // audio is not stored
       }
+      // ---- native voice: student audio in, validated streamed speech out (framed: one JSON line, then raw PCM16 24 kHz mono)
+      if (req.method === 'POST' && (route === '/v1/voice' || route === '/v1/say-stream')) {
+        const isVoice = route === '/v1/voice';
+        let opts = {};
+        if (isVoice) { try { opts = JSON.parse(Buffer.from(url.searchParams.get('ctx') || 'e30', 'base64url').toString('utf8')); } catch { return send(res, 400, { error: 'bad_ctx' }); } }
+        else opts = body.length ? JSON.parse(body.toString('utf8')) : {};
+        const sess = live.get(isVoice ? url.searchParams.get('sessionId') : opts.sessionId);
+        if (!sess) return send(res, 404, { error: 'unknown_session' });
+        const lim = live.admit(sess); if (lim) return send(res, 429, { error: lim });
+        if (isVoice && (body.length < 4800 || body.length > 48000 * 30)) return send(res, 413, { error: body.length < 4800 ? 'audio_too_short' : 'audio_too_long' });
+        const ac = new AbortController();
+        res.on('close', () => { if (!res.writableEnded) ac.abort(); });   // student interrupted → cancel speech upstream
+        let headerSent = false;
+        const onMeta = m => { if (headerSent) return; headerSent = true; res.writeHead(200, { 'Content-Type': 'application/octet-stream', 'Cache-Control': 'no-store', 'X-Accel-Buffering': 'no' }); res.write(JSON.stringify(m) + '\n'); };
+        const onAudio = chunk => { if (!res.writableEnded && !ac.signal.aborted) res.write(chunk); };
+        try {
+          const out = isVoice
+            ? await live.voiceTurn(sess, url.searchParams.get('persona') === 'Patient' ? 'Patient' : 'Instructor', body, { language: url.searchParams.get('lang') || undefined, context: opts }, { onMeta, onAudio, signal: ac.signal })
+            : await live.sayStream(sess, opts, { onMeta, onAudio, signal: ac.signal });
+          if (out) console.log(`  ${route} firstAudio=${out.firstAudioMs}ms total=${out.totalMs}ms fidelity=${out.fidelity == null ? '-' : out.fidelity.toFixed(2)}${out.cancelled ? ' (interrupted)' : ''} ${out.persona || ''} source=${out.source || '-'}${out.understandMs != null ? ' understand=' + out.understandMs + 'ms' : ''}${out.rejected ? ' rejected=' + out.rejected : ''}`);
+        } catch (e) {
+          if (!headerSent) throw e;                      // normal error response path
+          console.error(`[${route}] stream error ${redact(e.message)}`);
+        }
+        if (!res.writableEnded) res.end();
+        return;
+      }
       const json = body.length ? JSON.parse(body.toString('utf8')) : {};
-      if (req.method === 'POST' && route === '/v1/session/start') { const r = live.start(json); return send(res, r.status, r.json); }
+      if (req.method === 'POST' && route === '/v1/session/start') { const r = live.start(json); if (r.status === 200) live.prewarm(live.get(r.json.sessionId)); return send(res, r.status, r.json); }
       if (req.method === 'POST' && route === '/v1/session/end') { const r = live.end(json.sessionId); return send(res, r.status, r.json); }
       if (req.method === 'POST' && (route === '/v1/turn' || route === '/v1/say')) {
         const sess = live.get(json.sessionId);

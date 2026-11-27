@@ -21,7 +21,7 @@ namespace MedSimAI.Voice
     /// there is NO pre-recorded dialogue. Without the AI service, characters respond with subtitles only and the status
     /// line says so. Raw microphone audio is never written to disk.
     /// </summary>
-    public class VoiceInteractionManager : MonoBehaviour
+    public partial class VoiceInteractionManager : MonoBehaviour
     {
         public static VoiceInteractionManager Instance { get; private set; }
         public CharacterSpeechController patientSpeech, instructorSpeech;
@@ -44,7 +44,7 @@ namespace MedSimAI.Voice
         DictationRecognizer dictation; string dictationText = "";
 #endif
         AIProviderManager AI => AIProviderManager.Instance;
-        bool LiveOn => AI && AI.Mode == ConversationMode.OnlineAI && AI.Live.Configured;
+        public bool LiveOn => AI && AI.Mode == ConversationMode.OnlineAI && AI.Live.Configured;
 
         void Awake() { Instance = this; }
 
@@ -72,6 +72,7 @@ namespace MedSimAI.Voice
                 if (t2 != Target) SetTarget(t2);
             }
             if (State == VoiceState.Listening && Time.time - listenStart > maxRecordSeconds) StopListening();
+            NativeUpdate();
         }
 
         public void SetTarget(Persona p) { Target = p; TargetChanged?.Invoke(p); }
@@ -81,6 +82,7 @@ namespace MedSimAI.Voice
 
         public void StartListening()
         {
+            if (LiveOn && NativeBeginPushToTalk()) return; // native voice: audio goes straight to the Realtime session
             if (State == VoiceState.Speaking || State == VoiceState.Thinking) Interrupt(); // the student can always interrupt
             if (State != VoiceState.Idle) return;
             listenStart = Time.time;
@@ -112,6 +114,7 @@ namespace MedSimAI.Voice
 
         public async void StopListening()
         {
+            if (LiveOn && NativeEndPushToTalk()) return;
             if (State != VoiceState.Listening) return;
             SetState(VoiceState.Transcribing);
             string text = "";
@@ -192,6 +195,11 @@ namespace MedSimAI.Voice
                 var session = ClinicalScenarioManager.Instance.Session;
                 if (LiveOn)
                 {
+                    var streamed = await NativeSayStream(who, kind, baseText, severity, result);
+                    if (streamed != null) return streamed;
+                }
+                if (LiveOn && false)
+                {
                     try
                     {
                         if (string.IsNullOrEmpty(AI.Live.SessionId)) await AI.Live.StartSession(session.Scenario);
@@ -211,6 +219,7 @@ namespace MedSimAI.Voice
 
         public void Interrupt()
         {
+            NativeAbort();
             cts?.Cancel();
             AIProviderManager.Instance?.Orchestrator.CancelCurrent();
             if (patientSpeech) patientSpeech.Stop();
@@ -221,6 +230,7 @@ namespace MedSimAI.Voice
         public void Cancel()
         {
             Interrupt();
+            NativeCloseMic();
             if (recording != null) { Microphone.End(micDevice); recording = null; }
 #if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
             dictation?.Dispose(); dictation = null;

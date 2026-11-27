@@ -1,0 +1,17 @@
+cedar phoneme A: 26 calibration frames from a 1.4s steady window
+cedar phoneme I: 26 calibration frames from a 1.4s steady window
+cedar phoneme U: 26 calibration frames from a 1.4s steady window
+cedar phoneme E: 26 calibration frames from a 1.4s steady window
+cedar phoneme O: 26 calibration frames from a 1.4s steady window
+cedar -: no clip (kept sample data)
+cedar S: no clip (kept sample data)
+cedar loudness: 4319 voiced frames, log10 volume p20=-3.55 p50=-2.25 p97=-1.78 (uLipSync default range -2.5..-1.5)
+marin phoneme A: 26 calibration frames from a 1.4s steady window
+marin phoneme I: 26 calibration frames from a 1.4s steady window
+marin phoneme U: 26 calibration frames from a 1.4s steady window
+marin phoneme E: 26 calibration frames from a 1.4s steady window
+marin phoneme O: 26 calibration frames from a 1.4s steady window
+marin -: no clip (kept sample data)
+marin loudness: 1737 voiced frames, log10 volume p20=-2.38 p50=-1.84 p97=-1.35 (uLipSync default range -2.5..-1.5)
+RANGE Patient -3.547 -1.777
+RANGE Instructor -2.384 -1.349

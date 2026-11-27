@@ -119,3 +119,22 @@ test('secrets: env-file parsing and redaction never leak keys', () => {
   assert.equal(redact('Authorization: Bearer sk-proj-abcdefghijk123'), 'Authorization: Bearer ***');
   assert.ok(!redact('key sk-proj-abcdefghijk123 used').includes('abcdefghijk'));
 });
+
+test('native voice: noise/echo with no intelligible speech gets no reply, no history and no audio', async () => {
+  const eng = new LiveEngine({ scenarios, ai: fakeAI({}) });
+  const sess = newSession(eng);
+  const noted = [];
+  eng.understandingFor = () => ({ understand: async () => ({ data: { heard: '<unknown>', studentAct: 'other', factIds: [], emotion: 'neutral', reply: 'I am not sure.' }, callId: 'c1', ms: 5 }), noteSpoken: (id, t) => noted.push(t) });
+  let meta = null; let audio = 0;
+  const out = await eng.voiceTurn(sess, 'Patient', Buffer.alloc(9600), { context: ctx() }, { onMeta: m => meta = m, onAudio: () => audio++, signal: undefined });
+  assert.equal(meta.noSpeech, true); assert.equal(meta.text, ''); assert.equal(audio, 0);
+  assert.equal(out.source, 'no-speech');
+  assert.equal(sess.history.Patient.length, 0);
+});
+
+test('native voice: replies are cleaned of stray JSON debris before validation', async () => {
+  const { cleanReply, isNoSpeech } = await import('./lib/live.mjs');
+  assert.equal(cleanReply('What supports that?“}'), 'What supports that?');
+  assert.equal(cleanReply('"Okay."'), 'Okay.');
+  assert.ok(isNoSpeech('[inaudible]') && isNoSpeech('') && !isNoSpeech('Hello doctor'));
+});

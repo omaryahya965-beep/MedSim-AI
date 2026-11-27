@@ -88,6 +88,7 @@ namespace MedSimAI.XR
             var kb = Keyboard.current; var mouse = Mouse.current;
             bool ui = UiMode;
             Cursor.lockState = ui ? CursorLockMode.None : CursorLockMode.Locked; Cursor.visible = ui;
+            if (kb != null && kb.mKey.wasPressedThisFrame && VoiceInteractionManager.Instance) { var m = VoiceInteractionManager.Instance.CycleMicMode(); Toast("Microphone: " + (m == MicMode.HandsFree ? "hands-free — just speak" : m == MicMode.Muted ? "muted" : "push-to-talk — hold T")); }
             if (kb != null && (kb.f1Key.wasPressedThisFrame || kb.hKey.wasPressedThisFrame)) helpUntil = helpUntil > Time.unscaledTime ? 0 : Time.unscaledTime + 30f;
             UpdateStatus();
             if (ui || Time.timeScale == 0f) { SetPrompt(""); crosshair.enabled = false; return; }
@@ -230,7 +231,7 @@ namespace MedSimAI.XR
             status = MakeText(go.transform, new Vector2(0f, 1f), new Vector2(28, -24), 20, TextAlignmentOptions.TopLeft, new Vector2(900, 80), new Vector2(0, 1));
             toast = MakeText(go.transform, new Vector2(0.5f, 0.5f), new Vector2(0, -92), 22, TextAlignmentOptions.Center, new Vector2(1200, 50));
             help = MakeText(go.transform, new Vector2(1f, 1f), new Vector2(-28, -24), 19, TextAlignmentOptions.TopRight, new Vector2(620, 260), new Vector2(1, 1));
-            help.text = "<b>Desktop controls</b>\nWASD move · Shift faster\nMouse look\nE interact (doors, ECG, sanitiser)\nLeft click grab / apply instrument\nRight click put instrument back\nHold T talk to the person you look at\nEsc pause · F1 show/hide controls";
+            help.text = "<b>Desktop controls</b>\nWASD move · Shift faster\nMouse look\nE interact (doors, ECG, sanitiser)\nLeft click grab / apply instrument\nRight click put instrument back\nHold T talk to the person you look at\nM microphone: push-to-talk / hands-free / mute\nEsc pause · F1 show/hide controls";
         }
 
         static TextMeshProUGUI MakeText(Transform parent, Vector2 anchor, Vector2 pos, float size, TextAlignmentOptions align, Vector2 box, Vector2? pivot = null)
@@ -252,6 +253,7 @@ namespace MedSimAI.XR
             var v = VoiceInteractionManager.Instance; var ai = AIProviderManager.Instance;
             string voice = v == null ? "" : v.State == VoiceState.Listening ? "<color=#FF6B6B>● Listening…</color>" : v.State == VoiceState.Transcribing || v.State == VoiceState.Thinking ? "<color=#64B5F6>● Thinking…</color>" : "";
             string target = v != null && v.State == VoiceState.Idle ? $"<color=#B0BEC5>Talking to: {(v.Target == Persona.Patient ? "Mr. Reyes" : "Dr. Hassan")}</color>" : "";
+            if (v != null && v.LiveOn) target += $"<color=#B0BEC5>   ·   Mic: {(v.Mic == MicMode.HandsFree ? "hands-free" : v.Mic == MicMode.Muted ? "<color=#FF8A80>muted</color>" : "push-to-talk (T)")}</color>";
             string mode = ai ? (ai.Mode == ConversationMode.OnlineAI && ai.Live.Status != LiveStatus.Offline ? "<color=#64FFDA>LIVE AI</color>" : $"<color=#FFB74D>{ai.ModeLabel}</color>") : "";
             if (status) status.text = $"{mode}   {voice}\n<size=80%>{target}</size>";
         }

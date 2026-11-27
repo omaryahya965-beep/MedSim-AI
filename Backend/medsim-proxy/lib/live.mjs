@@ -4,7 +4,7 @@
 // fails, approved scenario text is spoken instead. All speech is synthesised at runtime (no pre-recorded dialogue).
 import crypto from 'node:crypto';
 import { validateGrounded, matchConcepts } from './grounding.mjs';
-import { speechFidelity, pcmToWav } from './openai.mjs';
+import { speechFidelity, pcmToWav, RealtimeUnderstanding } from './openai.mjs';
 
 export const VOICES = {
   Patient: { voice: process.env.MEDSIM_VOICE_PATIENT || 'cedar' },
@@ -26,6 +26,16 @@ const INSTRUCTOR_STYLE = {
 const PATIENT_ACTS = ['greeting', 'introduction', 'identity_check', 'consent_request', 'history_question', 'reassurance', 'explanation', 'examination_notice', 'question_about_diagnosis', 'current_symptoms_question', 'small_talk', 'other'];
 const INSTRUCTOR_INTENTS = ['greeting', 'hint_request', 'investigation_request', 'escalation_request', 'diagnosis_statement', 'diagnostic_question', 'summary_or_reasoning', 'question_about_case', 'smalltalk', 'out_of_scope'];
 
+/** Removes stray JSON/quote debris the model occasionally leaves around a reply (e.g. a trailing "}). */
+export function cleanReply(x) {
+  return String(x || '').trim().replace(/^[\s"“”'{\[]+/, '').replace(/[\s"“”{}\[\]]+$/, '').replace(/\s{2,}/g, ' ').trim();
+}
+/** True when the Realtime session reports no intelligible student speech (noise, echo of the characters, silence). */
+export function isNoSpeech(h) {
+  const t = String(h || '').trim().toLowerCase();
+  return !t || /^[<\[(].*[>\])]$/.test(t) || /^(unknown|inaudible|unintelligible|silence|noise|no speech|\.+|…)$/.test(t);
+}
+
 export class LiveEngine {
   constructor({ ai, scenarios, limits = {} }) {
     this.ai = ai; this.scenarios = scenarios;
@@ -44,7 +54,7 @@ export class LiveEngine {
     this.sessions.set(id, { id, scenarioId, entry, lang: language === 'ar' ? 'ar' : 'en', created: Date.now(), turns: 0, history: { Patient: [], Instructor: [] } });
     return { status: 200, json: { sessionId: id, scenarioVersion: entry.data.version, voices: { patient: VOICES.Patient.voice, instructor: VOICES.Instructor.voice } } };
   }
-  end(sessionId) { this.sessions.delete(sessionId); return { status: 200, json: { ok: true } }; }
+  end(sessionId) { this.sessions.delete(sessionId); for (const k of [...(this.rtu?.keys() || [])]) if (k.startsWith(sessionId + ':')) { this.rtu.get(k).close(); this.rtu.delete(k); } return { status: 200, json: { ok: true } }; }
   gc() {
     const now = Date.now();
     for (const [k, s] of this.sessions) if (now - s.created > this.limits.sessionTtlMs) this.sessions.delete(k);
@@ -117,7 +127,7 @@ export class LiveEngine {
   // ------------------------------------------------------------------ patient
   async patientTurn(sess, body) {
     const S = sess.entry.data; const lang = this.langOf(sess, body);
-    const utterance = String(body.utterance || '').slice(0, this.limits.maxUtterance);
+    let utterance = String(body.utterance || '').slice(0, this.limits.maxUtterance);
     const ctx = this.sanitizeContext(sess, body.context);
     const st = this.state(sess, ctx);
     const disclosed = new Set(ctx.events.filter(e => e.startsWith('FACT:')).map(e => e.slice(5)));
@@ -145,12 +155,13 @@ Rules:
       reply: { type: 'string' } } };
     const messages = [...sess.history.Patient.slice(-12), { role: 'user', content: utterance }];
     const t0 = Date.now();
-    const r = await this.ai.json({ system, messages, schema, name: 'patient_turn', maxOutputTokens: 300, tag: 'patient' });
+    const r = body._understand ? await body._understand({ system, schema }) : await this.ai.json({ system, messages, schema, name: 'patient_turn', maxOutputTokens: 300, tag: 'patient' });
+    if (body._understand) utterance = String(r.data.heard || '').slice(0, this.limits.maxUtterance);
     const valid = new Set(S.historyFacts.map(f => f.id));
     const factIds = [...new Set((r.data.factIds || []).filter(id => valid.has(id)))].slice(0, 3);
-    const corpus = [P.summary, ...(st?.statements || []), st?.context || '', ...(lang === 'ar' && sess.entry.translations?.ar?.states?.[st?.id] ? sess.entry.translations.ar.states[st.id] : []),
+    const corpus = [P.summary, S.chiefComplaint || '', 'ألم وجع في الصدر بنص صدري', ...(st?.statements || []), st?.context || '', ...(lang === 'ar' && sess.entry.translations?.ar?.states?.[st?.id] ? sess.entry.translations.ar.states[st.id] : []),
       ...factIds.flatMap(id => [S.historyFacts.find(f => f.id === id).answer, this.tr(sess, 'ar', 'facts', id, '')]), ...S.unknownAnswers, ...Object.values(sess.entry.translations?.ar?.unknownAnswers || {})];
-    let reply = String(r.data.reply || '').trim();
+    let reply = cleanReply(r.data.reply);
     const v = validateGrounded(reply, { corpus, studentText: utterance, maxWords: 45 });
     let source = 'ai';
     if (!v.ok) {
@@ -163,13 +174,13 @@ Rules:
     sess.history.Patient.push({ role: 'user', content: utterance }, { role: 'assistant', content: reply });
     const style = PATIENT_STYLE[st?.expression] || PATIENT_STYLE.discomfort;
     const audioId = body.speak === false ? null : this.queueSpeech('Patient', reply, { lang, style });
-    return { status: 200, json: { persona: 'Patient', text: reply, factIds, studentAct: PATIENT_ACTS.includes(r.data.studentAct) ? r.data.studentAct : 'other', emotion: r.data.emotion, source, rejected: v.ok ? null : v.reason + (v.detail ? ':' + v.detail : ''), audioId, llmMs: Date.now() - t0, model: this.ai.models.chat } };
+    return { status: 200, json: { persona: 'Patient', heard: utterance, text: reply, factIds, studentAct: PATIENT_ACTS.includes(r.data.studentAct) ? r.data.studentAct : 'other', emotion: r.data.emotion, source, rejected: v.ok ? null : v.reason + (v.detail ? ':' + v.detail : ''), audioId, llmMs: Date.now() - t0, model: this.ai.models.chat } };
   }
 
   // ------------------------------------------------------------------ supervising doctor (student addresses her)
   async instructorTurn(sess, body) {
     const S = sess.entry.data; const lang = this.langOf(sess, body);
-    const utterance = String(body.utterance || '').slice(0, this.limits.maxUtterance);
+    let utterance = String(body.utterance || '').slice(0, this.limits.maxUtterance);
     const ctx = this.sanitizeContext(sess, body.context);
     const st = this.state(sess, ctx);
     const P = S.personas?.instructor || {};
@@ -193,7 +204,8 @@ Rules:
 - escalationRequested = true ONLY if the student explicitly asks/proposes to call, page, contact or escalate to a senior/cardiology/cath lab (not merely naming a diagnosis).
 - diagnosisNamed = true if the student states a diagnosis as their impression; isQuestion = true if they are asking you a question.
 - concepts: which of these reasoning concepts the student's words clearly express: ${(S.reasoningConcepts || []).map(c => `${c.id} (${c.label})`).join('; ')}.
-- If out of scope (real patients, dosing, anything outside the case), say kindly it is outside this simulation and to ask their clinical tutor.`;
+- If out of scope (real patients, dosing, anything outside the case), say kindly it is outside this simulation and to ask their clinical tutor.
+- Teach by asking, not telling: never give management instructions, never advise waiting for, delaying or withholding treatment, results or escalation.`;
     const conceptIds = (S.reasoningConcepts || []).map(c => c.id);
     const schema = { type: 'object', additionalProperties: false, required: ['intent', 'investigationId', 'escalationRequested', 'diagnosisNamed', 'isQuestion', 'concepts', 'reply'], properties: {
       intent: { type: 'string', enum: INSTRUCTOR_INTENTS },
@@ -203,14 +215,15 @@ Rules:
       reply: { type: 'string' } } };
     const messages = [...sess.history.Instructor.slice(-12), { role: 'user', content: utterance }];
     const t0 = Date.now();
-    const r = await this.ai.json({ system, messages, schema, name: 'instructor_turn', maxOutputTokens: 350, tag: 'instructor' });
+    const r = body._understand ? await body._understand({ system, schema }) : await this.ai.json({ system, messages, schema, name: 'instructor_turn', maxOutputTokens: 350, tag: 'instructor' });
+    if (body._understand) utterance = String(r.data.heard || '').slice(0, this.limits.maxUtterance);
     const d = r.data;
     const intent = INSTRUCTOR_INTENTS.includes(d.intent) ? d.intent : 'smalltalk';
     const investigationId = intent === 'investigation_request' && S.investigations.some(i => i.id === d.investigationId) ? d.investigationId : null;
     const corpus = [P.summary, ...revealed, ...hints, ...S.investigations.map(i => i.name), ...S.objectives.map(o => o.text), ...(S.hints || []).map(h => h.text), ...(S.interventions || []).flatMap(i => i.lines), ...(S.discussion || []).map(q => q.question),
       S.instructorLines?.outOfScope || '', S.instructorLines?.escalationAck || '', ...(investigationId ? [S.investigations.find(i => i.id === investigationId).name] : []),
       ...(feedback ? [S.expectedReasoning.workingDiagnosis, ...S.expectedReasoning.keyPoints] : [])];
-    let reply = String(d.reply || '').trim();
+    let reply = cleanReply(d.reply);
     const v = validateGrounded(reply, { corpus, studentText: utterance, allowDiagnosis: feedback, maxWords: 55, allowMeta: true });
     let source = 'ai';
     if (!v.ok) {
@@ -219,11 +232,12 @@ Rules:
       else if (intent === 'hint_request') reply = hints[0] || S.instructorLines.noHintAvailable;
       else if (intent === 'out_of_scope') reply = S.instructorLines.outOfScope;
       else if (d.escalationRequested) reply = S.instructorLines.escalationAck;
+      else if (intent === 'diagnostic_question' || d.diagnosisNamed) reply = lang === 'ar' ? 'شو رأيك إنت؟ وشو اللي بيدعم هالتفكير؟' : 'What do you think it is, and what supports that?';
       else reply = dq ? 'Tell me a little more about how you reached that.' : d.isQuestion ? 'Good question. How could you find that out at the bedside?' : 'Okay. What would you like to do next?';
     }
     sess.history.Instructor.push({ role: 'user', content: utterance }, { role: 'assistant', content: reply });
     const audioId = body.speak === false ? null : this.queueSpeech('Instructor', reply, { lang, style: INSTRUCTOR_STYLE.default });
-    return { status: 200, json: { persona: 'Instructor', text: reply, intent, investigationId, escalationRequested: !!d.escalationRequested, diagnosisNamed: !!d.diagnosisNamed, isQuestion: !!d.isQuestion,
+    return { status: 200, json: { persona: 'Instructor', heard: utterance, text: reply, intent, investigationId, escalationRequested: !!d.escalationRequested, diagnosisNamed: !!d.diagnosisNamed, isQuestion: !!d.isQuestion,
       concepts: (d.concepts || []).filter(c => conceptIds.includes(c)), deterministicConcepts: matchConcepts(utterance, S.reasoningConcepts || []), source, rejected: v.ok ? null : v.reason + (v.detail ? ':' + v.detail : ''), audioId, llmMs: Date.now() - t0, model: this.ai.models.chat } };
   }
 
@@ -289,4 +303,77 @@ Reply ${lang === 'ar' ? 'in natural spoken Arabic' : 'in natural spoken English'
     const audioId = body.speak === false ? null : this.queueSpeech(persona, text, { lang, style });
     return { status: 200, json: { persona, kind, text, source, rejected, audioId, llmMs: Date.now() - t0 } };
   }
+
+  // ------------------------------------------------------------------ native voice (Realtime speech-to-speech with grounding)
+  /**
+   * Student audio → persistent Realtime session (hears the audio directly; returns a constrained function call) →
+   * the SAME deterministic grounding/validation as text turns → validated reply streamed as runtime speech.
+   * Medically significant content is therefore never spoken unless it passed validation.
+   */
+  understandingFor(sess, persona) {
+    this.rtu ??= new Map();
+    const key = sess.id + ':' + persona;
+    let rt = this.rtu.get(key);
+    if (!rt || rt.closed) { rt = new RealtimeUnderstanding({ apiKey: this.ai.apiKey, model: process.env.MEDSIM_VOICE_UNDERSTAND_MODEL || 'gpt-realtime-2.1-mini', ledger: this.ai.ledger, timeoutMs: 20000 }); this.rtu.set(key, rt); }
+    return rt;
+  }
+
+  /** Opens the persistent Realtime connections in advance (connecting is not billed) so the first spoken turn is not slower. */
+  prewarm(sess) {
+    if (!this.ai.configured) return;
+    for (const p of ['Patient', 'Instructor']) this.understandingFor(sess, p).connect().catch(() => { });
+    for (const p of ['Patient', 'Instructor']) this.ai.prewarmVoice?.(VOICES[p].voice);
+  }
+
+  async voiceTurn(sess, persona, pcm, body, { onMeta, onAudio, signal }) {
+    const rt = this.understandingFor(sess, persona);
+    const t0 = Date.now(); let callId = null, understandMs = 0;
+    const understand = async ({ system, schema }) => {
+      const sch = JSON.parse(JSON.stringify(schema));
+      sch.properties = { heard: { type: 'string', description: 'Verbatim transcript of what the student just said, in the language they spoke. Empty string if the audio has no intelligible speech addressed to you (silence, noise, coughing, or only the simulation characters\' own voices).' }, ...sch.properties };
+      sch.required = ['heard', ...(sch.required || [])];
+      const r = await rt.understand(pcm, { instructions: system + "\nThe student's latest turn is the audio you just received. Put exactly what they said in \"heard\" (empty if nothing intelligible was said), then classify it and propose your reply.", schema: sch });
+      callId = r.callId; understandMs = r.ms;
+      if (isNoSpeech(r.data.heard)) { const e = new Error('no_speech'); e.code = 'no_speech'; throw e; }
+      return r;
+    };
+    const turnBody = { ...body, utterance: '', speak: false, _understand: understand };
+    let res;
+    try { res = persona === 'Patient' ? await this.patientTurn(sess, turnBody) : await this.instructorTurn(sess, turnBody); }
+    catch (e) {
+      if (e.code !== 'no_speech') throw e;
+      rt.noteSpoken(callId, '');                     // nothing said: no reply, no history, nothing spoken
+      onMeta({ persona, heard: '', text: '', noSpeech: true, source: 'no-speech', timings: { understandMs } });
+      return { firstAudioMs: null, totalMs: Date.now() - t0, fidelity: null, cancelled: false, persona, source: 'no-speech', understandMs };
+    }
+    rt.noteSpoken(callId, res.json.text);
+    const tMeta = Date.now();
+    onMeta({ ...res.json, timings: { understandMs, validateMs: tMeta - t0 - understandMs } });
+    const out = await this.streamSpeech(sess, persona, res.json.text, body, { onAudio, signal, t0, tMeta, kind: 'voice' });
+    return { ...out, persona, source: res.json.source, rejected: res.json.rejected, understandMs };
+  }
+
+  /** Director-initiated line (welcome, intervention, discussion, debrief…), phrased + validated, then streamed. */
+  async sayStream(sess, body, { onMeta, onAudio, signal }) {
+    const t0 = Date.now();
+    const r = await this.say(sess, { ...body, speak: false });
+    if (r.status !== 200) { onMeta(r.json); return null; }
+    const tMeta = Date.now(); onMeta(r.json);
+    const out = await this.streamSpeech(sess, r.json.persona, r.json.text, body, { onAudio, signal, t0, tMeta, kind: 'say-' + (body.kind || 'line') });
+    return { ...out, persona: r.json.persona, source: r.json.source, rejected: r.json.rejected };
+  }
+
+  async streamSpeech(sess, persona, text, body, { onAudio, signal, t0, tMeta, kind }) {
+    const lang = this.langOf(sess, body);
+    const ctx = this.sanitizeContext(sess, body.context);
+    const st = this.state(sess, ctx);
+    const style = persona === 'Patient' ? (PATIENT_STYLE[st?.expression] || PATIENT_STYLE.discomfort) : (body.kind === 'debrief' ? INSTRUCTOR_STYLE.debrief : body.severity === 'safety' ? INSTRUCTOR_STYLE.safety : INSTRUCTOR_STYLE.default);
+    const sp = await this.ai.speak(text, { voice: VOICES[persona].voice, style, lang, onAudio, signal });
+    const fidelity = sp.cancelled ? null : speechFidelity(text, sp.transcript);
+    const firstAudioMs = sp.firstAudioMs != null ? (tMeta - t0) + sp.firstAudioMs : null;
+    this.ai.ledger.record({ kind: kind + '-latency', model: 'pipeline', ms: Date.now() - t0, firstAudioMs, usd: 0, fidelity, cancelled: !!sp.cancelled, lang });
+    if (fidelity != null && fidelity < 0.75) console.warn(`[voice] low speech fidelity ${fidelity.toFixed(2)} (validated text was voiced imprecisely)`);
+    return { firstAudioMs, totalMs: Date.now() - t0, fidelity, cancelled: !!sp.cancelled };
+  }
+
 }

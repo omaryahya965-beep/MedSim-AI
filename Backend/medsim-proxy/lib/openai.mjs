@@ -84,12 +84,18 @@ export class OpenAIClient {
   }
 
   /** Runtime speech: Realtime API (survives the 2027-01-06 /audio/speech shutdown). Returns { pcm (24 kHz s16le mono), transcript, ms, firstAudioMs }. */
-  async speak(text, { voice, style, lang = 'en' }) {
+  async speak(text, { voice, style, lang = 'en', onAudio = null, signal = null }) {
     if (!this.configured) throw new UpstreamError('tts', 0, 'provider not configured');
     this.ledger.guard(0.01);
     let rv = this.rt.get(voice);
     if (!rv || rv.closed) { rv = new RealtimeVoice({ apiKey: this.apiKey, model: this.models.tts, voice, ledger: this.ledger, timeoutMs: this.timeoutMs }); this.rt.set(voice, rv); }
-    return rv.say(text, { style, lang });
+    return rv.say(text, { style, lang, onAudio, signal });
+  }
+
+  prewarmVoice(voice) {
+    let rv = this.rt.get(voice);
+    if (!rv || rv.closed) { rv = new RealtimeVoice({ apiKey: this.apiKey, model: this.models.tts, voice, ledger: this.ledger, timeoutMs: this.timeoutMs }); this.rt.set(voice, rv); }
+    rv.connect().catch(() => { });
   }
 
   /** Fallback runtime speech via /v1/audio/speech (deprecated: shuts down 2027-01-06). Returns { pcm, ms }. */
@@ -135,7 +141,7 @@ export class RealtimeVoice {
         if (m.type === 'session.updated' || m.type === 'session.created') { if (m.type === 'session.updated') { clearTimeout(to); resolve(); } return; }
         if (m.type === 'error') { const c = this.current; const err = new UpstreamError('tts', 400, m.error?.code || m.error?.type); if (c) c.reject(err); else { clearTimeout(to); reject(err); } return; }
         const c = this.current; if (!c) return;
-        if (m.type === 'response.output_audio.delta') { if (!c.first) c.first = Date.now(); c.chunks.push(Buffer.from(m.delta, 'base64')); }
+        if (m.type === 'response.output_audio.delta') { if (!c.first) c.first = Date.now(); const b = Buffer.from(m.delta, 'base64'); c.chunks.push(b); if (c.onAudio) { try { c.onAudio(b); } catch { } } }
         else if (m.type === 'response.output_audio_transcript.delta') c.transcript += m.delta || '';
         else if (m.type === 'response.done') c.done(m.response);
       };
@@ -144,12 +150,13 @@ export class RealtimeVoice {
     });
     return this.ready;
   }
-  say(text, { style = '', lang = 'en' } = {}) {
+  say(text, { style = '', lang = 'en', onAudio = null, signal = null } = {}) {
     const run = async () => {
       await this.connect();
       const t0 = Date.now();
       return await new Promise((resolve, reject) => {
-        const c = { chunks: [], transcript: '', first: 0 };
+        const c = { chunks: [], transcript: '', first: 0, onAudio };
+        if (signal) { if (signal.aborted) return reject(Object.assign(new UpstreamError('tts', 0, 'cancelled'), { cancelled: true })); signal.addEventListener('abort', () => { try { this.ws.send(JSON.stringify({ type: 'response.cancel' })); } catch { } if (this.current === c) { this.current = null; clearTimeout(timer); resolve({ pcm: Buffer.concat(c.chunks), transcript: c.transcript, ms: Date.now() - t0, firstAudioMs: c.first ? c.first - t0 : null, cancelled: true }); } }, { once: true }); }
         const timer = setTimeout(() => { this.current = null; reject(Object.assign(new UpstreamError('tts', 0, 'realtime response timeout'), { retryable: true })); }, this.timeoutMs);
         c.reject = e => { clearTimeout(timer); this.current = null; this.ledger.record({ kind: 'tts', model: this.model, error: e.message.slice(0, 80), ms: Date.now() - t0 }); reject(e); };
         c.done = resp => {
@@ -196,4 +203,71 @@ export function speechFidelity(intended, transcript) {
   let hit = 0; for (const w of a) { const n = bag.get(w) || 0; if (n > 0) { hit++; bag.set(w, n - 1); } }
   const extra = Math.max(0, b.length - hit);
   return hit / (a.length + extra * 0.5);
+}
+
+
+/**
+ * Persistent Realtime session that LISTENS to the student's audio directly (no separate speech-to-text request) and
+ * returns a constrained function call (what it heard, fact ids / intent, proposed reply). Text-only output: the reply is
+ * validated against the authoritative scenario before anything is spoken. One session per (student session, persona),
+ * so each character keeps its own conversational memory.
+ */
+export class RealtimeUnderstanding {
+  constructor({ apiKey, model, ledger, timeoutMs = 20000 }) { this.apiKey = apiKey; this.model = model; this.ledger = ledger; this.timeoutMs = timeoutMs; this.queue = Promise.resolve(); this.ws = null; this.ready = null; this.current = null; this.closed = false; }
+  connect() {
+    if (this.ready) return this.ready;
+    this.ready = new Promise((resolve, reject) => {
+      const url = `wss://api.openai.com/v1/realtime?model=${encodeURIComponent(this.model)}`;
+      const ws = new WebSocket(url, { headers: { Authorization: `Bearer ${this.apiKey}` } }); this.ws = ws;
+      const to = setTimeout(() => { reject(new UpstreamError('understand', 0, 'connect timeout')); this.close(); }, this.timeoutMs);
+      ws.onopen = () => ws.send(JSON.stringify({ type: 'session.update', session: { type: 'realtime', model: this.model, output_modalities: ['text'], audio: { input: { format: { type: 'audio/pcm', rate: 24000 }, turn_detection: null } }, instructions: 'You are a component of a medical education simulation. Always answer by calling the provided function.' } }));
+      ws.onmessage = ev => {
+        let m; try { m = JSON.parse(typeof ev.data === 'string' ? ev.data : Buffer.from(ev.data).toString('utf8')); } catch { return; }
+        if (m.type === 'session.updated') { clearTimeout(to); resolve(); return; }
+        if (m.type === 'error') { const err = new UpstreamError('understand', 400, m.error?.code || m.error?.message?.slice(0, 120)); if (this.current) this.current.reject(err); else { clearTimeout(to); reject(err); } return; }
+        const c = this.current; if (!c) return;
+        if (m.type === 'response.function_call_arguments.done') { c.args = m.arguments; c.callId = m.call_id; }
+        else if (m.type === 'response.done') c.done(m.response);
+      };
+      ws.onerror = () => { const err = new UpstreamError('understand', 0, 'socket error'); if (this.current) this.current.reject(err); clearTimeout(to); reject(err); this.close(); };
+      ws.onclose = () => { this.closed = true; this.ready = null; if (this.current) this.current.reject(new UpstreamError('understand', 0, 'closed')); };
+    });
+    return this.ready;
+  }
+  /** pcm: 24 kHz s16le mono. Returns { data, callId, ms, audioSec }. */
+  understand(pcm, { instructions, schema, contextNote }) {
+    const run = async () => {
+      this.ledger.guard(0.01);
+      await this.connect();
+      const t0 = Date.now();
+      return await new Promise((resolve, reject) => {
+        const c = { args: null, callId: null };
+        const timer = setTimeout(() => { this.current = null; reject(Object.assign(new UpstreamError('understand', 0, 'response timeout'), { retryable: true })); }, this.timeoutMs);
+        c.reject = e => { clearTimeout(timer); this.current = null; this.ledger.record({ kind: 'understand', model: this.model, error: e.message.slice(0, 80), ms: Date.now() - t0 }); reject(e); };
+        c.done = resp => {
+          clearTimeout(timer); this.current = null;
+          const u = resp?.usage || {};
+          const usage = { textIn: (u.input_token_details?.text_tokens || 0) - (u.input_token_details?.cached_tokens_details?.text_tokens || 0), cachedIn: u.input_token_details?.cached_tokens || 0, audioIn: (u.input_token_details?.audio_tokens || 0) - (u.input_token_details?.cached_tokens_details?.audio_tokens || 0), textOut: u.output_token_details?.text_tokens ?? u.output_tokens ?? 0 };
+          const ms = Date.now() - t0;
+          this.ledger.record({ kind: 'understand', model: this.model, inTok: u.input_tokens || 0, outTok: u.output_tokens || 0, audioSec: pcm.length / 48000, usd: priceTokens(this.model, usage), ms });
+          if (resp?.status && resp.status !== 'completed') return reject(new UpstreamError('understand', 422, 'response ' + resp.status));
+          let args = c.args;
+          if (!args) for (const o of resp?.output || []) if (o.type === 'function_call') { args = o.arguments; c.callId = o.call_id; }
+          let data; try { data = JSON.parse(args || '{}'); } catch { return reject(new UpstreamError('understand', 422, 'bad function arguments')); }
+          resolve({ data, callId: c.callId, ms, audioSec: pcm.length / 48000 });
+        };
+        this.current = c;
+        if (contextNote) this.ws.send(JSON.stringify({ type: 'conversation.item.create', item: { type: 'message', role: 'system', content: [{ type: 'input_text', text: contextNote }] } }));
+        for (let i = 0; i < pcm.length; i += 48000) this.ws.send(JSON.stringify({ type: 'input_audio_buffer.append', audio: pcm.subarray(i, Math.min(pcm.length, i + 48000)).toString('base64') }));
+        this.ws.send(JSON.stringify({ type: 'input_audio_buffer.commit' }));
+        this.ws.send(JSON.stringify({ type: 'response.create', response: { output_modalities: ['text'], instructions, tools: [{ type: 'function', name: 'respond', description: 'Your classification of the student\'s spoken turn and your proposed spoken reply.', parameters: schema }], tool_choice: 'required' } }));
+      });
+    };
+    const p = this.queue.then(run, run); this.queue = p.catch(() => { }); return p;
+  }
+  /** Records what was actually said (after validation) so the character's memory matches the student's experience. */
+  noteSpoken(callId, text) {
+    try { if (callId && this.ws) this.ws.send(JSON.stringify({ type: 'conversation.item.create', item: { type: 'function_call_output', call_id: callId, output: JSON.stringify({ spokenReply: text }) } })); } catch { }
+  }
+  close() { this.closed = true; try { this.ws?.close(); } catch { } this.ready = null; }
 }

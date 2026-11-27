@@ -189,8 +189,31 @@ namespace MedSimAI.AI
                     session.RecordReasoning(utterance, r.concepts.Where(c => !session.Tracker.Has(ClinicalEvents.Concept(c))), true);
             }
             var text = (r.speech ?? "").Trim();
-            if (InputGuard.Classify(text) == GuardCategory.Dosing) text = target == Persona.Patient ? s.unknownAnswers[0] : s.instructorLines.outOfScope;
+            if (InputGuard.Classify(text) == GuardCategory.Dosing || ResponseValidator.ContainsDosing(text)) text = target == Persona.Patient ? s.unknownAnswers[0] : s.instructorLines.outOfScope;
             return text;
+        }
+
+        /// <summary>
+        /// Applies a native-voice turn: the proxy's Realtime session heard the student's audio and returned a validated
+        /// reply. The SAME deterministic tracking runs on what was heard; AI-only recognitions are tagged as usual.
+        /// </summary>
+        public ConversationTurn ApplyVoiceTurn(Persona target, string heard, AIResponse resp)
+        {
+            var turn = new ConversationTurn { persona = target, studentText = heard ?? "" };
+            if (!string.IsNullOrWhiteSpace(heard))
+            {
+                if (target == Persona.Patient) session.ProcessStudentQuestion(heard);
+                else
+                {
+                    var inv = session.ProcessInstructorStatement(heard);
+                    if (inv.HasValue) turn.investigation = new InvestigationOutcome { id = inv.Value.investigationId, name = inv.Value.name, result = inv.Value.result, imageKey = inv.Value.imageKey, available = inv.Value.available };
+                }
+                session.Record(ClinicalEvents.StudentSpoke, target.ToString());
+            }
+            turn.responseText = ApplyLive(target, resp, turn, heard ?? "");
+            turn.source = resp.liveSource == "ai" ? ResponseSource.AIValidated : ResponseSource.ScenarioFact;
+            turn.note = "voice:" + resp.liveSource;
+            return Finish(target, turn);
         }
 
         ConversationTurn Finish(Persona p, ConversationTurn t)

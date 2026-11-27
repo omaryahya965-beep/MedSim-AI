@@ -12,6 +12,14 @@ fs.mkdirSync(out, { recursive: true });
 const ai = new OpenAIClient({ apiKey: loadSecrets().openaiKey, ledger: new Ledger({ budgetUsd: Number(process.env.MEDSIM_BUDGET_USD || 2) }) });
 const only = process.argv[3]; const lines = [
   ['student_en_intro', 'en', 'alloy', 'Hello Mister Reyes, I am a medical student working with Doctor Hassan. Can you tell me when the pain started?'],
+  ['student_en_allergy', 'en', 'alloy', 'Are you allergic to any medications?'],
+  ['student_en_escalate', 'en', 'alloy', 'I would like to call the cardiology registrar and activate the cath lab now.'],
+  ['student_en_stemi_q', 'en', 'alloy', 'Do you think this could be a STEMI?'],
+  ['student_en_dr_ecg', 'en', 'alloy', 'Doctor Hassan, can I get an ECG for him please?'],
+  ['student_en_dr_next', 'en', 'alloy', 'What should I do next?'],
+  ['student_en_dr_hint', 'en', 'alloy', 'Can you give me a hint?'],
+  ['student_en_dr_mi', 'en', 'alloy', 'I think he is having a heart attack.'],
+  ['student_en_dr_hello', 'en', 'alloy', 'Hello Doctor Hassan, nice to meet you.'],
   ['student_ar_onset', 'ar', 'coral', 'مرحبا عمو، أنا طالبة طب. من أيمتى بلش معك الوجع؟'],
 ];
 for (const [name, lang, voice, text] of lines.filter(l => !only || l[0] === only)) {
