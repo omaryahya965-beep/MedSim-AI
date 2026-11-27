@@ -1,0 +1,89 @@
+0.0s [info] mode=LIVE AI configured=True lang=en
+0.7s [speech] Dr. Hassan (supervisor): [live_9000eeec 13.1s] Welcome—I’m Dr. Sara Hassan, your supervising physician. Mr. Adam Reyes, fifty-eight, has come in with chest pain; assess him as you would a real patient, then tell me what you think and what you would do. Open the door when you’re ready.
+13.8s [shot] G01_corridor_welcome
+14.1s [door] opened angle=39
+15.4s [shot] G02_door_open
+18.7s [doctor] walked in 3.3s, now at (-0.73, 0.01, -0.52)
+19.7s [room] entered=False
+19.8s [shot] G03_in_room
+22.3s [stt] 2.40s → "Hello Mr. Reyes, I am a medical student working with Dr. Hassan. Can you tell me when the pain started?"
+22.3s [student->Patient] Hello Mr. Reyes, I am a medical student working with Dr. Hassan. Can you tell me when the pain started?
+25.4s [speech] Mr. Reyes (patient): [live_b3f15ef2 6.3s] It started about forty-five minutes ago. I was carrying shopping up the stairs.
+25.4s [latency] Patient reply started after 3.09s
+31.8s [shot] G04_patient_conversation
+31.8s [student->Patient] Is it alright if I ask you some questions and examine you?
+34.7s [speech] Mr. Reyes (patient): [live_4abf04a0 5.5s] Yes, of course. Please do whatever you need to.
+34.7s [latency] Patient reply started after 2.91s
+40.1s [student->Patient] Can you describe the pain for me?
+43.3s [speech] Mr. Reyes (patient): [live_89fdcd7e 5.3s] It's a heavy, crushing feeling, like a weight sitting on my chest.
+43.3s [latency] Patient reply started after 3.13s
+48.6s [student->Patient] Does the pain spread anywhere?
+51.7s [speech] Mr. Reyes (patient): [live_c83a499b 4.2s] It goes into my left arm, and my jaw feels tight too.
+51.7s [latency] Patient reply started after 3.14s
+56.0s [student->Patient] Have you had anything like this before?
+59.1s [speech] Mr. Reyes (patient): [live_928caccd 7.8s] I've had a bit of tightness on hills over the last few weeks, but it always eased off quickly. Never like this.
+59.1s [latency] Patient reply started after 3.14s
+66.9s [student->Patient] Are you allergic to any medicines?
+69.7s [speech] Mr. Reyes (patient): [live_fc84597c 3.9s] I'm allergic to penicillin. It gave me a rash.
+69.7s [latency] Patient reply started after 2.84s
+73.6s [student->Patient] Do you smoke?
+76.5s [speech] Mr. Reyes (patient): [live_9a5e76dd 3.9s] I smoke about twenty a day. Have done for thirty years.
+76.5s [latency] Patient reply started after 2.94s
+80.5s [student->Patient] Do you take any regular medication?
+83.6s [speech] Mr. Reyes (patient): [live_b411ee34 4.8s] I take amlodipine for my blood pressure and atorvastatin for cholesterol.
+83.6s [latency] Patient reply started after 3.14s
+90.1s [supervisor] interventions: I_WRONG_PLACEMENT/L0
+93.2s [speech] Dr. Hassan (supervisor): [live_f089a2d5 4.2s] Take a moment. Where on the body does that instrument need to go?
+97.5s [shot] G05_supervisor_intervention
+106.6s [shot] G06_examination
+106.6s [student->Instructor] Could we get a 12-lead ECG on him please?
+109.8s [speech] Dr. Hassan (supervisor): [live_8bad090a 6.0s] Yes—I’ll arrange a 12-lead ECG now. Once it’s available, what findings will you look for?
+109.8s [latency] Instructor reply started after 3.20s
+117.0s [shot] G07_ecg
+117.0s [supervisor] silent after correct actions: True (history 1→1)
+117.0s [student->Instructor] Is this a STEMI?
+120.1s [speech] Dr. Hassan (supervisor): [live_5506454e 7.4s] What does the ECG show in the inferior leads, and what would you do next without waiting for troponin?
+120.1s [latency] Instructor reply started after 3.11s
+127.5s [engine] diagnosticQuestion=True escalated=False
+127.5s [student->Instructor] I want to call the cardiology registrar and activate the cath lab now.
+130.9s [speech] Dr. Hassan (supervisor): [live_a332dbd9 9.0s] Yes—please contact the cardiology registrar and activate the cath lab now. What ECG findings support this urgent next step?
+130.9s [latency] Instructor reply started after 3.44s
+139.8s [engine] escalated=True state=S_HANDOVER
+139.9s [flow] state=Discussion
+142.8s [speech] Dr. Hassan (supervisor): [live_acfa0b8f 6.9s] Let's step back for a moment. Talk me through your assessment. What did you find when you assessed Mr. Reyes?
+149.8s [student->Instructor] He has crushing central chest pain radiating to his left arm and jaw with sweating and nausea; he smokes, has high blood pressure and cholesterol, and his father had a heart attack.
+153.2s [speech] Dr. Hassan (supervisor): [live_8abe2b86 9.4s] You’ve identified the concerning chest-pain pattern and several cardiovascular risk factors. What did you find on the ECG, and who needs to know now?
+153.2s [latency] Instructor reply started after 3.49s
+165.3s [speech] Dr. Hassan (supervisor): [live_c4fe1d3a 1.5s] What did the ECG show?
+166.7s [student->Instructor] The ECG shows ST elevation in II, III and aVF with reciprocal ST depression in I and aVL.
+169.7s [speech] Dr. Hassan (supervisor): [live_c7f6420f 6.6s] Good—those are the key ECG changes. What do you think they suggest, and what urgent next step should follow?
+169.7s [latency] Instructor reply started after 2.99s
+182.6s [speech] Dr. Hassan (supervisor): [live_60baca71 2.0s] So, what do you think is happening?
+184.7s [student->Instructor] I think this is an inferior STEMI.
+188.2s [speech] Dr. Hassan (supervisor): [live_cc5186e8 7.8s] You’ve linked the ECG pattern to your working diagnosis. What urgent next step should you take, and should you wait for troponin?
+188.2s [latency] Instructor reply started after 3.54s
+198.4s [speech] Dr. Hassan (supervisor): [live_658d8143 2.3s] And what needs to happen next?
+200.8s [student->Instructor] He needs urgent cardiology for the cath lab and reperfusion, and we should not wait for the troponin.
+204.4s [speech] Dr. Hassan (supervisor): [live_32e3b006 10.7s] Good. The inferior ECG changes support urgent cardiology involvement and reperfusion; don’t delay while awaiting troponin. The senior team is already on the way.
+204.4s [latency] Instructor reply started after 3.69s
+218.0s [debrief] You introduced yourself, asked permission, and gathered key details about the pain and risk factors; you also recognised the ECG pattern and escalated promptly for reperfusion. For this patient, confirming identity and asking about associated symptoms, severity, and medical and family history would help complete the assessment and identify important risks. Next time, confirm who the patient is first, then use a brief chest-pain checklist while arranging urgent care—don’t wait for troponin when the ECG shows STEMI. Please take a look at the detailed report.
+218.1s [shot] G08_debrief
+218.1s [assessment] observable 21/25 communication 8/9 missedCritical=0 aiInterpreted=0
+218.1s [events] DOOR_OPENED FACT:H_ONSET FACT:H_GREETING FACT:H_SOCIAL STUDENT_SPOKE FACT:H_CONSENT FACT:H_CHARACTER FACT:H_RADIATION FACT:H_SITE FACT:H_PREVIOUS FACT:H_MEDS FACT:H_ALLERGY FACT:H_SMOKING ZONE_REJECTED INTERVENTION:I_WRONG_PLACEMENT INSTRUMENT_ON_PATIENT EXAM:EX_AUSC_HEART EXAM:EX_AUSC_LUNGS EXAM:EX_SPO2 EXAM:EX_BP INV:INV_ECG ECG_REVIEWED DIAGNOSTIC_QUESTION ESCALATION_REQUESTED STATE:S_HANDOVER DIAGNOSIS_NAMED REASONING_GIVEN CONCEPT:C_KEY_HISTORY CONCEPT:C_RISK_FACTORS SUMMARY_GIVEN CONCEPT:C_ECG_FINDING CONCEPT:C_WORKING_DX INV:INV_TROP CONCEPT:C_NO_WAIT_TROPONIN CONCEPT:C_NEXT_STEP SCENARIO_COMPLETED
+220.8s [stt] 1.32s → "مرحبا عمو، أنا طالبة طب، من إمتى بلش معك الوجع؟"
+220.8s [student->Patient] مرحبا عمو، أنا طالبة طب، من إمتى بلش معك الوجع؟
+224.4s [speech] Mr. Reyes (patient): [live_464c0620 5.7s] بلّش من حوالي خمس وأربعين دقيقة، وأنا كنت شايل أغراض التسوّق وطالع الدرج.
+224.4s [latency] Patient reply started after 3.59s
+230.2s [shot] E01_arabic_conversation
+230.2s [student->Patient] بتوخذ أي أدوية؟
+233.4s [speech] Mr. Reyes (patient): [live_ac274b0c 5.1s] آه، باخد أملوديبين للضغط وأتورفاستاتين للكوليسترول.
+233.4s [latency] Patient reply started after 3.16s
+238.5s [state] condition=S_ONGOING path=S_PRESENTATION>S_ONGOING HR=104 SpO2=96
+241.8s [speech] Mr. Reyes (patient): [live_ddcfcceb 2.5s] مش عم يتحسن أبداً يا دكتورة.
+247.5s [speech] Dr. Hassan (supervisor): [live_739089fb 7.5s] يبدو أن حالة السيد رييس ازدادت سوءًا. ما الذي ستعيد تقييمه، وما الذي ينبغي أن يحدث الآن؟
+255.0s [supervisor] after deterioration: I_DETERIORATION
+255.0s [student->Patient] كيف حاسس هلأ؟
+258.3s [speech] Mr. Reyes (patient): [live_feb8a5e7 3.0s] آسف، لست متأكداً من ذلك.
+258.3s [latency] Patient reply started after 3.24s
+261.4s [shot] F01_deterioration
+--- spoken lines: 26, runtime-generated audio: 26, text-only: 0

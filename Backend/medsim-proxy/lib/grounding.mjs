@@ -93,8 +93,18 @@ export function validateGrounded(reply, { corpus = [], studentText = '', allowDi
   return { ok: true };
 }
 
-/** Deterministic concept detection used for reasoning assessment (mirrors the C# ConceptMatcher). */
+/** Deterministic concept detection used for reasoning assessment (mirrors the C# StatementAnalysis.MatchConcepts). */
+const escapeRe = s => s.split('').map(ch => '.*+?^${}()|[]\\'.includes(ch) ? '\\' + ch : ch).join('');
 export function matchConcepts(text, concepts = []) {
   const t = norm(text);
-  return concepts.filter(c => (c.anyOf || []).some(k => termIn(k, t)) && (!(c.alsoAnyOf || []).length || c.alsoAnyOf.some(k => termIn(k, t)))).map(c => c.id);
+  const inContext = (k, notAfter) => {
+    const n = norm(k); if (!n) return false;
+    const re = /^[a-z0-9]{1,3}$/.test(n) ? new RegExp('(^|[^a-z0-9])' + n + '([^a-z0-9]|$)', 'g') : new RegExp(escapeRe(n), 'g');
+    for (const m of t.matchAll(re)) {
+      const before = t.slice(Math.max(0, m.index - 28), m.index);
+      if (!(notAfter || []).some(x => before.includes(norm(x)))) return true;
+    }
+    return false;
+  };
+  return concepts.filter(c => (c.anyOf || []).some(k => inContext(k, c.notAfter)) && (!(c.alsoAnyOf || []).length || c.alsoAnyOf.some(k => termIn(k, t)))).map(c => c.id);
 }

@@ -37,8 +37,27 @@ namespace MedSimAI.Clinical
         {
             var u = Norm(utterance); var outp = new List<string>();
             foreach (var c in s.reasoningConcepts ?? new ReasoningConcept[0])
-                if (Any(u, c.anyOf) && (c.alsoAnyOf == null || c.alsoAnyOf.Length == 0 || Any(u, c.alsoAnyOf))) outp.Add(c.id);
+                if (AnyInContext(u, c.anyOf, c.notAfter) && (c.alsoAnyOf == null || c.alsoAnyOf.Length == 0 || Any(u, c.alsoAnyOf))) outp.Add(c.id);
             return outp;
+        }
+
+        /// <summary>True if some keyword occurs NOT preceded (within 28 characters) by an excluded context word.</summary>
+        static bool AnyInContext(string u, string[] terms, string[] notAfter)
+        {
+            if (terms == null) return false;
+            if (notAfter == null || notAfter.Length == 0) return Any(u, terms);
+            foreach (var k in terms)
+            {
+                var t = Norm(k); if (t.Length == 0) continue;
+                bool shortTok = t.Length <= 3 && Regex.IsMatch(t, "^[a-z0-9]+$");
+                var re = new Regex(shortTok ? $"(^|[^a-z0-9]){Regex.Escape(t)}([^a-z0-9]|$)" : Regex.Escape(t));
+                foreach (Match m in re.Matches(u))
+                {
+                    var before = u.Substring(Math.Max(0, m.Index - 28), m.Index - Math.Max(0, m.Index - 28));
+                    if (!notAfter.Any(n => before.Contains(Norm(n)))) return true;
+                }
+            }
+            return false;
         }
 
         public static bool IsQuestion(string utterance)

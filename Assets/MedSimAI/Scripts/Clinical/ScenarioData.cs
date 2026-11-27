@@ -102,7 +102,7 @@ namespace MedSimAI.Clinical
     }
     [Serializable] public class SupervisorPolicy { public float globalCooldownSeconds = 20, tickSeconds = 0.5f; public bool silentOnCorrectActions = true, ordinaryNeedsStudentIdle = true; }
     [Serializable] public class EscalationLexicon { public string[] explicit_ = new string[0]; public string[] actions, targets; }
-    [Serializable] public class ReasoningConcept { public string id, label; public string[] anyOf, alsoAnyOf; }
+    [Serializable] public class ReasoningConcept { public string id, label; public string[] anyOf, alsoAnyOf; [UnityEngine.Tooltip("Ignore an anyOf match preceded (within ~4 words) by one of these, e.g. family history: 'his father had a heart attack'.")] public string[] notAfter; }
     [Serializable] public class DiscussionQuestion { public string id, question; public string[] concepts; }
 
     [Serializable] public class ScenarioData

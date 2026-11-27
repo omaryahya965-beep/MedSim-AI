@@ -3,7 +3,7 @@
   "sourceVersion": "0.2.0",
   "language": "ar",
   "status": "DRAFT_TRANSLATION_NOT_REVIEWED",
-  "translatorNote": "Machine-assisted draft by the software team (Modern Standard Arabic). Requires review by a bilingual clinician before educational use.",
+  "translatorNote": "Machine-assisted draft by the software team (Modern Standard Arabic). Requires review by a bilingual clinician before educational use. v0.2.0: state statements added (DRAFT, software team; requires bilingual clinical review).",
   "facts": {
     "H_GREETING": "مرحباً يا دكتور. شكراً لقدومك. هذا الألم يقلقني كثيراً.",
     "H_IDENTITY": "اسمي آدم رييس. عمري ثمانية وخمسون عاماً.",
@@ -66,5 +66,22 @@
     "banner": "مسودة — غير معتمدة سريرياً · عرض تقني فقط · مريض افتراضي",
     "listening": "يستمع…",
     "holdToTalk": "اضغط مطوّلاً على A/X للتحدث"
+  },
+  "states": {
+    "S_PRESENTATION": [
+      "الوجع لسا موجود، تقيل بنص صدري.",
+      "عرقان كتير وحاسس حالي بدي أرجّع شوي."
+    ],
+    "S_ONGOING": [
+      "مش عم يتحسن أبداً يا دكتور.",
+      "صرت أعرق أكتر."
+    ],
+    "S_DETERIORATION": [
+      "الوجع عم يزيد، حاسس حالي تعبان كتير.",
+      "حاسس حالي رح يغمى علي وبدي أرجّع."
+    ],
+    "S_HANDOVER": [
+      "الله يعطيك العافية إنك جبت حدا يساعد يا دكتور."
+    ]
   }
 }

@@ -23,7 +23,7 @@ const INSTRUCTOR_STYLE = {
   debrief: 'a warm, encouraging clinical teacher giving personal feedback after a session: measured, specific, supportive',
 };
 
-const PATIENT_ACTS = ['greeting', 'introduction', 'identity_check', 'consent_request', 'history_question', 'reassurance', 'explanation', 'examination_notice', 'question_about_diagnosis', 'small_talk', 'other'];
+const PATIENT_ACTS = ['greeting', 'introduction', 'identity_check', 'consent_request', 'history_question', 'reassurance', 'explanation', 'examination_notice', 'question_about_diagnosis', 'current_symptoms_question', 'small_talk', 'other'];
 const INSTRUCTOR_INTENTS = ['greeting', 'hint_request', 'investigation_request', 'escalation_request', 'diagnosis_statement', 'diagnostic_question', 'summary_or_reasoning', 'question_about_case', 'smalltalk', 'out_of_scope'];
 
 export class LiveEngine {
@@ -135,6 +135,7 @@ Rules:
 - Reply in ${lang === 'ar' ? 'natural spoken Palestinian Arabic (colloquial), as this patient would' : 'natural spoken English'}; at most 2 short sentences (max 35 words). No lists.
 - If the student asks about something covered by a fact, choose that fact id in factIds and convey it faithfully in your own natural words: keep every detail identical (times, numbers, drug names, body parts, relatives). Do not add details that are not in the fact.
 - You may express emotion, react to greetings, reassurance, consent requests or examination naturally, but do not add new symptoms or medical details beyond the facts and "how you feel" lines.
+- If asked how you feel now, describe it using the "how you feel" lines (studentAct current_symptoms_question).
 - If nothing you know answers the question, say naturally that you don't know or aren't sure, and choose no fact.
 - Never name or guess a diagnosis, never give test results or measurements, never mention a simulation, AI, scores or grading.`;
     const schema = { type: 'object', additionalProperties: false, required: ['factIds', 'studentAct', 'emotion', 'reply'], properties: {
@@ -154,7 +155,9 @@ Rules:
     let source = 'ai';
     if (!v.ok) {
       source = 'approved-fallback';
+      const stLines = st ? (lang === 'ar' && sess.entry.translations?.ar?.states?.[st.id] ? sess.entry.translations.ar.states[st.id] : st.statements) : [];
       reply = factIds.length ? factIds.map(id => this.tr(sess, lang, 'facts', id, S.historyFacts.find(f => f.id === id).answer)).join(' ')
+        : (['current_symptoms_question', 'reassurance', 'greeting', 'examination_notice'].includes(r.data.studentAct) && stLines.length) ? stLines[0]
         : this.tr(sess, lang, 'unknownAnswers', '0', S.unknownAnswers[0]);
     }
     sess.history.Patient.push({ role: 'user', content: utterance }, { role: 'assistant', content: reply });

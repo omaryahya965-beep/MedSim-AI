@@ -176,9 +176,11 @@ namespace MedSimAI.AI
             }
             else
             {
-                if (!string.IsNullOrEmpty(r.investigationId) && turn.investigation == null && s.FindInvestigation(r.investigationId) != null)
+                if (!string.IsNullOrEmpty(r.investigationId) && turn.investigation == null && s.FindInvestigation(r.investigationId) != null && !session.Tracker.Has(ClinicalEvents.Inv(r.investigationId)))
                 {
+                    bool reasoning = session.Stages.Current == ClinicalStage.ClinicalReasoning;
                     var res = session.RequestInvestigation(r.investigationId);
+                    if (reasoning) session.Stages.TryTransition(ClinicalStage.ClinicalReasoning);
                     turn.investigation = new InvestigationOutcome { id = res.investigationId, name = res.name, result = res.result, imageKey = res.imageKey, available = res.available };
                 }
                 if (r.escalationRequested && session.Stages.Current != ClinicalStage.Introduction && !session.Tracker.Has(ClinicalEvents.EscalationRequested))

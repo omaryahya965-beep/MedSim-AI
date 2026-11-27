@@ -249,8 +249,14 @@ namespace MedSimAI.Clinical
             InvestigationResult? inv = null;
             var a = StatementAnalysis.Analyse(Scenario, utterance);
             LastStatement = a;
+            bool reasoning = Stages.Current == ClinicalStage.ClinicalReasoning;
             var match = HistoryMatcher.MatchInvestigation(Scenario, utterance);
-            if (match != null && !(a.isQuestion && a.diagnosticQuestion)) inv = RequestInvestigation(match.id);
+            // Mentioning an investigation that was already done ("the ECG shows…") is reasoning, not a new request.
+            if (match != null && !(a.isQuestion && a.diagnosticQuestion) && !Tracker.Has(ClinicalEvents.Inv(match.id)))
+            {
+                inv = RequestInvestigation(match.id);
+                if (reasoning) Stages.TryTransition(ClinicalStage.ClinicalReasoning); // a new request during the discussion keeps the discussion stage
+            }
             if (Stages.Current != ClinicalStage.Introduction && a.escalationRequested) Escalate(utterance);
             if (a.diagnosisNamed && !Tracker.Has(ClinicalEvents.DiagnosisNamed)) Record(ClinicalEvents.DiagnosisNamed, utterance);
             if (a.diagnosticQuestion) Record(ClinicalEvents.DiagnosticQuestion, utterance);

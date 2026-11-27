@@ -61,6 +61,7 @@ namespace MedSimAI.AI
             if (code == 0) return "AI service unreachable (is the MedSim proxy running?)";
             if (code == 401) return "AI proxy refused the client token";
             if (code == 402) return "AI test budget reached";
+            if (body != null && body.Contains("provider_auth_failed")) return "AI provider rejected the API key (check the proxy secrets)";
             if (code == 429) return "AI rate limit reached — please wait a moment";
             if (code == 504) return "AI service timed out";
             return "AI service error (" + code + ")";

@@ -169,6 +169,24 @@ namespace MedSimAI.Tests
             Assert.IsTrue(r.criteria.First(c => c.id == "R_REASON_DX").viaAIIntent);
         }
 
+        [Test] public void Discussion_MentioningCompletedEcg_IsReasoning_NotANewRequest()
+        {
+            session.RequestInvestigation("INV_ECG");
+            session.Stages.TryTransition(ClinicalStage.ClinicalReasoning);
+            session.ProcessInstructorStatement("The ECG shows ST elevation in II, III and aVF.");
+            Assert.AreEqual(ClinicalStage.ClinicalReasoning, session.Stages.Current, "stays in the discussion");
+            Assert.IsTrue(session.Tracker.Has("CONCEPT:C_ECG_FINDING"));
+            session.ProcessInstructorStatement("We should not wait for the troponin before the cath lab.");
+            Assert.AreEqual(ClinicalStage.ClinicalReasoning, session.Stages.Current);
+            Assert.IsTrue(session.Tracker.Has("CONCEPT:C_NO_WAIT_TROPONIN"));
+        }
+
+        [Test] public void FamilyHistoryHeartAttack_IsNotTheWorkingDiagnosis()
+        {
+            CollectionAssert.DoesNotContain(StatementAnalysis.MatchConcepts(session.Scenario, "He smokes and his father had a heart attack at 55."), "C_WORKING_DX");
+            CollectionAssert.Contains(StatementAnalysis.MatchConcepts(session.Scenario, "I think he is having a heart attack."), "C_WORKING_DX");
+        }
+
         [Test] public void NoPrerecordedCharacterDialogue_InProject()
         {
             Assert.AreEqual(0, Resources.LoadAll<AudioClip>("Audio/Voice").Length, "pre-recorded dialogue removed");

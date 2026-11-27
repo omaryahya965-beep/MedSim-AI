@@ -1387,22 +1387,47 @@
         "جلطة قلبية",
         "نوبة قلبية"
       ],
-      "alsoAnyOf": []
+      "alsoAnyOf": [],
+      "notAfter": [
+        "father",
+        "mother",
+        "dad",
+        "mum",
+        "family",
+        "brother",
+        "sister",
+        "uncle",
+        "grandfather",
+        "had a",
+        "أبوه",
+        "والده",
+        "أبوي",
+        "أمه"
+      ]
     },
     {
       "id": "C_NO_WAIT_TROPONIN",
       "label": "Do not wait for troponin",
       "anyOf": [
-        "not wait for troponin",
-        "don't wait for troponin",
-        "dont wait for troponin",
+        "not wait",
+        "don't wait",
+        "dont wait",
+        "shouldn't wait",
         "without waiting",
-        "not delay",
         "no need to wait",
+        "not delay",
+        "shouldn't delay",
+        "won't change",
+        "regardless of",
         "ما نستنى",
-        "بدون انتظار"
+        "بدون ما نستنى",
+        "بدون انتظار",
+        "ما ننتظر"
       ],
-      "alsoAnyOf": []
+      "alsoAnyOf": [
+        "troponin",
+        "تروبونين"
+      ]
     },
     {
       "id": "C_NEXT_STEP",
