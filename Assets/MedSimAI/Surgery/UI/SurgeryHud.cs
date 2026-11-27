@@ -95,7 +95,7 @@ namespace MedSimAI.Surgery.UI
             bool d = SurgeryCanvas.IsDesktop; if (d != desktop) { desktop = d; Build(); }
             bool toggle = Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame;
             var l = InputDevices.GetDeviceAtXRNode(XRNode.LeftHand);
-            bool menuDown = l.isValid && l.TryGetFeatureValue(CommonUsages.menuButton, out var m) && m;
+            bool menuDown = l.isValid && l.TryGetFeatureValue(UnityEngine.XR.CommonUsages.menuButton, out var m) && m;
             if (menuDown && !menuWasDown) toggle = true; menuWasDown = menuDown;
             if (toggle && debrief && !debrief.gameObject.activeSelf) ShowPause(!pause.gameObject.activeSelf);
         }

@@ -57,7 +57,7 @@ namespace MedSimAI.Surgery.UI
             if (SceneManager.GetActiveScene().name == ScenarioRouter.MenuScene) { held = 0; return; }
             if (Keyboard.current != null && Keyboard.current.f10Key.wasPressedThisFrame) { ScenarioRouter.ToMenu(); return; }
             var l = InputDevices.GetDeviceAtXRNode(XRNode.LeftHand);
-            bool down = l.isValid && l.TryGetFeatureValue(CommonUsages.menuButton, out var m) && m;
+            bool down = l.isValid && l.TryGetFeatureValue(UnityEngine.XR.CommonUsages.menuButton, out var m) && m;
             held = down ? held + Time.unscaledDeltaTime : 0;
             if (held >= 2f) { held = 0; ScenarioRouter.ToMenu(); }
         }

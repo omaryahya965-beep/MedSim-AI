@@ -48,8 +48,8 @@ namespace MedSimAI.Surgery.AI
             bool key = Keyboard.current != null && Keyboard.current.tKey.isPressed;
             bool xr = false;
             var l = InputDevices.GetDeviceAtXRNode(XRNode.LeftHand); var r = InputDevices.GetDeviceAtXRNode(XRNode.RightHand);
-            if (l.isValid && l.TryGetFeatureValue(CommonUsages.primaryButton, out var lb) && lb) xr = true;
-            if (r.isValid && r.TryGetFeatureValue(CommonUsages.primaryButton, out var rb) && rb) xr = true;
+            if (l.isValid && l.TryGetFeatureValue(UnityEngine.XR.CommonUsages.primaryButton, out var lb) && lb) xr = true;
+            if (r.isValid && r.TryGetFeatureValue(UnityEngine.XR.CommonUsages.primaryButton, out var rb) && rb) xr = true;
             return key || xr;
         }
 
