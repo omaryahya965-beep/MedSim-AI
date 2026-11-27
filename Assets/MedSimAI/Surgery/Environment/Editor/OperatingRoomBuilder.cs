@@ -44,7 +44,9 @@ namespace MedSimAI.Surgery.Environment.Editor
 
             Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             ConfigureDemoLighting();
+            ConfigureTextures();
             CreatePalette();
+            AssetDatabase.SaveAssets();
             BuildRobotPrefab();
 
             Transform room = new GameObject("OperatingRoom").transform;
@@ -54,6 +56,7 @@ namespace MedSimAI.Surgery.Environment.Editor
 
             var robot = (GameObject)PrefabUtility.InstantiatePrefab(
                 AssetDatabase.LoadAssetAtPath<GameObject>(RobotPath), scene);
+            robot.name = "RobotBase";
             robot.transform.SetParent(room, false);
             robot.transform.localPosition = V(1.99f, 0, -.94f);
 
@@ -101,7 +104,7 @@ namespace MedSimAI.Surgery.Environment.Editor
         {
             ("01-overview", V(-3.25f, 2.12f, -3.44f), V(.19f, 1.28f, .47f), 66),
             ("02-surgeon", V(-1.50f, 1.64f, -.72f), V(.31f, 1.10f, .05f), 62),
-            ("03-table", V(-1.48f, 1.34f, -1.98f), V(.03f, .86f, .08f), 49),
+            ("03-table", V(.97f, 1.57f, -2.14f), V(.01f, .88f, .14f), 52),
             ("04-equipment", V(-1.29f, 1.65f, 1.19f), V(.60f, 1.40f, 2.68f), 59),
             ("05-robot", V(.63f, 1.57f, -2.88f), V(1.70f, 1.10f, -.79f), 50),
             ("06-entry", V(-1.98f, 1.66f, -1.33f), V(-1.92f, 1.45f, -3.90f), 61)
@@ -125,9 +128,9 @@ namespace MedSimAI.Surgery.Environment.Editor
         {
             RenderSettings.skybox = null;
             RenderSettings.ambientMode = AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = Rgb("#a0b6c2");
-            RenderSettings.ambientEquatorColor = Rgb("#788f9c");
-            RenderSettings.ambientGroundColor = Rgb("#4e6268");
+            RenderSettings.ambientSkyColor = Rgb("#b3c6cb");
+            RenderSettings.ambientEquatorColor = Rgb("#93a5a9");
+            RenderSettings.ambientGroundColor = Rgb("#617473");
             RenderSettings.ambientIntensity = 1;
             RenderSettings.reflectionIntensity = .75f;
             RenderSettings.fog = false;
@@ -163,6 +166,7 @@ namespace MedSimAI.Surgery.Environment.Editor
             {
                 surface.RemoveData();
                 EditorUtility.CopySerialized(generated, saved);
+                EditorUtility.SetDirty(saved);
                 UnityEngine.Object.DestroyImmediate(generated);
                 surface.navMeshData = saved;
                 surface.AddData();
@@ -219,6 +223,8 @@ namespace MedSimAI.Surgery.Environment.Editor
                 Glow(texture, "#ffffff", 1f, texture);
             foreach (string texture in new[] { "RoomSign", "SupplySign", "UtilitySign", "WasteSign" })
                 Lit(texture, "#ffffff", .30f, 0, texture: texture);
+            foreach (var material in materials.Values)
+                EditorUtility.SetDirty(material);
         }
 
         private void Lit(string name, string tint, float smoothness, float metallic = 0,
@@ -235,8 +241,8 @@ namespace MedSimAI.Surgery.Environment.Editor
                 return;
             }
 
-            mat.SetTexture("_BaseMap", Texture(maps + "Color", true));
-            mat.SetTexture("_BumpMap", Texture(maps + "Normal", true, true));
+            mat.SetTexture("_BaseMap", Texture(maps + "Color"));
+            mat.SetTexture("_BumpMap", Texture(maps + "Normal"));
             mat.SetFloat("_BumpScale", maps == "Floor" ? .50f : .7f);
             mat.EnableKeyword("_NORMALMAP");
             if (maps == "Fabric")
@@ -283,11 +289,32 @@ namespace MedSimAI.Surgery.Environment.Editor
             }
 
             materials.Add(name, material);
-            EditorUtility.SetDirty(material);
             return material;
         }
 
-        private static Texture2D Texture(string name, bool repeat = false, bool normal = false)
+        private static void ConfigureTextures()
+        {
+            foreach (string prefix in new[] { "Floor", "Fabric", "Steel" })
+            {
+                ConfigureTexture(prefix + "Color", true, false);
+                ConfigureTexture(prefix + "Normal", true, true);
+            }
+            foreach (string name in new[] {"Vitals", "Anesthesia", "Robot", "WallStatus",
+                         "RoomSign", "SupplySign", "UtilitySign", "WasteSign" })
+                ConfigureTexture(name, false, false);
+            AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+        }
+
+        private static Texture2D Texture(string name)
+        {
+            string path = Root + "/Textures/" + name + ".png";
+            var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+            if (!texture)
+                throw new FileNotFoundException($"Could not load the imported 2D texture {name}.", path);
+            return texture;
+        }
+
+        private static void ConfigureTexture(string name, bool repeat, bool normal)
         {
             string path = Root + "/Textures/" + name + ".png";
             var import = (TextureImporter)AssetImporter.GetAtPath(path);
@@ -296,10 +323,12 @@ namespace MedSimAI.Surgery.Environment.Editor
 
             var textureType = normal ? TextureImporterType.NormalMap : TextureImporterType.Default;
             var wrap = repeat ? TextureWrapMode.Repeat : TextureWrapMode.Clamp;
-            if (import.textureType != textureType || import.wrapMode != wrap || import.maxTextureSize != 1024 ||
+            if (import.textureType != textureType || import.textureShape != TextureImporterShape.Texture2D ||
+                import.wrapMode != wrap || import.maxTextureSize != 1024 ||
                 import.npotScale != TextureImporterNPOTScale.None || import.anisoLevel != 4)
             {
                 import.textureType = textureType;
+                import.textureShape = TextureImporterShape.Texture2D;
                 import.wrapMode = wrap;
                 import.maxTextureSize = 1024;
                 import.npotScale = TextureImporterNPOTScale.None;
@@ -308,8 +337,6 @@ namespace MedSimAI.Surgery.Environment.Editor
                 import.anisoLevel = 4;
                 import.SaveAndReimport();
             }
-
-            return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
         }
 
         private static void AddReflection(Transform room)

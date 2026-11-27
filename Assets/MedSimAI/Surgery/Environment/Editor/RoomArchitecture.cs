@@ -1,7 +1,6 @@
 using Unity.AI.Navigation;
 using UnityEngine;
 using UnityEngine.AI;
-using UnityEngine.Rendering.Universal;
 using static MedSimAI.Surgery.Environment.Editor.RoomGeometry;
 
 namespace MedSimAI.Surgery.Environment.Editor
@@ -295,8 +294,13 @@ namespace MedSimAI.Surgery.Environment.Editor
 
             foreach (var p in new[] { V(-2.15f, 2.88f, -2.05f), V(2.15f, 2.88f, -2.05f),
                 V(-2.18f, 2.88f, 2.03f), V(2.18f, 2.88f, 2.03f) })
-                MakeLight(lights, "LED ambient fill", p, p + Vector3.down,
-                    LightType.Point, 2.3f, 5.05f, false);
+            {
+                var fill = MakeLight(lights, "LED ambient fill", p, p + Vector3.down,
+                    LightType.Spot, 3.8f, 5.05f, false);
+                fill.color = Rgb("#f1f8fc");
+                fill.spotAngle = 143;
+                fill.innerSpotAngle = 105;
+            }
         }
 
         private void LightHead(Transform arm, string name, Vector3 position, float radius, Vector3 euler)
@@ -321,7 +325,7 @@ namespace MedSimAI.Surgery.Environment.Editor
             art.NoShadows(lenses);
         }
 
-        private static void MakeLight(Transform parent, string name, Vector3 position, Vector3 target,
+        private static Light MakeLight(Transform parent, string name, Vector3 position, Vector3 target,
             LightType type, float intensity, float range, bool shadows)
         {
             var light = Facing(parent, name, position, target).gameObject.AddComponent<Light>();
@@ -334,11 +338,11 @@ namespace MedSimAI.Surgery.Environment.Editor
             light.shadowBias = .06f;
             light.shadowNormalBias = .21f;
             if (type != LightType.Spot)
-                return;
+                return light;
 
             light.spotAngle = 61;
             light.innerSpotAngle = 39;
-            light.GetUniversalAdditionalLightData().additionalLightsShadowResolutionTier = 2;
+            return light;
         }
     }
 }

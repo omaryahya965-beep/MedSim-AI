@@ -134,7 +134,7 @@ namespace MedSimAI.Surgery.Environment.Editor
             {
                 var local = new Vector3((x - .5f) * width, (y - .5f) * height);
                 return (position + rotation * local, rotation * Vector3.forward,
-                    new Vector2(x * tiles.x, y * tiles.y));
+                    new Vector2((1 - x) * tiles.x, y * tiles.y));
             });
         }
 
@@ -209,7 +209,9 @@ namespace MedSimAI.Surgery.Environment.Editor
                 float u = (float)x / (steps - 1);
                 float v = (float)y / (steps - 1);
                 var p = Sample(u, v);
-                Vector3 n = Vector3.Cross(Sample(u + .002f, v) - p, Sample(u, v + .002f) - p).normalized;
+                Vector3 across = (Sample(u + .002f, v) - p) / .002f;
+                Vector3 along = (Sample(u, v + .002f) - p) / .002f;
+                Vector3 n = Vector3.Cross(across, along).normalized;
                 return (center + p, n, new Vector2(u, v));
             });
 
@@ -257,6 +259,7 @@ namespace MedSimAI.Surgery.Environment.Editor
                 if (existing)
                 {
                     EditorUtility.CopySerialized(mesh, existing);
+                    EditorUtility.SetDirty(existing);
                     Object.DestroyImmediate(mesh);
                     mesh = existing;
                 }
