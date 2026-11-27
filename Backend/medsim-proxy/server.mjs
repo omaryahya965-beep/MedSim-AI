@@ -262,7 +262,7 @@ export function createServer() {
       console.error(`[${route}] ${redact(e.message)}`);
       const [st, code] = errStatus(e);
       return send(res, st, { error: code });
-    } finally { if (route !== '/health') console.log(`${req.method} ${route} ${Date.now() - started}ms`); }
+    } finally { if (route !== '/health') console.log(`${req.method} ${route} ${res.statusCode} ${Date.now() - started}ms`); }
   });
 }
 

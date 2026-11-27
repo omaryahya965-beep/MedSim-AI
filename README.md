@@ -1,45 +1,60 @@
-# MedSim AI — Immersive Medical Training Simulator (Prototype v0.1)
+# MedSim AI — Immersive Medical Training Simulator (Prototype v0.2)
 
-> **DRAFT — NOT CLINICALLY VALIDATED.** Technical demonstration with a fictional patient. Not a clinical decision-support tool and not a competency certification.
+> **DRAFT — NOT CLINICALLY VALIDATED.** Educational technical demonstration with a fictional patient. Not for real-patient diagnosis or treatment, and not a competency certification.
 
-MedSim AI places a medical student in a VR emergency examination room with a simulated patient (Mr. Adam Reyes, chest pain) and a supervising physician (Dr. Sara Hassan). The student interviews the patient by voice or tablet, examines him with real interactive instruments, requests investigations, explains their reasoning and receives a deterministic, traceable debrief.
+The experience runs as one continuous scene with no loading screens:
+
+1. **Corridor.** The student starts in a hospital corridor beside the supervising physician, Dr. Sara Hassan, who gives a short welcome generated live by AI. The provisional bilingual sign reads «جامعة بيرزيت — أهلاً وسهلاً» / *Birzeit University — Welcome*.
+2. **Door.** The student opens the examination-room door by its lever handle, and Dr. Hassan walks in with them.
+3. **Assessment.** The patient, Mr. Adam Reyes (58, chest pain), is resting in a hospital bed. The student talks to him naturally by voice in English or Arabic and examines him with real instruments. Both characters answer with AI-generated, scenario-grounded speech.
+4. **Supervision.** Dr. Hassan observes silently and steps in only when the scenario rules call for it.
+5. **Patient condition.** It evolves through authored states.
+6. **Discussion and debrief.** The session ends with a clinical discussion and a personalised spoken debrief.
 
 ## Quick start (PCVR, VIVE Focus 3 via VIVE Business Streaming / SteamVR)
-1. Open `D:\Medical-Test\My project` in **Unity 6000.3.29f1**.
-2. Open `Assets/MedSimAI/Scenes/MedSim_ER.unity`.
-3. Start VIVE Business Streaming (or SteamVR) and connect the headset; make it the active OpenXR runtime.
-4. Press **Play**. The menu board floats over the bed; point and pull the trigger on **Start Clinical Session** or **Training Mode**.
+1. **Start the AI proxy** (one time per session):
+   ```
+   cd "D:\Medical-Test\My project\Backend\medsim-proxy"
+   node server.mjs
+   ```
+   Secrets are read from `D:\Medical-Test\secrets\medsim.env` (see [AI_SETUP.md](AI_SETUP.md)). The Unity client config is created once with `node tools/write-unity-config.mjs`.
+2. **Connect the headset** and make it the active OpenXR runtime.
+3. **Launch** `D:\Medical-Test\Builds\MedSimAI_PCVR_v0.2\MedSimAI.exe`, or open `Assets/MedSimAI/Scenes/MedSim_ER.unity` in Unity 6000.3.29f1 and press Play.
 
-No headset? Play still runs the full simulation; use the Unity Test Runner or `AgentScripts/Drive.cs` to drive it. A camera rig fallback sets a 1.65 m eye height when XR is not active.
+Without the proxy the app still runs, **text-only** (subtitles), and says so. It never plays pre-recorded dialogue.
 
 ## Controls
 | Action | Input |
 |---|---|
-| Pick up instrument | Grip |
-| Press buttons / UI | Trigger (ray or direct) |
-| Push-to-talk | Hold A / X, release to send (keyboard `T` on desktop) |
-| Teleport / snap turn | Thumbstick forward / left-right |
-| Pause | Left menu button (`Esc` on desktop) |
-| Recentre | `R` (desktop) |
-
-You talk to whoever you are looking at (patient or supervisor). The bedside **clinical tablet** has the same questions, investigations, hints, escalation and *Finish case*. This is the main input path in offline mode on Android.
-
-## Clinical session flow
-Welcome and controls → interview → bedside measurements (BP cuff on upper arm, pulse oximeter on finger, stethoscope on chest zones) → investigations (12-lead ECG cart, troponin, CXR, glucose) → reasoning and escalation to the supervisor → debrief (objectives, checklist, timing, hints, teaching points, references) → restart and compare.
-
-## Rebuilding generated content
-- `MedSim AI ▸ Build ER Scene` regenerates the scene, meshes and materials (`Assets/MedSimAI/Generated`).
-- `MedSim AI ▸ Generate Branding` regenerates the icon and splash.
-- `MedSim AI ▸ Configure Platforms (PCVR + Android)` re-applies player and quality settings.
-- If you change scenario text, re-render the offline voices: export `AgentScripts/VoiceManifest.cs` (via `unity command script eval`), then run `AgentScripts/RenderVoices.ps1`. `VoiceCoverageTests` fails if a line is missing audio.
+| Talk to the person you are looking at | Hold A / X, speak, release (keyboard `T` on desktop) |
+| Open the door | Grab the lever handle (grip), push the door open |
+| Pick up and apply instruments | Grip; release on the patient (cuff → upper arm, oximeter → fingertip, stethoscope → hold on the chest) |
+| Record ECG | Press the RECORD button on the ECG cart |
+| Pause menu (tablet on/off, subtitles, language EN/AR, comfort and height, restart) | Left menu button (`Esc` on desktop) |
+| Teleport / snap turn | Thumbstick |
 
 ## Documentation
-[ARCHITECTURE](ARCHITECTURE.md) · [CLINICAL_SCENARIO](CLINICAL_SCENARIO.md) · [CLINICAL_REVIEW](CLINICAL_REVIEW.md) · [MEDICAL_REFERENCES](MEDICAL_REFERENCES.md) · [ASSET_CREDITS](ASSET_CREDITS.md) · [AI_SETUP](AI_SETUP.md) · [SECURITY_AND_PRIVACY](SECURITY_AND_PRIVACY.md) · [VR_SETUP](VR_SETUP.md) · [TEST_REPORT](TEST_REPORT.md) · [KNOWN_LIMITATIONS](KNOWN_LIMITATIONS.md)
+- **Design:** [RESEARCH_AND_VISUAL_DIRECTION](RESEARCH_AND_VISUAL_DIRECTION.md) · [ARCHITECTURE](ARCHITECTURE.md) · [INTELLIGENT_SUPERVISOR](INTELLIGENT_SUPERVISOR.md) · [DYNAMIC_PATIENT_STATE](DYNAMIC_PATIENT_STATE.md)
+- **AI and security:** [AI_SETUP](AI_SETUP.md) · [SECURITY_AND_PRIVACY](SECURITY_AND_PRIVACY.md)
+- **Clinical:** [CLINICAL_SCENARIO](CLINICAL_SCENARIO.md) · [CLINICAL_REVIEW](CLINICAL_REVIEW.md) · [MEDICAL_REFERENCES](MEDICAL_REFERENCES.md)
+- **Testing:** [LIVE_AI_TEST_REPORT](LIVE_AI_TEST_REPORT.md) · [TEST_REPORT](TEST_REPORT.md) · [KNOWN_LIMITATIONS](KNOWN_LIMITATIONS.md)
+- **Credits:** [ASSET_CREDITS](ASSET_CREDITS.md)
+- **Earlier audit:** [MEDSIM_REALISM_AND_EXPERIENCE_AUDIT](MEDSIM_REALISM_AND_EXPERIENCE_AUDIT.md)
 
-## Phase 2 (2026-11-26)
-- **Realistic characters.** Dr. Sara Hassan and Mr. Adam Reyes are now MakeHuman/MPFB2 humans: textured, humanoid-rigged (53 bones), with 74 facial blend shapes. They breathe, blink, follow you with eyes and head, show expressions, gesture, and lip-sync with visemes. The patient reclines on the bed and the examination zones are fitted to his body surface.
-- **Lighting.** Baked GI and ambient occlusion with light probes (`MedSim AI ▸ Bake Lighting`), plus a patient chart on the footboard and a doctor-led onboarding.
-- **Instruments.** Faint placement guidance on every valid zone while an instrument is held, eased snapping, pickup/confirm sounds, a BP pump sound, and haptics.
-- **Live AI.** The proxy now loads the scenario server-side and uses structured outputs. The model only picks approved fact IDs and intents; all clinical speech is approved text. See [AI_SETUP](AI_SETUP.md). Offline mode remains the default.
-- **Arabic (optional, draft).** A separate reviewable translation file, shaped RTL subtitles, and Arabic speech through Live AI.
-- **Regenerating characters.** Run `Assets/MedSimAI/Characters/make_character_mpfb.py.txt` with the portable Blender at `D:\Medical-Test\Tools`, then `MedSim AI ▸ Setup Realistic Characters`, then `Build ER Scene`, then `Bake Lighting`.
+## Rebuilding generated content (Unity menu *MedSim AI*)
+Run these in order:
+1. *Build ER Scene*
+2. *Build Redesign (v0.2)*
+3. *Characters v2*
+4. *Bake Lighting*
+
+Re-running only *Build ER Scene* restores the old MakeHuman characters.
+
+## Restore points (git)
+| Commit | State |
+|---|---|
+| `78ed12c` | Before the redesign (post-audit) |
+| `a7ad1d4` | Live AI + supervisor |
+| `ab3c13f` | Environment |
+| `054cbc6` | Characters |
+| `75c6a05` | Live end-to-end fixes |

@@ -119,3 +119,42 @@ These checks are **desktop renders only**. Headset clarity is not verified by th
 
 ## Requires the physical headset
 Perceived pixelation and blockiness after the VBS settings change, real FPS of the built player, comfort at +0.40 m, grab alignment, haptics, and microphone conversation.
+
+---
+# v0.2 — Complete redesign + Live AI (2026-11-27)
+
+## Automated results (final runs)
+| Suite | Result | Notes |
+|---|---|---|
+| Unity EditMode | **72 / 72** | 50 previous tests kept; 22 new (supervisor, states, reasoning/escalation, no pre-recorded dialogue, character controller/viseme mapping) |
+| Unity PlayMode (real `MedSim_ER` scene) | **15 / 15** | 13 previous tests (2 character tests updated for the Rocketbox models), plus 2 new: unreachable-AI fallback, session restart |
+| Proxy (`node --test server.test.mjs live.test.mjs`) | **23 / 23** | 10 previous + 13 new: grounding, numbers (EN/AR), concepts, persona isolation, state, debrief, rate limits, budget cap, secret redaction |
+| Live AI tests | **A–H pass** | See [LIVE_AI_TEST_REPORT.md](LIVE_AI_TEST_REPORT.md): 163 real requests, about $0.18 |
+| Compile / console | 0 errors | |
+
+**Tests removed on purpose:** `VoiceCoverageTests` (2). They asserted that pre-recorded voice files existed, which contradicts the v0.2 requirement that no pre-recorded dialogue exists. They are replaced by `NoPrerecordedCharacterDialogue_InProject`.
+
+## Visual verification
+- Before/after renders from the same camera positions: `Screenshots/CompleteRedesign/before` and `/after` (A00–A23).
+- Corridor set: C00–C09.
+- Characters: A07–A11 and P10–P14.
+- Live session: `/live` (G01–G08, E01, F01).
+
+All were reviewed. The environment and character agents each did review→fix passes; the remaining issues are listed in KNOWN_LIMITATIONS.md.
+
+## Build
+- **PCVR Windows build:** `D:\Medical-Test\Builds\MedSimAI_PCVR_v0.2\MedSimAI.exe`. Built successfully: 0 errors, 306 MB.
+- **Secret scan:** `tools/scan-build-for-secrets.mjs` found no provider key, no client token, no `sk-` pattern and no `OPENAI_API_KEY` reference in the build (208 files) or in `Assets/`. The real key appears 0 times in git history.
+- **Not verified:** the built player stops at OpenXR instance creation on this PC (SteamVR running, no headset connected), so its runtime was not observed. Test it with the headset connected.
+
+## Requires the physical headset
+- Comfort
+- Frame rate
+- Hand and controller alignment and grab poses
+- Physically opening the door with the lever
+- Headset microphone STT quality
+- Spatial audio and lip-sync perception
+- Text readability
+- +0.40 m height (unchanged and still unit-tested)
+
+**APK:** not built, as instructed.
