@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using UnityEngine;
 
 namespace MedSimAI.Characters
@@ -29,11 +30,15 @@ namespace MedSimAI.Characters
         float sitT, sit, sitV; float turnT, turn, turnV; float lArmT, lArm, lArmV, rArmT, rArmV, rArm; float mouthT, mouth, mouthV;
         enum ArmGoal { Rest, Raise, Extend, Point }
         ArmGoal lGoal, rGoal; float settleTime = -1, deepUntil, mouthUntil, holdUntil, lookUntil, armHoldUntil;
-        string pendingType, pendingSide; Func<bool> pendingDone; float pendingDeadline;
+        string pendingType, pendingSide; Func<bool> pendingDone; float pendingDeadline; MedSimAI.Instruments.PlacementZone[] chestZones; MedSimAI.Instruments.StethoscopeController steth;
         float nextIdleShift, nextDiscomfort, discomfortUntil; public CharacterSpeechController speech; public bool autonomous = true;
 
-        void Start()
+        void Start() => EnsureInit();
+        bool inited;
+        /// <summary>Bones and bed parts — also on first use, so an action requested in the same frame the controller was added (before Start) works.</summary>
+        void EnsureInit()
         {
+            if (inited) return; inited = true;
             if (!animator) animator = GetComponent<Animator>();
             if (!life) life = GetComponent<HumanoidLifeController>();
             if (!face) face = GetComponentInChildren<FaceRig>();
@@ -54,6 +59,7 @@ namespace MedSimAI.Characters
         /// <summary>Starts an action. Returns false if it is not something this body can do right now.</summary>
         public bool Execute(string type, string side)
         {
+            EnsureInit();
             bool left = side == "left", right = side == "right", both = side == "both" || side == "none";
             Interrupted(type);
             switch (type)
@@ -62,15 +68,15 @@ namespace MedSimAI.Characters
                 case "recline": sitT = 0f; turnT = 0; Pending(type, side, () => sit < 0.05f && Mathf.Abs(turn) < 0.05f, 6); return true;
                 case "turn_to_side": turnT = left ? -1f : 1f; Pending(type, side, () => Mathf.Abs(turn - turnT) < 0.05f, 5); return true;
                 case "shift_on_bed": settleTime = 0f; Pending(type, side, () => settleTime < 0, 4); return true;
-                case "raise_arm": SetArm(left, ArmGoal.Raise); armHoldUntil = Time.time + 25f; Pending(type, side, () => ArmAt(left, 0.95f), 5); return true;
-                case "extend_arm": SetArm(left, ArmGoal.Extend); armHoldUntil = Time.time + 25f; Pending(type, side, () => ArmAt(left, 0.95f), 5); return true;
+                case "raise_arm": SetArm(left, ArmGoal.Raise); Pending(type, side, () => ArmAt(left, 0.95f), 5); return true;
+                case "extend_arm": if (side == "nearest") { left = NearestIsLeft(); } SetArm(left, ArmGoal.Extend); Pending(type, side, () => ArmAt(left, 0.95f), 5); return true;
                 case "point_to_pain": SetArm(false, ArmGoal.Point); armHoldUntil = Time.time + 5f; Pending(type, "right", () => ArmAt(false, 0.95f), 5); return true;
                 case "lower_arm":
                     if (left || both) SetArm(true, ArmGoal.Rest); if (right || both) SetArm(false, ArmGoal.Rest);
                     Pending(type, side, () => lArm < 0.05f && rArm < 0.05f, 5); return true;
-                case "deep_breath": deepUntil = Time.time + 13f; Pending(type, side, () => Time.time > deepUntil, 16); return true;
+                case "deep_breath": deepUntil = Time.time + 30f; deepStarted = Time.time; Pending(type, side, () => life == null || life.breathDepth > 3.0f, 6); return true; // visible deep breaths until "breathe normally" (max 30 s)
                 case "breathe_normally": deepUntil = 0; Pending(type, side, () => true, 1); return true;
-                case "open_mouth": mouthT = 1f; mouthUntil = Time.time + 5f; Pending(type, side, () => mouth > 0.9f, 3); return true;
+                case "open_mouth": mouthT = 1f; mouthUntil = Time.time + 15f; Pending(type, side, () => mouth > 0.9f, 3); return true;
                 case "close_mouth": mouthT = 0f; mouthUntil = 0; Pending(type, side, () => mouth < 0.1f, 3); return true;
                 case "look_at_student": lookUntil = Time.time + 8f; Pending(type, side, () => true, 1); return true;
                 case "hold_still": holdUntil = Time.time + 12f; Pending(type, side, () => true, 1); return true;
@@ -82,15 +88,27 @@ namespace MedSimAI.Characters
         public event Action<string, string> WasInterrupted;
         void Interrupted(string next) { if (pendingType != null) { WasInterrupted?.Invoke(pendingType, pendingSide); pendingType = null; } }
         void Pending(string type, string side, Func<bool> done, float timeout) { pendingType = type; pendingSide = side; pendingDone = done; pendingDeadline = Time.time + timeout; }
+        float deepStarted;
+        bool NearestIsLeft() { if (!student || !lUA || !rUA) return false; return Vector3.Distance(student.position, lUA.position) < Vector3.Distance(student.position, rUA.position); }
+        /// <summary>Clinical state change (e.g. deterioration): stop holding requested poses and rest.</summary>
+        public void ReturnToRest() { Execute("rest", "none"); }
         void SetArm(bool left, ArmGoal g) { if (left) { lGoal = g; lArmT = g == ArmGoal.Rest ? 0 : 1; } else { rGoal = g; rArmT = g == ArmGoal.Rest ? 0 : 1; } }
         bool ArmAt(bool left, float w) => left ? lArm >= w : rArm >= w;
 
         public float Sit => sit; public float Turn => turn; public float LeftArm => lArm; public float RightArm => rArm; public float Mouth => mouth;
 
         // ------------------------------------------------------------------ per frame
+        /// <summary>Measured cost of this layer (ms per frame, running average) — reported by the exe self-test.</summary>
+        public static float AvgMs { get; private set; }
+        static readonly System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
         void LateUpdate()
         {
             if (!animator) return;
+            sw.Restart();
+            try { Step(); } finally { AvgMs = Mathf.Lerp(AvgMs, (float)sw.Elapsed.TotalMilliseconds, 0.05f); }
+        }
+        void Step()
+        {
             float dt = Time.deltaTime;
             sit = Mathf.SmoothDamp(sit, sitT, ref sitV, 0.9f, 2f, dt);
             turn = Mathf.SmoothDamp(turn, turnT, ref turnV, 0.7f, 3f, dt);
@@ -130,6 +148,11 @@ namespace MedSimAI.Characters
 
             // breathing depth / mouth / gaze / stillness via the life layer and face
             bool deep = Time.time < deepUntil;
+            if (chestZones == null) chestZones = GetComponentsInChildren<MedSimAI.Instruments.PlacementZone>(true).Where(z => z.zoneId.StartsWith("CHEST")).ToArray();
+            if (!steth) steth = FindAnyObjectByType<MedSimAI.Instruments.StethoscopeController>();
+            bool auscultating = steth && steth.IsOnPatient;
+            if (steth && !auscultating) { var probe = steth.probePoint ? steth.probePoint.position : steth.transform.position; foreach (var z in chestZones) if (z && (z.Occupied || (probe - z.transform.position).sqrMagnitude < 0.07f * 0.07f)) { auscultating = true; break; } } // chest piece on the chest
+            if (auscultating) holdUntil = Mathf.Max(holdUntil, Time.time + 0.5f); // cooperates: stays still while being listened to
             if (life)
             {
                 life.breathDepth = Mathf.MoveTowards(life.breathDepth, deep ? 3.4f : 1f, dt * 1.5f);
@@ -170,7 +193,10 @@ namespace MedSimAI.Characters
             {
                 case ArmGoal.Raise: target = sh + fwd * 0.40f + up * 0.30f + side * 0.10f; hint = sh + side * 0.28f - up * 0.08f; break; // forward and up in front of the chest
                 case ArmGoal.Extend:
-                    var to = student ? (student.position - sh) : fwd; to.y = Mathf.Clamp(to.y, -0.2f, 0.25f);
+                    var to = student ? (student.position - sh) : fwd; to.y = Mathf.Clamp(to.y, -0.2f, 0.25f); to.Normalize();
+                    // the far arm never reaches across the chest: it is held out in front, on its own side of the body
+                    float across = Vector3.Dot(to, side);
+                    if (across < 0.1f) { to += side * (0.1f - across); float f = Vector3.Dot(to, fwd); if (f < 0.45f) to += fwd * (0.45f - f); }
                     target = sh + to.normalized * 0.58f; hint = sh + side * 0.22f - up * 0.25f; break;
                 case ArmGoal.Point:
                     Vector3 sternum = chest ? chest.position + fwd * 0.13f + up * 0.03f : sh + fwd * 0.2f - side * 0.18f;

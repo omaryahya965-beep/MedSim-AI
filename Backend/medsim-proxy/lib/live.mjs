@@ -4,7 +4,7 @@
 // fails, approved scenario text is spoken instead. All speech is synthesised at runtime (no pre-recorded dialogue).
 import crypto from 'node:crypto';
 import { validateGrounded, matchConcepts } from './grounding.mjs';
-import { actionSchema, actionPromptRule, validateAction, actionLine, actionContext } from './actions.mjs';
+import { actionSchema, actionsSchema, actionPromptRule, validateAction, actionLine, actionContext } from './actions.mjs';
 import { detectLang, scriptLang, detectLanguageCommand, resolveReplyLang, replyLanguageRule, LANGUAGE_ACK } from './language.mjs';
 import { speechFidelity, pcmToWav, RealtimeUnderstanding } from './openai.mjs';
 
@@ -25,8 +25,8 @@ const INSTRUCTOR_STYLE = {
   debrief: 'a warm, encouraging clinical teacher giving personal feedback after a session: measured, specific, supportive',
 };
 
-const PATIENT_ACTS = ['greeting', 'introduction', 'identity_check', 'consent_request', 'history_question', 'reassurance', 'explanation', 'examination_notice', 'question_about_diagnosis', 'current_symptoms_question', 'small_talk', 'other'];
-const INSTRUCTOR_INTENTS = ['greeting', 'hint_request', 'investigation_request', 'escalation_request', 'diagnosis_statement', 'diagnostic_question', 'summary_or_reasoning', 'question_about_case', 'smalltalk', 'out_of_scope'];
+const PATIENT_ACTS = ['physical_request', 'greeting', 'introduction', 'identity_check', 'consent_request', 'history_question', 'reassurance', 'explanation', 'examination_notice', 'question_about_diagnosis', 'current_symptoms_question', 'small_talk', 'other'];
+const INSTRUCTOR_INTENTS = ['physical_request', 'greeting', 'hint_request', 'investigation_request', 'escalation_request', 'diagnosis_statement', 'diagnostic_question', 'summary_or_reasoning', 'question_about_case', 'smalltalk', 'out_of_scope'];
 
 /** Removes stray JSON/quote debris the model occasionally leaves around a reply (e.g. a trailing "}). */
 export function cleanReply(x) {
@@ -132,6 +132,12 @@ export class LiveEngine {
     return { status: 200, json: { persona, heard: utterance, text: reply, lang: cmd, languageCommand: cmd, source: 'language-command', factIds: [], studentAct: 'other', intent: 'smalltalk', investigationId: null, escalationRequested: false, diagnosisNamed: false, isQuestion: false, concepts: [], deterministicConcepts: [], rejected: null, audioId: null, llmMs: 0 } };
   }
 
+  /** Validates every proposed action; a sentence that only partly makes sense still yields its valid actions in order. */
+  validateAll(persona, list, ctx) {
+    const out = [];
+    for (const a of (Array.isArray(list) ? list : []).slice(0, 3)) { const v = validateAction(persona, a, ctx); if (v.status !== 'none') out.push(v); }
+    return out;
+  }
   logAction(sess, persona, a) {
     if (!a || a.status === 'none') return;
     (sess.actionLog ??= []).push({ persona, type: a.type, side: a.side, status: a.status === 'accepted' ? 'requested (in progress)' : a.status === 'denied' ? 'declined (' + a.reason + ')' : 'needs clarification', t: Date.now() });
@@ -213,8 +219,8 @@ Rules:
 ${actionPromptRule('Patient')}
 ${actionContext(sess)}`;
     const system = sys(body._understand ? replyLanguageRule('Patient', { lock }) : replyLanguageRule('Patient', { lock, known: lang }));
-    const schema = { type: 'object', additionalProperties: false, required: ['factIds', 'studentAct', 'emotion', 'action', 'reply'], properties: {
-      action: actionSchema('Patient'),
+    const schema = { type: 'object', additionalProperties: false, required: ['factIds', 'studentAct', 'emotion', 'actions', 'reply'], properties: {
+      actions: actionsSchema('Patient'),
       factIds: { type: 'array', maxItems: 3, items: { type: 'string', enum: S.historyFacts.map(f => f.id) } },
       studentAct: { type: 'string', enum: PATIENT_ACTS },
       emotion: { type: 'string', enum: ['pain', 'worried', 'relieved', 'neutral', 'distressed', 'grateful'] },
@@ -246,14 +252,16 @@ ${actionContext(sess)}`;
         : (['current_symptoms_question', 'reassurance', 'greeting', 'examination_notice'].includes(r.data.studentAct) && stLines.length) ? stLines[0]
         : this.tr(sess, lang, 'unknownAnswers', '0', S.unknownAnswers[0]);
     }
-    const action = validateAction('Patient', r.data.action, { scenario: S, stateId: st?.id, utterance });
-    if (action.status === 'denied' || action.status === 'clarify') { reply = actionLine(action.lineKey, 'Patient', lang) || reply; source = 'action-policy'; }
-    else if (action.status === 'accepted' && source === 'approved-fallback') { reply = lang === 'ar' ? 'حاضر.' : 'Okay.'; source = 'action-ack'; }
-    this.logAction(sess, 'Patient', action);
+    const actions = this.validateAll('Patient', r.data.actions ?? (r.data.action ? [r.data.action] : []), { scenario: S, stateId: st?.id, utterance });
+    const action = actions[0] || { type: 'none', side: 'none', instrument: 'none', status: 'none' };
+    const blocked = actions.find(a => a.status === 'denied') || actions.find(a => a.status === 'clarify');
+    if (blocked) { reply = actionLine(blocked.lineKey, 'Patient', lang) || reply; source = 'action-policy'; }
+    else if (action.status === 'accepted' && (source === 'approved-fallback' || actions.some(a => a.corrected))) { reply = lang === 'ar' ? 'حاضر.' : 'Okay.'; source = 'action-ack'; } // a corrected action never gets a reply that describes the other movement
+    for (const a of actions) this.logAction(sess, 'Patient', a);
     sess.history.Patient.push({ role: 'user', content: utterance }, { role: 'assistant', content: reply }); this.noteCharacterLine(sess, reply);
     const style = PATIENT_STYLE[st?.expression] || PATIENT_STYLE.discomfort;
     const audioId = body.speak === false ? null : this.queueSpeech('Patient', reply, { lang, style });
-    return { status: 200, json: { persona: 'Patient', heard: utterance, text: reply, lang, action, supervisorIntervention: action.status === 'denied' ? 'I_UNSAFE_MOBILISE' : null, factIds, studentAct: PATIENT_ACTS.includes(r.data.studentAct) ? r.data.studentAct : 'other', emotion: r.data.emotion, source, rejected: v.ok ? null : v.reason + (v.detail ? ':' + v.detail : ''), audioId, llmMs: Date.now() - t0, model: this.ai.models.chat } };
+    return { status: 200, json: { persona: 'Patient', heard: utterance, text: reply, lang, action, actions: blocked ? actions.filter(a => a.status !== 'accepted').slice(0, 1) : actions, supervisorIntervention: actions.some(a => a.status === 'denied') ? 'I_UNSAFE_MOBILISE' : null, factIds, studentAct: PATIENT_ACTS.includes(r.data.studentAct) ? r.data.studentAct : 'other', emotion: r.data.emotion, source, rejected: v.ok ? null : v.reason + (v.detail ? ':' + v.detail : ''), audioId, llmMs: Date.now() - t0, model: this.ai.models.chat } };
   }
 
   // ------------------------------------------------------------------ supervising doctor (student addresses her)
@@ -295,8 +303,8 @@ Approved instrument guidance (what you may show or say in a demonstration):\n${(
 ${actionContext(sess)}`;
     const system = sys(body._understand ? replyLanguageRule('Instructor', { lock }) : replyLanguageRule('Instructor', { lock, known: lang }));
     const conceptIds = (S.reasoningConcepts || []).map(c => c.id);
-    const schema = { type: 'object', additionalProperties: false, required: ['intent', 'investigationId', 'escalationRequested', 'diagnosisNamed', 'isQuestion', 'concepts', 'action', 'reply'], properties: {
-      action: actionSchema('Instructor'),
+    const schema = { type: 'object', additionalProperties: false, required: ['intent', 'investigationId', 'escalationRequested', 'diagnosisNamed', 'isQuestion', 'concepts', 'actions', 'reply'], properties: {
+      actions: actionsSchema('Instructor'),
       intent: { type: 'string', enum: INSTRUCTOR_INTENTS },
       investigationId: { type: ['string', 'null'], enum: [...S.investigations.map(i => i.id), null] },
       escalationRequested: { type: 'boolean' }, diagnosisNamed: { type: 'boolean' }, isQuestion: { type: 'boolean' },
@@ -340,13 +348,15 @@ ${actionContext(sess)}`;
       else if (d.isQuestion) reply = ar ? (FB.goodQuestion || 'سؤال منيح. كيف ممكن تعرف هالإشي وإنت عند السرير؟') : 'Good question. How could you find that out at the bedside?';
       else reply = ar ? (FB.whatNext || 'تمام. شو حابب تعمل هلّق؟') : 'Okay. What would you like to do next?';
     }
-    const action = validateAction('Instructor', d.action, { scenario: S, stateId: st?.id, utterance });
-    if (action.status === 'denied' || action.status === 'clarify') { reply = actionLine(action.lineKey, 'Instructor', lang) || reply; source = 'action-policy'; }
+    const actions = this.validateAll('Instructor', d.actions ?? (d.action ? [d.action] : []), { scenario: S, stateId: st?.id, utterance });
+    const action = actions[0] || { type: 'none', side: 'none', instrument: 'none', status: 'none' };
+    const blocked = actions.find(a => a.status === 'denied') || actions.find(a => a.status === 'clarify');
+    if (blocked) { reply = actionLine(blocked.lineKey, 'Instructor', lang) || reply; source = 'action-policy'; }
     else if (action.status === 'accepted' && source === 'approved-fallback') { reply = lang === 'ar' ? 'أكيد.' : 'Sure.'; source = 'action-ack'; }
-    this.logAction(sess, 'Instructor', action);
+    for (const a of actions) this.logAction(sess, 'Instructor', a);
     sess.history.Instructor.push({ role: 'user', content: utterance }, { role: 'assistant', content: reply }); this.noteCharacterLine(sess, reply);
     const audioId = body.speak === false ? null : this.queueSpeech('Instructor', reply, { lang, style: INSTRUCTOR_STYLE.default });
-    return { status: 200, json: { persona: 'Instructor', heard: utterance, text: reply, lang, action, intent, investigationId, escalationRequested: !!d.escalationRequested, diagnosisNamed: !!d.diagnosisNamed, isQuestion: !!d.isQuestion,
+    return { status: 200, json: { persona: 'Instructor', heard: utterance, text: reply, lang, action, actions: blocked ? actions.filter(a => a.status !== 'accepted').slice(0, 1) : actions, intent, investigationId, escalationRequested: !!d.escalationRequested, diagnosisNamed: !!d.diagnosisNamed, isQuestion: !!d.isQuestion,
       concepts: (d.concepts || []).filter(c => conceptIds.includes(c)), deterministicConcepts: matchConcepts(utterance, S.reasoningConcepts || []), source, rejected: v.ok ? null : v.reason + (v.detail ? ':' + v.detail : ''), audioId, llmMs: Date.now() - t0, model: this.ai.models.chat } };
   }
 

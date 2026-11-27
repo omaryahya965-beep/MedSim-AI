@@ -1,9 +1,17 @@
-# Known Limitations (v0.5, 2026-11-27)
+# Known Limitations (v0.6, 2026-11-27)
+
+**v0.6 notes.**
+- **Embodied actions** are procedural (analytic IK plus posture layers), not motion capture. Instructions are limited to the fixed catalogue in EMBODIED_AI.md. Anything else gets "what would you like me to do?".
+- **Short colloquial commands** are still sometimes misheard by the mini Realtime model (e.g. «تقعد» heard as «تقطش»). The patient then asks instead of guessing. The full model is better but about 9× the cost and was not enabled without approval.
+- **point_to_pain** is authored for central chest pain (right hand to the sternum).
+- **demonstrate_instrument:** the doctor points at and explains the instrument; she does not handle it.
+- **Budget:** the proxy ledger shows **$0.095** of the $2.00 cap remaining. Further live testing is limited until the budget is reviewed.
+- **Surface realism:** the gown weave and skin pore detail maps help, but hair, eyes and hands are unchanged.
+
 
 **v0.5 notes.**
 - **Embodied actions are procedural** (IK and posture layers), not motion capture. Legs never move, since the patient stays under the blanket.
 - **The default speech model sometimes mishears short colloquial Arabic commands.** Seen once: «عمو، ممكن تقعد شوي؟» was heard as a request to be examined. Repeating the request or using `gpt-realtime-2.1` helps.
-- **No new visual-realism work in v0.5:** skin, hair, eyes, clothing and hands are unchanged.
 - **The centre interaction prompt is English** in Arabic mode.
 - **Echo filter:** a student who deliberately repeats the patient's exact words within 60 s would be ignored.
 
