@@ -267,9 +267,19 @@ function readBody(req) {
 function send(res, status, obj, type = 'application/json') { res.writeHead(status, { 'Content-Type': type, 'Cache-Control': 'no-store' }); res.end(type === 'application/json' ? JSON.stringify(obj) : obj); }
 function errStatus(e) { if (e.code === 'budget_exceeded') return [402, 'budget_exceeded']; if (e.status === 401 || e.status === 403) return [502, 'provider_auth_failed']; if (e.status === 429) return [429, 'provider_rate_limited']; if (e.name === 'TimeoutError' || /timeout/i.test(e.message)) return [504, 'upstream_timeout']; if (e instanceof SyntaxError) return [400, 'bad_json']; return [502, 'upstream_failure']; }
 
+// LAN mode (standalone headset): only loopback and private-network clients are served; MEDSIM_ALLOW_PREFIX (e.g. "192.168.1.")
+// narrows it to the laptop's own subnet. The client token check below still applies to every API route.
+export function trustedClient(addr, prefix = process.env.MEDSIM_ALLOW_PREFIX || '') {
+  const a = String(addr || '').replace(/^::ffff:/, '');
+  if (a === '127.0.0.1' || a === '::1') return true;
+  if (prefix) return a.startsWith(prefix);
+  return /^10\./.test(a) || /^192\.168\./.test(a) || /^172\.(1[6-9]|2\d|3[01])\./.test(a);
+}
+
 export function createServer() {
   return http.createServer(async (req, res) => {
     const started = Date.now(); const route = req.url.split('?')[0];
+    if (!trustedClient(req.socket.remoteAddress)) { res.writeHead(403); return res.end(); }
     try {
       if (route === '/health') return send(res, 200, { ok: true, scenarios: [...scenarios.keys()], surgicalScenarios: [...surgeryScenarios.keys()], providerConfigured: !!CFG.openaiKey, chatModel: CFG.chatModel, sttModel: CFG.sttModel, ttsModel: CFG.ttsModel, budgetRemainingUsd: Number(ledger.remaining().toFixed(4)) });
       if (!CFG.clientToken || req.headers['x-medsim-client'] !== CFG.clientToken) return send(res, 401, { error: 'unauthorized' });

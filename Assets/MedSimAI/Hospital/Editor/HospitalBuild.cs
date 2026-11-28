@@ -35,6 +35,40 @@ namespace MedSimAI.Hospital.EditorTools
 
         public static string BuildPcvr(string path = PcvrPath) => "PCVR: " + Build(path);
 
+        public const string VivePath = "D:/Medical-Test/Builds/MedSimAI_VIVE_Standalone/MedSimAI_VIVE_Focus3.apk";
+        [MenuItem("MedSim AI/Hospital/Build VIVE Focus 3 standalone APK")] public static void ViveMenu() => UnityEngine.Debug.Log(BuildViveStandalone());
+
+        /// <summary>
+        /// Native Android APK for the VIVE Focus 3 (ARM64, IL2CPP, OpenXR + VIVE Focus 3 feature/controller profile, GLES3,
+        /// single-pass instanced, "Mobile" quality level / MedSim_Standalone_RP). Network: the AI proxy is reached over the LAN
+        /// with plain HTTP, so cleartext is allowed; the endpoint and client token come from medsim_ai_config.json pushed to
+        /// the headset at install time — nothing secret is in the APK.
+        /// </summary>
+        public static string BuildViveStandalone(string path = VivePath)
+        {
+            PlayerSettings.SetScriptingBackend(UnityEditor.Build.NamedBuildTarget.Android, ScriptingImplementation.IL2CPP);
+            PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
+            PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel29;
+            PlayerSettings.Android.forceInternetPermission = true;
+            PlayerSettings.insecureHttpOption = InsecureHttpOption.AlwaysAllowed;
+            PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.Android, false);
+            PlayerSettings.SetGraphicsAPIs(BuildTarget.Android, new[] { UnityEngine.Rendering.GraphicsDeviceType.OpenGLES3 });
+            EditorUserBuildSettings.buildAppBundle = false;
+            EditorUserBuildSettings.androidBuildSubtarget = MobileTextureSubtarget.ASTC;
+            var rp = AssetDatabase.LoadAssetAtPath<UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset>("Assets/MedSimAI/Settings/MedSim_Standalone_RP.asset");
+            if (rp)
+            {
+                rp.msaaSampleCount = 2; rp.renderScale = 1f; rp.supportsHDR = false; rp.shadowDistance = 6f;
+                var so = new SerializedObject(rp); var p = so.FindProperty("m_AdditionalLightsRenderingMode"); if (p != null) p.intValue = 2; // per-vertex
+                so.ApplyModifiedPropertiesWithoutUndo(); EditorUtility.SetDirty(rp);
+            }
+            AssetDatabase.SaveAssets();
+            Directory.CreateDirectory(Path.GetDirectoryName(path));
+            var r = BuildPipeline.BuildPlayer(new BuildPlayerOptions { scenes = Scenes, locationPathName = path, target = BuildTarget.Android, targetGroup = BuildTargetGroup.Android, options = BuildOptions.None });
+            var s = r.summary;
+            return $"VIVE APK: {s.result} → {path} · errors={s.totalErrors} warnings={s.totalWarnings} size={s.totalSize / (1024 * 1024)} MB time={s.totalTime}";
+        }
+
         static string Build(string path)
         {
             Directory.CreateDirectory(Path.GetDirectoryName(path));
