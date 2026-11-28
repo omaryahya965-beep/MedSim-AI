@@ -8,5 +8,5 @@ Built Assets/MedSimAI/Hospital/Scenes/MedSim_Hospital.unity
 ✓ Surgical session layer (Person 4) wired to the real mechanics; hostManaged; starts on entering Room 02, ends on leaving
 ✓ Hospital coordinator: zones, room choice (voice / directory / keys / walking in), guided walk, session isolation, summary
 ✓ Bilingual room signs: Room 01 · Clinical Examination / Room 02 · Surgical Training; lobby sign
-✓ One hospital NavMesh rebaked (227 triangles); exam door carves when closed; OR doors carve when closed
+✓ One hospital NavMesh rebaked (226 triangles); exam door carves when closed; OR doors carve when closed
 ✓ Build scenes: MedSim_Hospital (start), MedSim_ER (standalone clinical scene, launch with -clinical-only)

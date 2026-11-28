@@ -21,6 +21,8 @@
     "UnityEngine.UI",
     "Unity.AI.Navigation",
     "Unity.XR.CoreUtils",
+    "Unity.XR.Management",
+    "Unity.XR.Management.Editor",
     "Unity.RenderPipelines.Universal.Runtime"
   ],
   "includePlatforms": ["Editor"]

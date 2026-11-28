@@ -331,7 +331,7 @@ namespace MedSimAI.Hospital.EditorTools
             var anim = a.GetComponentInChildren<Animator>(); var ctrl = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(DoctorCtrl);
             if (anim && ctrl) { anim.runtimeAnimatorController = ctrl; anim.applyRootMotion = false; }
             var speech = a.GetComponent<CharacterSpeechController>(); if (!speech) speech = a.AddComponent<CharacterSpeechController>();
-            speech.persona = MedSimAI.AI.Persona.Instructor; speech.displayName = "Sami";
+            speech.persona = MedSimAI.AI.Persona.Instructor; speech.displayName = "Sami (surgical assistant)"; speech.displayNameAr = "سامي (مساعد العمليات)";
             var src = a.GetComponent<AudioSource>(); if (!src) src = a.AddComponent<AudioSource>(); src.spatialBlend = 1; src.minDistance = 1; src.maxDistance = 12;
             var agent = a.AddComponent<NavMeshAgent>(); agent.radius = 0.25f; agent.height = 1.75f; agent.speed = 1.1f; agent.angularSpeed = 360; agent.stoppingDistance = 0.3f;
             var attire = a.AddComponent<SurgicalAttire>(); attire.scrubs = new Color(0.18f, 0.36f, 0.55f); attire.addCap = true; attire.addMask = true;
@@ -355,6 +355,7 @@ namespace MedSimAI.Hospital.EditorTools
             var voice = sessionGo.AddComponent<SurgeryVoiceInput>();
             var ctl = sessionGo.AddComponent<SurgerySessionController>();
             ctl.hud = hud; ctl.actuator = act; ctl.voice = voice; ctl.allowMockMechanics = false; ctl.hostManaged = true;
+            hud.useHostConversationPanel = true; hud.hostManaged = true;   // one conversation panel in the whole hospital
             sessionGo.SetActive(false);
 
             var bridge = new GameObject("Room 02 Bridge").AddComponent<SurgicalRoomBridge>();
@@ -378,7 +379,7 @@ namespace MedSimAI.Hospital.EditorTools
             hc.room02Zone = new Bounds(new Vector3(OrRoot.x, 1.5f, OrRoot.z - 0.33f), new Vector3(7.6f, 4f, 8.46f));        // OR + inner half of the vestibule
             // Directory on the lobby's north wall, facing the student.
             var dirAnchor = new GameObject("Hospital Directory").transform; dirAnchor.SetParent(hc.transform, false);
-            dirAnchor.SetPositionAndRotation(new Vector3(12.25f, 1.55f, CorridorZ1 - 0.03f), Quaternion.LookRotation(Vector3.back));
+            dirAnchor.SetPositionAndRotation(new Vector3(12.25f, 1.55f, CorridorZ1 - 0.03f), Quaternion.LookRotation(Vector3.forward));   // a world canvas is read looking along its +Z
             var dir = dirAnchor.gameObject.AddComponent<HospitalDirectory>(); dir.coordinator = hc; hc.directory = dir;
             report.Add("✓ Surgical session layer (Person 4) wired to the real mechanics; hostManaged; starts on entering Room 02, ends on leaving");
             report.Add("✓ Hospital coordinator: zones, room choice (voice / directory / keys / walking in), guided walk, session isolation, summary");

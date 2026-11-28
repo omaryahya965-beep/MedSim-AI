@@ -16,8 +16,11 @@ namespace MedSimAI.Surgery.Characters
         [Tooltip("Renderer/material name fragments treated as clothing (case-insensitive).")]
         public string[] clothingKeywords = { "shirt", "top", "body", "cloth", "pant", "trouser", "coat", "gown", "uniform", "torso", "leg" };
         public bool addCap = true, addMask = true;
+        [Tooltip("Replace printed clothing textures with plain fabric (a patient-gown print must not show on staff).")] public bool plainFabric = true;
+        [Tooltip("Hide patient-only items on a reused body model (e.g. a hospital wristband).")] public bool hidePatientItems = true;
         [Tooltip("Mask covers mouth/nose; turn off for speaking close-ups if lip sync must be visible.")] public bool maskUp = true;
         [Range(0.8f, 1.3f)] public float headScale = 1f;
+        [Tooltip("Heights above the head bone (rigs differ: a Bip01 head bone sits near the jaw).")] public float capHeight = 0.13f, maskHeight = 0.052f;
 
         bool applied;
 
@@ -30,14 +33,17 @@ namespace MedSimAI.Surgery.Characters
             foreach (var r in GetComponentsInChildren<Renderer>(true))
             {
                 if (r.name.StartsWith("Surgical_")) continue;
+                if (hidePatientItems && r.name.ToLowerInvariant().Contains("wristband")) { r.enabled = false; continue; }
                 var mats = Application.isPlaying ? r.materials : r.sharedMaterials;
                 bool changed = false;
                 for (int i = 0; i < mats.Length; i++)
                 {
                     var m = mats[i]; if (!m) continue;
                     var key = (r.name + " " + m.name).ToLowerInvariant();
-                    if (!System.Array.Exists(clothingKeywords, k => key.Contains(k)) || key.Contains("skin") || key.Contains("hair") || key.Contains("eye") || key.Contains("teeth") || key.Contains("head")) continue;
+                    // exclusions as whole words on the material name ("Reyes" contains "eye")
+                    if (!System.Array.Exists(clothingKeywords, k => key.Contains(k)) || System.Text.RegularExpressions.Regex.IsMatch(m.name.ToLowerInvariant(), @"(^|[^a-z])(skin|hair|eye|eyes|eyelash|lashes|teeth|head)([^a-z]|$)")) continue;
                     if (!Application.isPlaying) { m = new Material(m); mats[i] = m; }
+                    if (plainFabric && m.HasProperty("_BaseMap")) m.SetTexture("_BaseMap", null);
                     if (m.HasProperty("_BaseColor")) m.SetColor("_BaseColor", scrubs);
                     if (m.HasProperty("_Color")) m.SetColor("_Color", scrubs);
                     changed = true;
@@ -49,18 +55,37 @@ namespace MedSimAI.Surgery.Characters
             if (!head) return;
             if (addCap && !head.Find("Surgical_Cap"))
             {
-                var c = GameObject.CreatePrimitive(PrimitiveType.Sphere); c.name = "Surgical_Cap";
+                var c = Shell("Surgical_Cap", new Vector3(0.114f, 0.08f, 0.127f));
                 DestroyCollider(c); c.transform.SetParent(head, false);
-                c.transform.localPosition = new Vector3(0, 0.085f, -0.01f) * headScale; c.transform.localScale = new Vector3(0.205f, 0.13f, 0.235f) * headScale;
+                Place(c.transform, head, anim, new Vector3(0, capHeight, -0.025f) * headScale, Vector3.one * headScale);
                 Tint(c, cap);
             }
             if (addMask && !head.Find("Surgical_Mask"))
             {
-                var m = GameObject.CreatePrimitive(PrimitiveType.Cube); m.name = "Surgical_Mask";
+                var m = Shell("Surgical_Mask", new Vector3(0.081f, 0.07f, 0.082f));   // curved: wraps nose, mouth and chin
                 DestroyCollider(m); m.transform.SetParent(head, false);
-                m.transform.localPosition = new Vector3(0, maskUp ? 0.0f : -0.05f, 0.095f) * headScale; m.transform.localScale = new Vector3(0.15f, 0.085f, 0.03f) * headScale;
+                Place(m.transform, head, anim, new Vector3(0, maskUp ? maskHeight : maskHeight - 0.03f, 0.062f) * headScale, Vector3.one * headScale);
                 Tint(m, mask);
             }
+        }
+
+        /// <summary>Places a head item using the CHARACTER's axes (x right, y up, z forward), whatever the head bone's orientation.</summary>
+        void Place(Transform item, Transform head, Animator anim, Vector3 offsetInCharacterAxes, Vector3 size)
+        {
+            // world up + the humanoid body's facing (FBX root axes can be rotated)
+            var up = Vector3.up; var fwd = Vector3.ProjectOnPlane(transform.forward, up);   // the root faces where the character faces (NavMesh turns it)
+            if (fwd.sqrMagnitude < 1e-4f) fwd = Vector3.forward; fwd.Normalize(); var right = Vector3.Cross(up, fwd);
+            var world = head.position + right * offsetInCharacterAxes.x + up * offsetInCharacterAxes.y + fwd * offsetInCharacterAxes.z;
+            item.SetPositionAndRotation(world, Quaternion.LookRotation(fwd, up));
+            var ls = head.lossyScale; item.localScale = new Vector3(size.x / Mathf.Max(1e-4f, ls.x), size.y / Mathf.Max(1e-4f, ls.y), size.z / Mathf.Max(1e-4f, ls.z));
+        }
+
+        /// <summary>A smooth ellipsoid shell (radii in metres) for the cap and mask.</summary>
+        static GameObject Shell(string name, Vector3 radii)
+        {
+            var g = new GameObject(name, typeof(MeshFilter), typeof(MeshRenderer));
+            g.GetComponent<MeshFilter>().sharedMesh = MedSimAI.Core.MeshKit.Ellipsoid(radii, 28, 18);
+            return g;
         }
 
         static void DestroyCollider(GameObject g) { var col = g.GetComponent<Collider>(); if (col) { if (Application.isPlaying) Destroy(col); else DestroyImmediate(col); } }

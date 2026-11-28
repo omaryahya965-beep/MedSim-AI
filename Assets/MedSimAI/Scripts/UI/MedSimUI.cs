@@ -440,7 +440,7 @@ namespace MedSimAI.UI
         // ---- conversation panel geometry (canvas units) and paging
         const float ResponseH = 114f, StudentH = 48f, PanelH = 48 + ResponseH + 24 + StudentH + 12; // 234
         TMP_Text statusText, pageText; CharacterSpeechController currentSpeaker; float studentPageAt;
-        static string LocalName(CharacterSpeechController c, bool ar) => !ar ? c.displayName : c.persona == Persona.Patient ? "السيد آدم رييس (المريض)" : "د. سارة حسن (المشرفة)";
+        static string LocalName(CharacterSpeechController c, bool ar) => !ar ? c.displayName : !string.IsNullOrEmpty(c.displayNameAr) ? c.displayNameAr : c.persona == Persona.Patient ? "السيد آدم رييس (المريض)" : "د. سارة حسن (المشرفة)";
 
         /// <summary>Response paging follows the speech: page = progress × pages. Transcript pages rotate every 4 s.</summary>
         void UpdateConversationPaging()

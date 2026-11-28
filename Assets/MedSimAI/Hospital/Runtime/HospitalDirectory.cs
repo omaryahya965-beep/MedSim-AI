@@ -27,7 +27,7 @@ namespace MedSimAI.Hospital
             if (built) return; built = true;
             var canvas = UIFactory.WorldCanvas("Hospital Directory Canvas", transform, sizeMm);
             var bg = UIFactory.Panel(canvas.transform, "Directory", Brand.Navy); UIFactory.Stretch(bg);
-            var col = UIFactory.VStack(bg, "Column", 18, 36);
+            var col = UIFactory.VStack(bg, "Column", 18, 36); UIFactory.Stretch(col);
             title = UIFactory.Text(col, "", 46, Brand.White, TextAlignmentOptions.Center, FontStyles.Bold);
             room01 = Button(col, () => coordinator.RequestRoom(HospitalRoomId.Room01, "directory"), Brand.Teal);
             room02 = Button(col, () => coordinator.RequestRoom(HospitalRoomId.Room02, "directory"), Brand.Teal);

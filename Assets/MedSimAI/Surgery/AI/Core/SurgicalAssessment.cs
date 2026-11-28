@@ -176,6 +176,21 @@ namespace MedSimAI.Surgery.AI
     /// <summary>Written debrief (en/ar) and grounded facts for the spoken debrief. Everything comes from the result.</summary>
     public static class SurgicalDebriefComposer
     {
+        /// <summary>Criterion notes are recorded in English; the Arabic report shows them in Arabic (integration fix).</summary>
+        static string Note(string note, string lang)
+        {
+            if (lang != "ar" || string.IsNullOrEmpty(note)) return note;
+            var m = System.Text.RegularExpressions.Regex.Match(note, @"^(\d+) invalid attempt\(s\)$");
+            if (m.Success) return m.Groups[1].Value + " محاولة غير صحيحة";
+            switch (note)
+            {
+                case "not completed": return "لم تكتمل";
+                case "not placed": return "لم يُركَّب";
+                case "accuracy not measured by mechanics": return "الدقة غير مُقاسة";
+                default: return note;
+            }
+        }
+
         public static string Written(SurgicalAssessmentResult r, string lang)
         {
             bool ar = lang == "ar"; var b = new StringBuilder();
@@ -192,7 +207,7 @@ namespace MedSimAI.Surgery.AI
             foreach (var o in r.Missed) b.AppendLine("  ✗ " + (ar ? o.titleAr : o.titleEn));
             if (!r.Missed.Any()) b.AppendLine("  —");
             b.AppendLine().AppendLine(L("Criteria", "المعايير"));
-            foreach (var c in r.criteria) b.AppendLine($"  {(c.status == CriterionStatus.Met ? "✓" : c.status == CriterionStatus.NotMet ? "✗" : "–")} {c.Label(lang)}{(string.IsNullOrEmpty(c.note) ? "" : " (" + c.note + ")")}");
+            foreach (var c in r.criteria) b.AppendLine($"  {(c.status == CriterionStatus.Met ? "✓" : c.status == CriterionStatus.NotMet ? "✗" : "–")} {c.Label(lang)}{(string.IsNullOrEmpty(Note(c.note, lang)) ? "" : " (" + Note(c.note, lang) + ")")}");
             var safety = ar ? r.safetyObservationsAr : r.safetyObservationsEn;
             b.AppendLine().AppendLine(L("Safety observations (scenario-defined)", "ملاحظات السلامة (حسب السيناريو)"));
             foreach (var x in safety) b.AppendLine("  • " + x);
