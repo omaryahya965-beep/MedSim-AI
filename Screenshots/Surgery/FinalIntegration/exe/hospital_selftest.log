@@ -1,9 +1,9 @@
     4.2s [info] hospital exe self-test · 0.1.0 · NVIDIA GeForce RTX 3050 Laptop GPU (3964 MB) · 1920x1080 · display=Desktop · AI=TEST MODE — text only
-   11.7s [perf] reception lobby: 1196 frames, avg 4.18 ms (239 fps), p50 4.16 ms, p95 4.18 ms, p99 4.23 ms, max 8.3 ms; GPU p50 1.50 ms, p95 1.94 ms (1196 samples); vSync=1
+   11.7s [perf] reception lobby: 1198 frames, avg 4.18 ms (239 fps), p50 4.16 ms, p95 4.19 ms, p99 4.22 ms, max 8.3 ms; GPU p50 1.49 ms, p95 2.00 ms (1198 samples); vSync=1
    11.7s [shot] 01_hospital_entrance
    12.1s [shot] 02_doctor_welcome
-   12.2s [shot] 03_corridor_both_room_entrances
-   16.2s [perf] corridor: 958 frames, avg 4.29 ms (233 fps), p50 4.16 ms, p95 4.19 ms, p99 4.28 ms, max 108.4 ms; GPU p50 1.68 ms, p95 2.35 ms (958 samples); vSync=1
+   12.3s [shot] 03_corridor_both_room_entrances
+   16.3s [perf] corridor: 961 frames, avg 4.27 ms (234 fps), p50 4.16 ms, p95 4.18 ms, p99 4.24 ms, max 95.9 ms; GPU p50 1.68 ms, p95 2.34 ms (961 samples); vSync=1
    16.3s [action] Instructor:guide_to_room(none,room_02) InProgress
    16.3s [guide] follow_room02
    16.3s [subtitle] Dr. Hassan (supervisor): تمام، تعال معي على غرفة العمليات.
@@ -13,12 +13,12 @@
    20.6s [subtitle] Dr. Hassan (supervisor): هاي غرفة العمليات. الباب بيفتح لحاله لما نقرّب. تفضّل.
    20.6s [action] Instructor:guide_to_room(none,room_02) Completed
    20.6s [hospital] doctor at OR door: 0.10 m from the mark
-   20.9s [room] Corridor → Room02
+   21.0s [room] Corridor → Room02
    21.1s [surgery] session active, mock=False, runtime=SurgeryMechanicsRoot, objective=obj.site_confirmation
    21.1s [subtitle] Dr. Hassan (supervisor): أهلاً فيك بغرفة العمليات. خلينا نبلّش بتأكيد مكان العملية.
-   28.9s [perf] operating room, surgeon view: 1199 frames, avg 4.17 ms (240 fps), p50 4.16 ms, p95 4.18 ms, p99 4.22 ms, max 8.0 ms; GPU p50 3.62 ms, p95 4.00 ms (1199 samples); vSync=1
+   29.0s [perf] operating room, surgeon view: 1201 frames, avg 4.17 ms (240 fps), p50 4.16 ms, p95 4.19 ms, p99 4.22 ms, max 4.8 ms; GPU p50 3.79 ms, p95 4.08 ms (1201 samples); vSync=1
    29.0s [shot] 07_integrated_operating_room
-   29.0s [shot] 08_surgical_patient_on_table
+   29.1s [shot] 08_surgical_patient_on_table
    29.1s [shot] 10_instrument_tray
    29.7s [shot] 11_student_holding_instrument
    29.7s [use] inst.scalpel → knee_r.site_marking: rejected
@@ -28,14 +28,14 @@
    33.9s [shot] 09_knee_anatomy_closeup
    34.1s [subtitle] Dr. Hassan (supervisor): أكيد. عظمة الفخذ لازم تتشكّل عشان تناسب المفصل.
    35.4s [shot] 14_doctor_providing_assistance
-   37.1s [subtitle] Sami (surgical assistant): تفضّل، هاي الأداة: دليل قطع الفخذ.
+   37.2s [subtitle] Sami (surgical assistant): تفضّل، هاي الأداة: دليل قطع الفخذ.
    38.1s [shot] 14b_assistant_offers_instrument
    38.1s [handoff] offered=inst.cutting_guide_femoral completed-before-grab=False
    38.1s [handoff] completed after the student's grab = True
    40.9s [clip] gif_femoral_resection (8 frames)
    40.9s [use] inst.cutting_guide_femoral → knee_r.distal_femur: valid
    43.5s [shot] 12a_guide_placed_robot_guidance
-   43.5s [use] inst.oscillating_saw → knee_r.distal_femur: valid
+   43.6s [use] inst.oscillating_saw → knee_r.distal_femur: valid
    44.2s [shot] 12_anatomy_state_change_resected
    44.2s [use] inst.cutting_guide_tibial → knee_r.proximal_tibia: valid
    44.2s [use] inst.oscillating_saw → knee_r.proximal_tibia: valid
@@ -49,28 +49,28 @@
    44.8s [use] inst.mallet → knee_r.proximal_tibia: valid
    44.8s [use] inst.skin_stapler → knee_r.wound: valid
    44.8s [subtitle] Dr. Hassan (supervisor): خلصنا. أكملت 9 من 9 خطوات، وأخذت 1 تلميحات. أكملت 8 خطوات بدون ولا محاولة غلط.  تذكّر إنه هاي محاكاة تعليمية غير معتمدة سريرياً.
-   47.4s [shot] 15_surgical_assessment
-   47.4s [assessment] score 22/24, completed=True, valid=15, invalid=1, hints=1
-   47.4s [events] bus: session.started×1, objective.started×9, tool.grabbed×13, tool.released×13, interaction.rejected×1, anatomy.interacted×10, anatomy.state_changed×12, objective.completed×9, tool.activated×4, help.requested×1, hint.given×1, assistant.action_requested×1, assistant.handoff_offered×1, assistant.handoff_completed×1, implant.placement_attempted×5, implant.placement_completed×5, session.completed×1
-   47.7s [room] Room02 → Corridor
-   48.9s [guide] where_next_after_surgical
-   48.9s [subtitle] Dr. Hassan (supervisor): خلصنا تدريب العملية. إذا حابب، فينا نروح على الغرفة الأولى لفحص المريض.
-   52.9s [shot] 16_return_to_corridor
-   52.9s [action] Instructor:guide_to_room(none,room_01) InProgress
-   52.9s [guide] follow_room01
-   52.9s [subtitle] Dr. Hassan (supervisor): تمام، تعال معي على الغرفة الأولى.
-   58.4s [clinical] at Room 01 door; session state Tutorial
-   58.8s [subtitle] Dr. Hassan (supervisor): أهلاً بك في قسم الطوارئ. أنا الدكتورة سارة حسن، المشرفة عليك اليوم. السيد رييس جاء يشكو من ألم في الصدر. قيّم حالته كما تفعل مع مريض حقيقي: عرّف بنفسك، خذ قصة مرضية مركّزة، افحصه، وأخبرني بما تريد فعله.
-   63.2s [room] Corridor → Room01
-   70.9s [perf] Room 01 (clinical): 1197 frames, avg 4.18 ms (239 fps), p50 4.16 ms, p95 4.19 ms, p99 4.26 ms, max 8.4 ms; GPU p50 2.00 ms, p95 2.29 ms (1197 samples); vSync=1
-   70.9s [shot] 05_clinical_examination_room
-   70.9s [action] Patient:raise_arm(left) InProgress
-   72.0s [action] Patient:raise_arm(left) Completed
-   73.9s [shot] 06_clinical_patient_interaction
-   73.9s [clinical] tracker events: 3, surgical ids present: False
-   74.3s [room] Room01 → Corridor
-   75.5s [guide] left_unfinished
-   75.5s [subtitle] Dr. Hassan (supervisor): وقفنا الحالة قبل ما تخلص. فيك ترجع تبلّشها من جديد وقت ما بدك.
-   75.5s [hospital] records: Room02 OR_TKA_TRAINING_001 completed 92% 0.4 min | Room01 ER_CHEST_PAIN_001 left unfinished -1% 0.3 min
-   75.5s [hospital] log tail: 47.2s student Room02 → Corridor ; 48.4s Room02 session ended (left the room, completed) ; 48.4s say:where_next_after_surgical ; 52.4s heard 'رجعني عالغرفة الأولى' → GoToRoom(Room01) ← 'الغرفه الاولي' ; 52.4s request Room01 via voice ; 52.4s say:follow_room01 ; 57.8s guide_to_room room_01 → arrived ; 57.8s clinical session started (arrived_at_door) clinical-89e95c80 ; 62.7s student Corridor → Room01 ; 73.7s student Room01 → Corridor ; 74.9s Room01 session ended (left the room, unfinished) ; 74.9s say:left_unfinished
-   75.5s [done] hospital self-test finished
+   47.9s [shot] 15_surgical_assessment
+   47.9s [assessment] score 22/24, completed=True, valid=15, invalid=1, hints=1
+   47.9s [events] bus: session.started×1, objective.started×9, tool.grabbed×13, tool.released×13, interaction.rejected×1, anatomy.interacted×10, anatomy.state_changed×12, objective.completed×9, tool.activated×4, help.requested×1, hint.given×1, assistant.action_requested×1, assistant.handoff_offered×1, assistant.handoff_completed×1, implant.placement_attempted×5, implant.placement_completed×5, session.completed×1
+   48.2s [room] Room02 → Corridor
+   49.4s [guide] where_next_after_surgical
+   49.4s [subtitle] Dr. Hassan (supervisor): خلصنا تدريب العملية. إذا حابب، فينا نروح على الغرفة الأولى لفحص المريض.
+   53.4s [shot] 16_return_to_corridor
+   53.4s [action] Instructor:guide_to_room(none,room_01) InProgress
+   53.4s [guide] follow_room01
+   53.4s [subtitle] Dr. Hassan (supervisor): تمام، تعال معي على الغرفة الأولى.
+   58.9s [clinical] at Room 01 door; session state Tutorial
+   59.3s [subtitle] Dr. Hassan (supervisor): أهلاً بك في قسم الطوارئ. أنا الدكتورة سارة حسن، المشرفة عليك اليوم. السيد رييس جاء يشكو من ألم في الصدر. قيّم حالته كما تفعل مع مريض حقيقي: عرّف بنفسك، خذ قصة مرضية مركّزة، افحصه، وأخبرني بما تريد فعله.
+   63.7s [room] Corridor → Room01
+   71.4s [perf] Room 01 (clinical): 1198 frames, avg 4.18 ms (239 fps), p50 4.16 ms, p95 4.18 ms, p99 4.26 ms, max 8.4 ms; GPU p50 2.01 ms, p95 2.39 ms (1198 samples); vSync=1
+   71.4s [shot] 05_clinical_examination_room
+   71.4s [action] Patient:raise_arm(left) InProgress
+   72.5s [action] Patient:raise_arm(left) Completed
+   74.4s [shot] 06_clinical_patient_interaction
+   74.4s [clinical] tracker events: 3, surgical ids present: False
+   74.8s [room] Room01 → Corridor
+   76.0s [guide] left_unfinished
+   76.0s [subtitle] Dr. Hassan (supervisor): وقفنا الحالة قبل ما تخلص. فيك ترجع تبلّشها من جديد وقت ما بدك.
+   76.0s [hospital] records: Room02 OR_TKA_TRAINING_001 completed 92% 0.4 min | Room01 ER_CHEST_PAIN_001 left unfinished -1% 0.3 min
+   76.0s [hospital] log tail: 47.2s student Room02 → Corridor ; 48.4s Room02 session ended (left the room, completed) ; 48.4s say:where_next_after_surgical ; 52.4s heard 'رجعني عالغرفة الأولى' → GoToRoom(Room01) ← 'الغرفه الاولي' ; 52.4s request Room01 via voice ; 52.4s say:follow_room01 ; 57.9s guide_to_room room_01 → arrived ; 57.9s clinical session started (arrived_at_door) clinical-2737989b ; 62.7s student Corridor → Room01 ; 73.8s student Room01 → Corridor ; 75.0s Room01 session ended (left the room, unfinished) ; 75.0s say:left_unfinished
+   76.0s [done] hospital self-test finished

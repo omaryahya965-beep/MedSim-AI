@@ -43,7 +43,8 @@ namespace MedSimAI.Hospital.EditorTools
         const string TrayPrefab = "Assets/MedSimAI/Surgery/Instruments/Prefabs/InstrumentTray_Populated.prefab";
         const string ImplantSetPrefab = "Assets/MedSimAI/Surgery/Anatomy/Prefabs/KneeImplantSet.prefab";
         const string MechanicsPrefab = "Assets/MedSimAI/Surgery/Mechanics/Prefabs/SurgeryMechanics.prefab";
-        const string AssistantFbx = "Assets/MedSimAI/Characters/v2/Patient/AdamReyes.fbx", DoctorCtrl = "Assets/MedSimAI/Characters/v2/Animations/DrHassan.controller";
+        // Scrub assistant: Microsoft Rocketbox "Medical_Male_04" (MIT): scrubs, surgical cap and mask (not the Room 01 patient's body).
+        const string AssistantDir = "Assets/MedSimAI/Characters/v2/Assistant", AssistantFbx = AssistantDir + "/Medical_Male_04.fbx", DoctorCtrl = "Assets/MedSimAI/Characters/v2/Animations/DrHassan.controller";
 
         // Layout (world metres). The clinical scene's corridor runs along X at z −5.02…−2.62; Room 01 is north of it.
         public static readonly Vector3 OrRoot = new Vector3(7.25f, 0f, 2.92f);   // vestibule ends flush with the corridor's north face
@@ -64,6 +65,7 @@ namespace MedSimAI.Hospital.EditorTools
             // Start from the clinical scene. Overwrite the file contents (keep the .meta) so the hospital scene GUID stays stable.
             if (File.Exists(HospitalScene)) { File.Copy(ErScene, HospitalScene, true); AssetDatabase.ImportAsset(HospitalScene, ImportAssetOptions.ForceUpdate); }
             else if (!AssetDatabase.CopyAsset(ErScene, HospitalScene)) return "Could not copy " + ErScene;
+            ConfigureAssistantImport();
             var scene = EditorSceneManager.OpenScene(HospitalScene, OpenSceneMode.Single);
 
             ExtendCorridor();
@@ -82,6 +84,43 @@ namespace MedSimAI.Hospital.EditorTools
             Directory.CreateDirectory("Docs/Surgery/FinalIntegration");
             File.WriteAllText("Docs/Surgery/FinalIntegration/LAST_HOSPITAL_BUILD.txt", msg + "\n");
             return msg;
+        }
+
+        /// <summary>Rocketbox import (as the library's own FixRocketboxMaxImport, but only for this asset): humanoid avatar,
+        /// normal maps typed as such, URP Lit materials from the delivered textures.</summary>
+        static Dictionary<string, Material> assistantMats;
+        static void ConfigureAssistantImport()
+        {
+            foreach (var guid in AssetDatabase.FindAssets("t:Texture2D", new[] { AssistantDir + "/Textures" }))
+            {
+                var p = AssetDatabase.GUIDToAssetPath(guid); var ti = (TextureImporter)AssetImporter.GetAtPath(p); bool normal = p.Contains("_normal"), spec = p.Contains("_specular");
+                var want = normal ? TextureImporterType.NormalMap : TextureImporterType.Default; bool ch = false;
+                if (ti.textureType != want) { ti.textureType = want; ch = true; }
+                if (ti.sRGBTexture == (normal || spec)) { ti.sRGBTexture = !(normal || spec); ch = true; }
+                if (ti.maxTextureSize != 2048) { ti.maxTextureSize = 2048; ch = true; }
+                if (ti.anisoLevel != 4) { ti.anisoLevel = 4; ch = true; }
+                bool alpha = p.Contains("head_color"); if (ti.alphaIsTransparency != alpha) { ti.alphaIsTransparency = alpha; ch = true; }
+                if (ch) ti.SaveAndReimport();
+            }
+            var mi = (ModelImporter)AssetImporter.GetAtPath(AssistantFbx);
+            if (mi.animationType != ModelImporterAnimationType.Human)
+            {   // keep the FBX material slots (their names say body / head / protection); they are replaced by URP materials below
+                mi.animationType = ModelImporterAnimationType.Human; mi.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
+                mi.importBlendShapes = true; mi.SaveAndReimport();
+            }
+            Texture2D T(string n) => AssetDatabase.LoadAssetAtPath<Texture2D>(AssistantDir + "/Textures/m162_" + n + ".png");
+            Material M(string name, string tex, float smooth, bool cutout)
+            {
+                var path = AssistantDir + "/" + name + ".mat"; var m = AssetDatabase.LoadAssetAtPath<Material>(path);
+                if (!m) { m = new Material(Shader.Find("Universal Render Pipeline/Lit")); AssetDatabase.CreateAsset(m, path); }
+                m.SetTexture("_BaseMap", T(tex + "_color")); m.SetColor("_BaseColor", Color.white);
+                m.SetTexture("_BumpMap", T(tex + "_normal")); m.EnableKeyword("_NORMALMAP");
+                m.SetFloat("_Smoothness", smooth); m.SetFloat("_Metallic", 0f);
+                if (cutout) { m.SetFloat("_AlphaClip", 1); m.SetFloat("_Cutoff", 0.4f); m.EnableKeyword("_ALPHATEST_ON"); m.SetOverrideTag("RenderType", "TransparentCutout"); m.renderQueue = 2450; m.SetFloat("_Cull", 0); }
+                EditorUtility.SetDirty(m); return m;
+            }
+            assistantMats = new Dictionary<string, Material> { ["body"] = M("Sami_Body", "body", 0.2f, false), ["head"] = M("Sami_Head", "head", 0.32f, true), ["protection"] = M("Sami_Protection", "protection", 0.15f, false) };
+            AssetDatabase.SaveAssets();
         }
 
         // ------------------------------------------------------------------ helpers
@@ -335,7 +374,14 @@ namespace MedSimAI.Hospital.EditorTools
             speech.persona = MedSimAI.AI.Persona.Instructor; speech.displayName = "Sami (surgical assistant)"; speech.displayNameAr = "سامي (مساعد العمليات)";
             var src = a.GetComponent<AudioSource>(); if (!src) src = a.AddComponent<AudioSource>(); src.spatialBlend = 1; src.minDistance = 1; src.maxDistance = 12;
             var agent = a.AddComponent<NavMeshAgent>(); agent.radius = 0.25f; agent.height = 1.75f; agent.speed = 1.1f; agent.angularSpeed = 360; agent.stoppingDistance = 0.3f;
-            var attire = a.AddComponent<SurgicalAttire>(); attire.scrubs = new Color(0.18f, 0.36f, 0.55f); attire.addCap = true; attire.addMask = true;
+            // Rocketbox delivers several detail levels: keep the high-detail mesh, and the model's own scrubs, cap and mask.
+            foreach (var smr in a.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+            {
+                var n = smr.name.ToLowerInvariant();
+                if (n.Contains("poly") && !n.Contains("hipoly")) { smr.gameObject.SetActive(false); continue; }
+                var mats = smr.sharedMaterials; for (int i = 0; i < mats.Length; i++) { var key = (mats[i] ? mats[i].name : n).ToLowerInvariant(); mats[i] = key.Contains("head") ? assistantMats["head"] : key.Contains("protection") ? assistantMats["protection"] : assistantMats["body"]; }
+                smr.sharedMaterials = mats; smr.updateWhenOffscreen = false;
+            }
             p.assistant = a.AddComponent<SurgicalCharacter>(); p.assistant.characterId = SurgeryCharacterIds.Assistant; p.assistant.homeAnchor = AnchorIds.AssistantHome;
             var nm2 = a.AddComponent<NavMeshModifier>(); nm2.ignoreFromBuild = true;
             report.Add("✓ One doctor: Dr. Sara Hassan (clinical scene's instructor) = hospital guide + surgeon role in Room 02; assistant Sami in Room 02");
