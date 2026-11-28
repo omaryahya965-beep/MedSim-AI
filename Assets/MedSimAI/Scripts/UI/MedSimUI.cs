@@ -55,6 +55,9 @@ namespace MedSimAI.UI
 
         void Start()
         {
+            LiveTextPolicy.ScrubScene();   // no draft/validation labels on world props (owner request; status documented in Docs/)
+            MedSimAI.Characters.ClinicalRealism.Install();   // head resting on the pillow, roll-up gown sleeve for the BP cuff
+            MedSimAI.XR.HandPresence.Install();               // visible gloved hands (VR controllers / desktop held instrument)
             BuildMenu(); BuildTablet(); BuildSubtitles();
             S.StateChanged += OnAppState; S.DebriefReady += OnDebrief;
             CharacterSpeechController.SubtitleStarted += OnSubtitleStarted; // unsubscribed in OnDestroy (static event outlives the scene)
@@ -85,6 +88,7 @@ namespace MedSimAI.UI
             var banner = UIFactory.Panel(root, "Disclaimer", new Color(1f, 0.72f, 0.3f, 0.95f), null);
             UIFactory.Place(banner, new Vector2(0, 0), new Vector2(1, 0), new Vector2(0, 0), new Vector2(0, 52));
             var bt = UIFactory.Text(banner, ClinicalScenarioManager.Instance.Scenario.ValidationBanner, 24, Brand.Navy, TextAlignmentOptions.Center, FontStyles.Bold); UIFactory.Stretch(bt.rectTransform, 6);
+            banner.gameObject.SetActive(false);   // no draft/validation ribbon in the live experience (owner's request; status documented in CLINICAL_REVIEW.md)
 
             loadingPanel = Section(root, "Loading");
             var lt = UIFactory.Text(loadingPanel, "<size=140%><b>MedSim <color=#64FFDA>AI</color></b></size>\n<color=#8892B0>Immersive clinical training</color>\n\n<size=70%>Preparing emergency department…</size>", 64, Brand.White, TextAlignmentOptions.Center);
@@ -273,7 +277,7 @@ namespace MedSimAI.UI
             if (micButtonText) micButtonText.text = MicLabel();
             if (micDeviceButtonText) micDeviceButtonText.text = MicDeviceLabel();
             var ai = AIProviderManager.Instance;
-            pauseStatusText.text = $"{ai.ModeLabel}  ·  {(ai.Config.language == "ar" ? "العربية" : "English")}  ·  {(S.trainingMode ? "Training" : "Assessment")}\n<size=80%><color=#FFB74D>{ClinicalScenarioManager.Instance.Scenario.ValidationBanner}</color></size>";
+            pauseStatusText.text = $"{ai.ModeLabel}  ·  {(ai.Config.language == "ar" ? "العربية" : "English")}  ·  {(S.trainingMode ? "Training" : "Assessment")}";
         }
 
         void Show(RectTransform panel)

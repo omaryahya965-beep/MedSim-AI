@@ -66,7 +66,7 @@ namespace MedSimAI.Hospital
                 sb.Append($"• {RoomName(r.room, ar)} — {(r.outcome == "completed" ? (ar ? "مكتملة" : "completed") : (ar ? "لم تكتمل" : "not finished"))}{(r.scorePercent >= 0 ? $" — {r.scorePercent}%" : "")} — {r.Minutes:0.0} {(ar ? "دقيقة" : "min")}\n");
             Set(summary, sb.ToString().TrimEnd());
             Set(keysHint, ar ? "اضغط 1 أو 2 أو 3 (الممر) · أو احكي مع الدكتورة (T)" : "Press 1, 2 or 3 (corridor) · or talk to the doctor (T)");
-            Set(notice, ar ? "مسودة — غير معتمدة سريرياً · ليست بديلاً عن الإشراف السريري ولا شهادة كفاءة" : "DRAFT — NOT CLINICALLY VALIDATED · not a substitute for clinical supervision or a competency certificate");
+            Set(notice, ar ? "محاكاة تعليمية · ليست بديلاً عن الإشراف السريري ولا شهادة كفاءة" : "Educational simulation · not a substitute for clinical supervision or a competency certificate");
         }
 
         static string RoomName(HospitalRoomId r, bool ar) => r == HospitalRoomId.Room01 ? (ar ? "الغرفة 01" : "Room 01") : r == HospitalRoomId.Room02 ? (ar ? "الغرفة 02 (العمليات)" : "Room 02 (operating room)") : (ar ? "الممر" : "the corridor");

@@ -463,7 +463,7 @@ namespace MedSimAI.EditorTools
             Sheet(nb, paper, new Vector3(-0.30f, 0.07f, -0.008f), 1.5f, "Clinical Skills Rota", "Week 48\nMon  Group A  08:30\nTue  Group B  08:30\nWed  Group C  10:30\nThu  Group D  08:30", Hex("#2F5D50"));
             Sheet(nb, paper, new Vector3(-0.07f, 0.06f, -0.008f), -2f, "Hand Hygiene Audit", "November\nCompliance 92 %\nTarget 95 %\n\nClean hands before\nevery patient contact.", Hex("#2F6690"));
             Sheet(nb, paper, new Vector3(0.16f, 0.075f, -0.008f), 1f, "Simulation Etiquette", "1  Treat the patient as real\n2  Introduce yourself\n3  Ask for consent\n4  Think aloud\n5  What happens here stays here", Hex("#7A5C2E"));
-            Sheet(nb, paper, new Vector3(0.345f, -0.06f, -0.008f), -1.5f, "DRAFT", "Scenario content is not\nclinically validated.\nAll patients are fictional.", Hex("#9B2F2F"), 0.15f, 0.2f);
+            Sheet(nb, paper, new Vector3(0.345f, -0.06f, -0.008f), -1.5f, "SIMULATION", "Educational simulation.\nAll patients are fictional.", Hex("#9B2F2F"), 0.15f, 0.2f);
             Text(nb, "لوحة الإعلانات", new Vector3(0.25f, 0.345f, -0.004f), Vector3.zero, 0.26f, Hex("#3A4A46"), new Vector2(0.4f, 0.05f), TextAlignmentOptions.Right);
             Text(nb, "Notices", new Vector3(-0.25f, 0.342f, -0.004f), Vector3.zero, 0.2f, Hex("#3A4A46"), new Vector2(0.4f, 0.05f), TextAlignmentOptions.Left, true);
 

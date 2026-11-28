@@ -26,7 +26,7 @@ namespace MedSimAI.Surgery.UI
         Canvas canvas; RectTransform root, pause, debrief; TMP_Text banner, objTitle, objBody, progress, status, transcript, mic, debriefText;
         readonly List<string> lines = new List<string>();
         bool desktop, menuWasDown;
-        string objT = "", objB = "", prog = "", stat = "", micText = "", bannerText = SurgeryContract.VALIDATION_BANNER; Color statColor = Color.white;
+        string objT = "", objB = "", prog = "", stat = "", micText = "", bannerText = ""; Color statColor = Color.white;
 
         void Start() { desktop = SurgeryCanvas.IsDesktop; Build(); }
         // The canvas is a separate root object: it must follow this component (hospital: hidden outside the operating room).
@@ -62,8 +62,9 @@ namespace MedSimAI.Surgery.UI
             canvas = SurgeryCanvas.Create("Surgery HUD", new Vector2(1600, 900), desktop);
             root = new GameObject("Root", typeof(RectTransform)).GetComponent<RectTransform>(); root.SetParent(canvas.transform, false); UIFactory.Stretch(root);
 
-            var top = UIFactory.Panel(root, "Banner", new Color(0.35f, 0.22f, 0.02f, 0.85f)); UIFactory.Place(top, new Vector2(0.25f, 0.95f), new Vector2(0.68f, 1f));
-            banner = Txt(top, "", 22, Brand.Warn, TextAlignmentOptions.Center, FontStyles.Bold); UIFactory.Stretch(banner.rectTransform, 4); Set(banner, bannerText);
+            // Optional notice strip, empty by default: the live experience shows no draft/validation ribbon (that status is documented in Docs/).
+            var top = UIFactory.Panel(root, "Banner", new Color(0.35f, 0.22f, 0.02f, 0.85f)); UIFactory.Place(top, new Vector2(0.30f, 0.90f), new Vector2(0.70f, 0.94f));
+            banner = Txt(top, "", 18, Brand.Warn, TextAlignmentOptions.Center, FontStyles.Bold); UIFactory.Stretch(banner.rectTransform, 4); Set(banner, bannerText); top.gameObject.SetActive(!string.IsNullOrEmpty(bannerText));
 
             var obj = UIFactory.Panel(root, "Objective", new Color(0.04f, 0.10f, 0.18f, 0.88f)); UIFactory.Place(obj, new Vector2(0.01f, 0.62f), new Vector2(0.30f, 0.93f));
             progress = Txt(obj, prog, 18, Brand.Muted); UIFactory.Place(progress.rectTransform, new Vector2(0.05f, 0.82f), new Vector2(0.95f, 0.96f));
@@ -77,8 +78,9 @@ namespace MedSimAI.Surgery.UI
                 RenderTranscript();
             }
 
-            var st = UIFactory.Panel(root, "Status", new Color(0, 0, 0, 0.55f)); UIFactory.Place(st, new Vector2(0.70f, 0.95f), new Vector2(0.99f, 1f));
-            status = Txt(st, "", 17, statColor, TextAlignmentOptions.Center); UIFactory.Stretch(status.rectTransform, 4); status.enableAutoSizing = true; status.fontSizeMin = 10; status.fontSizeMax = 17; Set(status, stat);
+            // Connection status: a small, unobtrusive pill at the top centre (always English).
+            var st = UIFactory.Panel(root, "Status", new Color(0, 0, 0, 0.40f)); UIFactory.Place(st, new Vector2(0.42f, 0.968f), new Vector2(0.58f, 0.995f));
+            status = Txt(st, "", 13, statColor, TextAlignmentOptions.Center); UIFactory.Stretch(status.rectTransform, 2); status.enableAutoSizing = true; status.fontSizeMin = 9; status.fontSizeMax = 13; Set(status, stat);
             if (!useHostConversationPanel) { mic = Txt(root, "", 18, Brand.Muted, TextAlignmentOptions.Center); UIFactory.Place(mic.rectTransform, new Vector2(0.30f, 0.225f), new Vector2(0.70f, 0.26f)); Set(mic, micText); }
 
             BuildPause(); BuildDebrief();
@@ -133,7 +135,8 @@ namespace MedSimAI.Surgery.UI
         public void SetBanner(string text) { bannerText = text; if (banner) Set(banner, string.IsNullOrEmpty(text) ? "" : text); if (banner) banner.transform.parent.gameObject.SetActive(!string.IsNullOrEmpty(text)); }
         public void SetObjective(string title, string body, int index, int total)
         {
-            objT = title; objB = body; prog = total > 0 ? L($"Step {Mathf.Min(index + 1, total)} of {total}", $"الخطوة {Mathf.Min(index + 1, total)} من {total}") : "";
+            // Step counter and step name are always English (clean, consistent labels); the explanation follows the language.
+            objT = title; objB = body; prog = total > 0 ? $"Step {Mathf.Min(index + 1, total)} of {total}" : "";
             Set(objTitle, objT); Set(objBody, objB); Set(progress, prog);
         }
         public void SetStatus(string text, Color c) { stat = text; statColor = c; if (status) { Set(status, text); status.color = c; } }

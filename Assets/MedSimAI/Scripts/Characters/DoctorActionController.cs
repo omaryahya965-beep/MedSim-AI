@@ -118,6 +118,9 @@ namespace MedSimAI.Characters
                 case "look_at_student": if (student) { movement.Face(student.position); Gaze(student, 6f); } return true;
                 case "demonstrate_instrument":
                 {
+                    // A real, step-by-step demonstration at the bedside (ClinicalDemonstrator) when available; it reports back when done.
+                    var demo = ClinicalDemonstrator.Ensure();
+                    if (demo && demo.Begin(instrument, (ok, why) => ReportExternal(type, ok, why))) { external = true; return true; }
                     var tool = FindInstrument(instrument); if (!tool) return false;
                     movement.Face(tool.position); if (life) life.PointAt(tool, 4f); if (instructor) instructor.Gesture(CharacterMood.Explaining, tool); Gaze(tool, 4f);
                     return true;

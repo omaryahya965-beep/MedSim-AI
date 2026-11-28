@@ -1,6 +1,6 @@
 {
   "name": "MedSimAI.Surgery.Mechanics",
   "rootNamespace": "MedSimAI.Surgery.Mechanics",
-  "references": ["MedSimAI.Surgery.Shared","MedSimAI.Surgery.Shared.Unity","MedSimAI.Surgery.Anatomy","MedSimAI.Surgery.Instruments","Unity.XR.Interaction.Toolkit","Unity.XR.CoreUtils","Unity.InputSystem"],
+  "references": ["MedSimAI.Surgery.Shared","MedSimAI.Surgery.Shared.Unity","MedSimAI.Surgery.Anatomy","MedSimAI.Surgery.Instruments","Unity.XR.Interaction.Toolkit","Unity.XR.CoreUtils","Unity.InputSystem","Unity.TextMeshPro"],
   "autoReferenced": true
 }

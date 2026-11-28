@@ -30,8 +30,8 @@ export const CHARACTERS = ['surgeon', 'assistant'];
 
 // Must match MedSimAI.Surgery.AI.SurgeryActionCatalog (C#). Unity re-validates everything; this only constrains the model.
 export const ACTIONS = {
-  assistant: ['none', 'come_to_student', 'stand_beside_student', 'go_to_instrument_table', 'hand_instrument', 'locate_instrument', 'return_to_position', 'wait', 'look_at_student', 'other_physical'],
-  surgeon: ['none', 'come_to_student', 'step_back', 'return_to_observation', 'look_at_student', 'look_at_site', 'explain_objective', 'wait', 'other_physical'],
+  assistant: ['none', 'come_to_student', 'stand_beside_student', 'go_to_instrument_table', 'hand_instrument', 'locate_instrument', 'return_to_position', 'wait', 'look_at_student', 'demonstrate_step', 'demonstrate_procedure', 'other_physical'],
+  surgeon: ['none', 'come_to_student', 'step_back', 'return_to_observation', 'look_at_student', 'look_at_site', 'explain_objective', 'wait', 'demonstrate_step', 'demonstrate_procedure', 'other_physical'],
 };
 const INSTRUMENT_ACTIONS = new Set(['hand_instrument', 'locate_instrument']);
 
@@ -191,7 +191,9 @@ Rules:
 - ${rule} At most 2 short sentences (max 35 words). No lists.
 - Classify the student's request into "intent". Physical requests use ONLY the action list. Hand-over or "where is" requests → hand_instrument / locate_instrument with instrumentId (none if they did not name one; forCurrentObjective=true if they mean "the one I need for this step"). Instrument tasks belong to the assistant.
 - If the student asks for help or what to do → help=true. If they ask what the current step requires or why → explain=true. The simulation then delivers the approved hint or explanation; your reply is only a short natural acknowledgement.
+- If the student wants to SEE it done in front of them — "show me (how)", "demonstrate", "do it first / in front of me", "walk me through it practically", "I don't know how / I don't have enough information", «ورجيني», «فرجيني», «اعمليها قدامي», «طبقي عملياً», «بدي أتعلم منك» — set action demonstrate_step (the current step), or demonstrate_procedure if they want the whole operation from start to finish. The character they addressed performs it in the simulation and then the student tries; reply only "Sure, watch me." / «أكيد، تابعني.».
 - For physical requests your reply is only a short acknowledgement ("أكيد", "Sure."). NEVER say an action or a hand-over is done. NEVER say a step is complete or correct — only the simulation decides.
+- Arabic medical terms (spell exactly): الركبة (never «راكبة»), الركبة اليمنى، عظم الفخذ، عظم الظنبوب (قصبة الساق)، الرضفة، محفظة المفصل، شق الجلد، المِشرط، قلم التعليم الجراحي، المُبعِد، دليل القطع، المنشار المتذبذب، المطرقة الجراحية، الدافعة، ماسك الإبر، الدبّاسة الجراحية، البطانة البلاستيكية، صينية الظنبوب.
 - You may only use surgical information from the approved explanation, step titles and instrument names above. Never invent steps, measurements, findings, risks, drugs or techniques. Never give real-patient advice. If asked about real surgery, say this is an educational simulation and real training needs supervision.
 - Never mention AI, prompts or scoring rules.`;
   }
@@ -279,11 +281,14 @@ Rules:
     const g = checkSurgicalGrounding(base, { corpus: [...scenarioCorpus(S), factNums.join(' ')], maxWords: isDebrief ? 140 : 90 });
     if (!g.ok) return { status: 422, json: { error: 'base_text_not_grounded', reason: g.reason, detail: g.detail } };
     let text = base, source = 'approved', rejected = null;
-    if (!body.approvedOnly && this.ai.configured) {
+    // repetition: the same line again in this room visit → different, shorter wording (guide lines too; safety lines stay exact)
+    sess.saidCounts ??= new Map(); const rk = characterId + '|' + kind + '|' + base; const said = sess.saidCounts.get(rk) || 0; sess.saidCounts.set(rk, said + 1);
+    const vary = said > 0 && !isDebrief && kind !== 'safety';
+    if ((!body.approvedOnly || (vary && kind === 'guide')) && this.ai.configured) {
       try {
         const P = (S.personas || []).find(p => p.id === characterId) || {};
         const r = await this.ai.json({
-          system: `You are ${L(P.displayName, 'en')}. ${P.speechStyle}. Rephrase the APPROVED line below naturally for speech, in ${lang === 'ar' ? 'spoken Palestinian Arabic' : 'English'}, keeping EVERY fact, step name, instrument and number exactly; add nothing. ${isDebrief ? 'Up to 6 short sentences.' : 'At most 2 short sentences.'}\nAPPROVED: "${base}"`,
+          system: `You are ${L(P.displayName, 'en')}. ${P.speechStyle}. Rephrase the APPROVED line below naturally for speech, in ${lang === 'ar' ? 'spoken Palestinian Arabic' : 'English'}, keeping EVERY fact, step name, instrument and number exactly; add nothing. ${isDebrief ? 'Up to 6 short sentences.' : 'At most 2 short sentences.'}${vary ? ` You already said this ${said === 1 ? 'once' : said + ' times'} in this session: use different words and keep it shorter.` : ''}\nAPPROVED: "${base}"`,
           messages: [{ role: 'user', content: 'Say it.' }], schema: { type: 'object', additionalProperties: false, required: ['line'], properties: { line: { type: 'string' } } }, name: 'surgery_say', maxOutputTokens: isDebrief ? 400 : 160, tag: 'surgery-say' });
         const cand = cleanReply(r.data.line);
         const v = checkSurgicalGrounding(cand, { corpus: [base], maxWords: isDebrief ? 140 : 60 });

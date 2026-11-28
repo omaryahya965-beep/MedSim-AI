@@ -17,6 +17,11 @@ namespace MedSimAI.Hospital
         public bool IsClosed => open01 < 0.02f;
 
         Vector3 closedL, closedR; float open01, lastPresence = -100f, nextScan;
+        public static readonly List<AutoSlidingDoor> All = new List<AutoSlidingDoor>();
+        void OnEnable() { if (!All.Contains(this)) All.Add(this); }
+        void OnDisable() { All.Remove(this); }
+        /// <summary>Someone is about to walk through (route planning): open now and stay open for at least <paramref name="seconds"/>.</summary>
+        public void HoldOpen(float seconds) { lastPresence = Mathf.Max(lastPresence, Time.time + seconds - holdOpenSeconds); }
         readonly List<Transform> sensed = new List<Transform>();
 
         void Awake()

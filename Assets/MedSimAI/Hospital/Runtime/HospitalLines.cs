@@ -25,6 +25,7 @@ namespace MedSimAI.Hospital
                 case "where_next_after_surgical": return ar ? "خلصنا تدريب العملية. إذا حابب، فينا نروح على الغرفة الأولى لفحص المريض." : "We've finished the surgical training. If you like, we can go to Room 01 to examine the patient.";
                 case "both_done": return ar ? "خلصت الحالتين اليوم. بتقدر تعيد أي وحدة منهم وقت ما بدك." : "You've completed both cases today. You can repeat either of them whenever you like.";
                 case "clarify_room": return ar ? "أي غرفة بتقصد: الغرفة الأولى ولا غرفة العمليات؟" : "Which room do you mean: Room 01 or the operating room?";
+                case "demo_go_room01": return ar ? "أكيد. تعال معي على الغرفة الأولى، ورح أوريك عملياً عند المريض، وبعدين بتجرب إنت." : "Of course. Come with me to Room 01; I'll show you at the bedside, and then you'll try.";
                 case "follow_room01": return ar ? "تمام، تعال معي على الغرفة الأولى." : "Sure, follow me to Room 01.";
                 case "follow_room02": return ar ? "تمام، تعال معي على غرفة العمليات." : "Sure, follow me to the operating room.";
                 case "follow_corridor": return ar ? "تمام، خلينا نطلع عالممر." : "All right, let's go back to the corridor.";

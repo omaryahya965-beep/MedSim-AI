@@ -236,7 +236,7 @@ namespace MedSimAI.Surgery.Tests
             foreach (var o in s.Ordered.Take(2)) foreach (var e in Runs.Objective(o)) Pub(e);
             var r = SurgicalAssessmentEngine.Evaluate(s, bus.Log);
             var en = SurgicalDebriefComposer.Written(r, "en"); var ar = SurgicalDebriefComposer.Written(r, "ar");
-            StringAssert.Contains(SurgeryContract.VALIDATION_BANNER, en); StringAssert.Contains(SurgeryContract.VALIDATION_BANNER_AR, ar);
+            StringAssert.DoesNotContain(SurgeryContract.VALIDATION_BANNER, en); StringAssert.DoesNotContain(SurgeryContract.VALIDATION_BANNER_AR, ar);   // owner request: no draft ribbon in the live debrief (status kept in result.validationBanner and docs)
             StringAssert.Contains("✓ " + s.Objective("obj.incision").title.en, en);
             StringAssert.Contains("✗ " + s.Objective("obj.closure").title.en, en);
             StringAssert.Contains("✓ " + s.Objective("obj.incision").title.ar, ar);

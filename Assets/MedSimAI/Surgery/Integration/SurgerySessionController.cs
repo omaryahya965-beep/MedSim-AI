@@ -40,6 +40,10 @@ namespace MedSimAI.Surgery.Integration
         public static Func<string, bool> UtteranceInterceptor;
         /// <summary>Host hook: what the surgical voice path heard the student say (the hospital shows it in its shared conversation panel).</summary>
         public static Action<string> StudentHeard;
+        /// <summary>The student asked to stop a running demonstration ("enough, let me try").</summary>
+        public static event Action StopDemonstrationRequested;
+        /// <summary>No character line is playing or queued (demonstration narration waits for this).</summary>
+        public bool SpeechIdle => !speaking && queue.Count == 0 && !voiceTurnBusy;
 
         public SurgerySessionCore Core { get; private set; }
         public SurgeryLiveClient Live { get; private set; }
@@ -100,7 +104,7 @@ namespace MedSimAI.Surgery.Integration
                 hud.RestartRequested += Restart; hud.MenuRequested += ReturnToMenu; hud.FinishRequested += () => Core.Complete();
                 hud.LanguageToggled += () => SetLanguage(Core.Language == "ar" ? "en" : "ar");
                 hud.MicModeToggled += () => { if (voice) voice.SetMode(voice.mode == SurgeryVoiceInput.Mode.HandsFree ? SurgeryVoiceInput.Mode.PushToTalk : SurgeryVoiceInput.Mode.HandsFree); };
-                hud.SetBanner(Scenario.ValidationBanner(Core.Language));
+                hud.SetBanner("");   // no draft/validation ribbon in the live experience (status documented in Docs/)
             }
             RefreshMic();
 
@@ -169,16 +173,27 @@ namespace MedSimAI.Surgery.Integration
             if (!hud) return;
             var id = Core.Runtime?.CurrentObjectiveId ?? Core.Supervisor.CurrentObjectiveId;
             var o = Scenario.Objective(id); var ordered = Scenario.Ordered.ToList();
-            if (o == null) hud.SetObjective(Core.Completed ? (Core.Language == "ar" ? "اكتملت العملية الافتراضية" : "Simulated procedure complete") : (Core.Language == "ar" ? "استعد" : "Get ready"), "", ordered.Count, ordered.Count);
-            else hud.SetObjective(o.title.Get(Core.Language), o.explanation.Get(Core.Language), ordered.IndexOf(o), ordered.Count);
+            if (o == null) hud.SetObjective(Core.Completed ? "Simulated procedure complete" : "Get ready", "", ordered.Count, ordered.Count);
+            else hud.SetObjective(o.title.Get("en"), ToolLine(o) + o.explanation.Get(Core.Language), ordered.IndexOf(o), ordered.Count);   // step names always in English
+        }
+
+        /// <summary>"Tool: skin marker → marked site on the right knee" (first line of the step panel), from the authored scenario.</summary>
+        string ToolLine(SurgicalObjective o)
+        {
+            bool ar = Core.Language == "ar";
+            var tools = (o.requiredTools ?? new string[0]).Select(t => Scenario.Instrument(t)?.name.Get(Core.Language) ?? t).ToList();
+            if (!string.IsNullOrEmpty(o.implantId)) tools.Insert(0, Scenario.implants.FirstOrDefault(i => i.id == o.implantId)?.name.Get(Core.Language) ?? o.implantId);
+            var where = o.targets != null && o.targets.Length > 0 ? Scenario.targets.FirstOrDefault(t => t.id == o.targets[0])?.name.Get(Core.Language) : null;
+            if (tools.Count == 0) return "";
+            return (ar ? "<b>الأداة:</b> " : "<b>Tool:</b> ") + string.Join(ar ? " ثم " : " then ", tools) + (string.IsNullOrEmpty(where) ? "" : (ar ? " · المكان: " : " · Where: ") + where) + "\n";
         }
 
         void RefreshStatus()
         {
             if (!hud) return;
-            string ai = Live != null && Live.Online ? (Core.Language == "ar" ? "الذكاء الاصطناعي: متصل" : "Live AI: online")
-                : (Core.Language == "ar" ? "نص فقط (الذكاء الاصطناعي غير متصل)" : "Text-only (Live AI offline)") + (string.IsNullOrEmpty(Live?.LastError) ? "" : " — " + Live.LastError);
-            if (UsingMockMechanics) ai += Core.Language == "ar" ? " · ميكانيكا تجريبية (MOCK)" : " · MOCK mechanics";
+            // Always English and short: "AI connected" / "AI offline · text only".
+            string ai = Live != null && Live.Online ? "AI connected" : "AI offline · text only" + (string.IsNullOrEmpty(Live?.LastError) ? "" : " (" + Live.LastError + ")");
+            if (UsingMockMechanics) ai += " · MOCK mechanics";
             hud.SetStatus(ai, Live != null && Live.Online && !UsingMockMechanics ? new Color(0.4f, 1f, 0.85f) : new Color(1f, 0.75f, 0.3f));
         }
 
@@ -272,6 +287,7 @@ namespace MedSimAI.Surgery.Integration
                 var intent = ToIntent(meta, characterId);
                 if (!string.IsNullOrEmpty(intent.languageCommand)) SetLanguage(intent.languageCommand, lockIt: true);
                 if (!string.IsNullOrEmpty(meta.text) && c && c.Speech) { hud?.AddLine(NameOf(characterId), meta.text); currentSpeaker = c.Speech; c.Speech.SpeakStreaming(meta.text, stream); }
+                if (intent.stopDemo) StopDemonstrationRequested?.Invoke();
                 if (meta.deferred || intent.helpRequest || intent.explainRequest || intent.action.action != SurgeryActionCatalog.None) Core.HandleRequest(intent);
             }
             while (!req.isDone) yield return null;
@@ -301,7 +317,7 @@ namespace MedSimAI.Surgery.Integration
         {
             Core.Language = lang; if (Live != null) { Live.Language = Core.Language; if (lockIt) Live.LangLock = Core.Language; }
             ScenarioRouter.Language = Core.Language;
-            if (hud) { hud.Language = Core.Language; hud.Rebuild(); hud.SetBanner(Scenario.ValidationBanner(Core.Language)); }
+            if (hud) { hud.Language = Core.Language; hud.Rebuild(); hud.SetBanner(""); }
             RefreshObjective(); RefreshStatus(); RefreshMic();
         }
 
@@ -340,6 +356,12 @@ namespace MedSimAI.Surgery.Integration
             var kb = UnityEngine.InputSystem.Keyboard.current; if (kb == null || Core == null || !Core.Active || (hud && hud.Paused)) return;
             if (kb.hKey.wasPressedThisFrame) Core.HandleRequest(new SurgeryIntentParser.Intent { helpRequest = true, addressed = SurgeryCharacterIds.Surgeon });
             if (kb.jKey.wasPressedThisFrame) Core.HandleRequest(new SurgeryIntentParser.Intent { explainRequest = true, addressed = SurgeryCharacterIds.Surgeon });
+            // G = "show me this step", Shift+G = "show me the whole procedure" (same validated path as the spoken request)
+            if (kb.gKey.wasPressedThisFrame)
+            {
+                bool full = kb.leftShiftKey.isPressed || kb.rightShiftKey.isPressed;
+                Core.HandleRequest(new SurgeryIntentParser.Intent { addressed = SurgeryCharacterIds.Surgeon, action = new ProposedAction { characterId = SurgeryCharacterIds.Surgeon, action = full ? SurgeryActionCatalog.DemonstrateProcedure : SurgeryActionCatalog.DemonstrateStep, utterance = full ? "show me the whole procedure" : "show me this step" } });
+            }
         }
     }
 

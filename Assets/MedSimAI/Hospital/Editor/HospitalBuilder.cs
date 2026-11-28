@@ -481,7 +481,7 @@ namespace MedSimAI.Hospital.EditorTools
                 var w2 = CloneUnder(welcome.gameObject, corridor, "Welcome_Sign_Lobby", new Vector3(XEnd - 0.03f, 1.75f, -6.6f), Quaternion.LookRotation(Vector3.left) * Quaternion.Inverse(welcome.rotation) * welcome.rotation);
                 w2.transform.rotation = Quaternion.LookRotation(Vector3.right);   // panel faces into the lobby (−X)
                 SetTexts(w2, "MedSim AI Training Hospital", "مستشفى ميدسيم للتدريب");
-                var small = w2.GetComponentsInChildren<TMP_Text>(true).OrderBy(t => t.fontSize).FirstOrDefault(); if (small) ArabicShaper.Apply(small, "Educational simulation · DRAFT — not clinically validated");
+                var small = w2.GetComponentsInChildren<TMP_Text>(true).OrderBy(t => t.fontSize).FirstOrDefault(); if (small) ArabicShaper.Apply(small, "Educational simulation");
             }
             report.Add("✓ Bilingual room signs: Room 01 · Clinical Examination / Room 02 · Surgical Training; lobby sign");
         }

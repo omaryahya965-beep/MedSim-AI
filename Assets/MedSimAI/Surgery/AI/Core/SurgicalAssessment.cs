@@ -196,7 +196,7 @@ namespace MedSimAI.Surgery.AI
             bool ar = lang == "ar"; var b = new StringBuilder();
             string L(string en, string a) => ar ? a : en;
             b.AppendLine(L("Surgical training debrief", "تقرير تقييم التدريب الجراحي"));
-            b.AppendLine(ar ? SurgeryContract.VALIDATION_BANNER_AR : SurgeryContract.VALIDATION_BANNER);
+            // (no draft/validation line in the on-screen debrief; the result record keeps validationBanner for logs and reports)
             b.AppendLine(L($"Score: {r.score}/{r.maxScore} ({r.Percent:0}%) · Time: {SurgicalAssessmentEngine.Mmss(r.durationSeconds)} · Hints: {r.hintsGiven} · Interventions: {r.interventions}",
                            $"النتيجة: {r.score}/{r.maxScore} ({r.Percent:0}%) · الوقت: {SurgicalAssessmentEngine.Mmss(r.durationSeconds)} · التلميحات: {r.hintsGiven} · التدخلات: {r.interventions}"));
             b.AppendLine(L($"Valid interactions: {r.validInteractions} · Invalid interactions: {r.invalidInteractions}", $"تفاعلات صحيحة: {r.validInteractions} · تفاعلات غير صحيحة: {r.invalidInteractions}"));

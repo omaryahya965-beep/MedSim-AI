@@ -30,8 +30,18 @@ const INSTRUCTOR_INTENTS = ['physical_request', 'greeting', 'hint_request', 'inv
 
 /** Removes stray JSON/quote debris the model occasionally leaves around a reply (e.g. a trailing "}). */
 export function cleanReply(x) {
-  return String(x || '').trim().replace(/^[\s"“”'{\[]+/, '').replace(/[\s"“”{}\[\]]+$/, '').replace(/\s{2,}/g, ' ').trim();
+  return fixArabicTerms(String(x || '').trim().replace(/^[\s"“”'{\[]+/, '').replace(/[\s"“”{}\[\]]+$/, '').replace(/\s{2,}/g, ' ').trim());
 }
+// Arabic medical spelling: the model occasionally writes «راكبة» (a rider) for «ركبة» (knee), or a final ه for ة.
+// Word-bounded (Arabic letters are not \w in JS), with the usual attached prefixes kept.
+const AR = 'ء-ي٠-٩ٮ-ۓ';
+const AR_TERM_FIXES = [
+  [new RegExp(`(^|[^${AR}])((?:و|ف)?(?:ب|ل|ك)?(?:ال)?)راكب[ةه](?=[^${AR}]|$)`, 'g'), '$1$2ركبة'],
+  [new RegExp(`(^|[^${AR}])((?:و|ف)?(?:ب|ل|ك)?(?:ال)?)ركبه(?=[^${AR}]|$)`, 'g'), '$1$2ركبة'],
+  [new RegExp(`(^|[^${AR}])((?:و|ف)?(?:ب|ل|ك)?(?:ال)?)رضفه(?=[^${AR}]|$)`, 'g'), '$1$2رضفة'],
+  [new RegExp(`(^|[^${AR}])((?:و|ف)?(?:ب|ل|ك)?(?:ال)?)(كفه)(?= الضغط)`, 'g'), '$1$2كفّة'],
+];
+export function fixArabicTerms(s) { let t = String(s || ''); for (const [re, to] of AR_TERM_FIXES) t = t.replace(re, to); return t; }
 export function echoWords(t) { return String(t || '').toLowerCase().replace(/[ً-ْـ]/g, '').replace(/[إأآ]/g, 'ا').replace(/ة/g, 'ه').replace(/[^\p{L}\p{N}\s]/gu, ' ').split(/\s+/).filter(x => x.length > 1); }
 /** True when the Realtime session reports no intelligible student speech (noise, echo of the characters, silence). */
 export function isNoSpeech(h) {
@@ -404,12 +414,15 @@ Speak ${lang === 'ar' ? 'in natural Arabic' : 'in natural English'}: 4-6 sentenc
       if (lang === 'ar') fallback = [met.length ? `أحسنت في ${met.length > 1 ? 'عدة نقاط أساسية' : 'نقطة أساسية'} بالتقييم.` : '', critical.length ? 'بس في إشي مهم كتير للسلامة فاتك، ولازم تنتبهله المرة الجاية.' : (missed.length ? 'وفي كم نقطة فاتتك وبتستاهل تراجعها.' : ''), res.escalated ? 'وكان منيح إنك صعّدت الحالة للفريق الأعلى.' : '', 'اطّلع على التقرير المفصّل لتشوف كل التفاصيل.'].filter(Boolean).join(' ');
       else fallback = [met.length ? `You did well with ${met.slice(0, 2).join(' and ').toLowerCase()}.` : '', critical.length ? `The most important thing you missed: ${critical[0].toLowerCase()}` : (missed.length ? `Next time, remember: ${missed[0].toLowerCase()}` : ''), `For this patient, the key point is: ${S.expectedReasoning.keyPoints[S.expectedReasoning.keyPoints.length - 1].toLowerCase()}.`, 'Have a look at the detailed report when you are ready.'].filter(Boolean).join(' ');
     } else {
-      const purpose = { welcome: ctx.location === 'room01' ? 'The student has just come into the examination room with you (they are already inside, the door is open). Welcome them and brief the task, using the approved line below. 2-3 short sentences, under 15 seconds of speech. Do not tell them to open the door.' : 'Welcome the student in the corridor and brief the task, using the approved brief below. 2-3 short sentences, under 15 seconds of speech.',
+      let purpose = { welcome: ctx.location === 'room01' ? 'The student has just come into the examination room with you (they are already inside, the door is open). Welcome them and brief the task, using the approved line below. 2-3 short sentences, under 15 seconds of speech. Do not tell them to open the door.' : 'Welcome the student in the corridor and brief the task, using the approved brief below. 2-3 short sentences, under 15 seconds of speech.',
         intervention: 'Say this coaching line to the student now, in your own natural words, keeping exactly the same meaning and the same level of hinting (do not give more of the answer).',
         discussion: 'Ask the student this discussion question in your own natural words. You may briefly connect it to what they just said.',
         result: 'Tell the student this investigation result conversationally. Keep every number and term exactly as given.',
         ack: 'Say this acknowledgement naturally.',
         state: 'React naturally, in character, to how you feel now.' }[kind] || 'Say this line naturally, keeping the same meaning.';
+      // repetition: the same approved line again in this room visit → same meaning, different and shorter wording
+      sess.saidCounts ??= new Map(); const rk = persona + '|' + kind + '|' + base; const said = sess.saidCounts.get(rk) || 0; sess.saidCounts.set(rk, said + 1);
+      if (said > 0) purpose += ` You already said this ${said === 1 ? 'once' : said + ' times'} earlier in this visit: say it differently and more briefly, without repeating the same words.`;
       system = `You are ${P?.summary || ''} ${P?.speechStyle || ''} Boundaries: ${P?.boundaries || ''}
 Task: ${purpose}
 Approved line/brief: "${kind === 'welcome' && ctx.location !== 'room01' ? (S.instructorLines.welcomeBrief || base) : base}"${baseAr ? `\nApproved Arabic wording of the same line (use its meaning and terms): «${baseAr}»` : ''}

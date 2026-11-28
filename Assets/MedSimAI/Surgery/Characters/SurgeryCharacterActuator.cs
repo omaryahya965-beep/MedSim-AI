@@ -26,6 +26,8 @@ namespace MedSimAI.Surgery.Characters
 
         /// <summary>Simulation distances (m): the assistant can pick an instrument / hold it out to the student from here.</summary>
         public const float ReachToTool = 0.85f, HandOverDistance = 1.15f;
+        /// <summary>Host hook for demonstrate_step / demonstrate_procedure: return true when started; call done(ok, reason) once at the end.</summary>
+        public static Func<CharacterActionRequest, Action<bool, string>, bool> DemonstrationHandler;
         static float Flat(Vector3 a, Vector3 b) { a.y = 0; b.y = 0; return Vector3.Distance(a, b); }
 
         public void Execute(CharacterActionRequest r, Action<CharacterActionResult> onDone)
@@ -84,6 +86,11 @@ namespace MedSimAI.Surgery.Characters
                     }, tool);
                     break;
                 }
+                case SurgeryActionCatalog.DemonstrateStep:
+                case SurgeryActionCatalog.DemonstrateProcedure:
+                    // Embodied teaching is run by the host's demonstrator (it drives walking, reaching, the tools and narration).
+                    if (DemonstrationHandler == null || !DemonstrationHandler(r, (ok, why) => Done(ok ? ActionOutcome.Completed : ActionOutcome.Unavailable, why))) Done(ActionOutcome.Unavailable, "no_demonstrator");
+                    break;
                 default: Done(ActionOutcome.Denied, "not_supported"); break;
             }
         }

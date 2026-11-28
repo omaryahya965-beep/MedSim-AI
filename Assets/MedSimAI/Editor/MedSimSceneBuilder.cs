@@ -491,7 +491,7 @@ namespace MedSimAI.EditorTools
             chart.position = bed.position + new Vector3(-0.22f, 0.86f, -1.075f); chart.rotation = Quaternion.Euler(10, 0, 0);
             Box("Chart_Board", chart, new Vector3(0.24f, 0.32f, 0.008f), 0.006f, Mat("Chart_Board", new Color(0.1f, 0.35f, 0.42f), 0.5f), Vector3.zero);
             Box("Chart_Paper", chart, new Vector3(0.21f, 0.28f, 0.002f), 0.001f, Mat("Poster_Paper", Color.white), new Vector3(0, -0.01f, -0.005f));
-            Label(chart, "<b>EMERGENCY DEPT · BAY 3</b>\n<size=80%>Name: <b>REYES, Adam</b>  (fictional)\nAge/Sex: 58 M   MRN: SIM-0001\nTriage: chest pain, ~45 min\nTriage category: 2 (very urgent)\nAllergies: <i>to be confirmed</i>\nMonitoring: 3-lead ECG attached</size>\n\n<size=65%><color=#B71C1C>DRAFT — NOT CLINICALLY VALIDATED</color></size>",
+            Label(chart, "<b>EMERGENCY DEPT · BAY 3</b>\n<size=80%>Name: <b>REYES, Adam</b>  (fictional)\nAge/Sex: 58 M   MRN: SIM-0001\nTriage: chest pain, ~45 min\nTriage category: 2 (very urgent)\nAllergies: <i>to be confirmed</i>\nMonitoring: 3-lead ECG attached</size>",
                 new Vector3(0, -0.01f, -0.007f), Vector3.zero, 0.13f, new Color(0.08f, 0.1f, 0.16f), new Vector2(0.2f, 0.26f), TextAlignmentOptions.TopLeft);
             return bed;
         }
@@ -554,7 +554,7 @@ namespace MedSimAI.EditorTools
             // Posters & signage (world text on mounted panels)
             Poster(props, "HAND HYGIENE", "<b>Your 5 moments</b>\n1  Before touching a patient\n2  Before clean / aseptic procedures\n3  After body fluid exposure risk\n4  After touching a patient\n5  After touching patient surroundings", new Vector3(RX - 0.01f, 1.55f, -1.2f), -90, new Color(0.0f, 0.5f, 0.55f));
             Poster(props, "CHEST PAIN", "<b>Think time-critical</b>\n• Early 12-lead ECG\n• Repeat observations\n• Escalate concerns early\n• Follow local ACS pathway\n\n<size=70%>Educational simulation poster</size>", new Vector3(-0.2f, 1.6f, -RZ + 0.01f), 0, new Color(0.65f, 0.12f, 0.15f));
-            Poster(props, "MEDSIM AI", "<b>Simulation Suite</b>\nAll patients are fictional.\nScenario content is DRAFT and not\nclinically validated.", new Vector3(-1.9f, 1.6f, -RZ + 0.01f), 0, new Color(0.04f, 0.1f, 0.18f));
+            Poster(props, "MEDSIM AI", "<b>Simulation Suite</b>\nAll patients are fictional.\nEducational simulation.", new Vector3(-1.9f, 1.6f, -RZ + 0.01f), 0, new Color(0.04f, 0.1f, 0.18f));
         }
 
         static void Poster(Transform parent, string title, string body, Vector3 pos, float yaw, Color accent)

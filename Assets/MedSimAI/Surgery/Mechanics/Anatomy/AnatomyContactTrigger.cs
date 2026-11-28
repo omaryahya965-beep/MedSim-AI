@@ -67,9 +67,16 @@ namespace MedSimAI.Surgery.Mechanics
             if (!IsHeld(inst) || !TipAt(inst, targetCol)) { e.dwell = 0f; return false; }     // incidental: ignored, no penalty
             e.dwell += dt;
             if (e.dwell < minDwellSeconds) return false;
-            e.fired = true;
             if (interactionController == null) interactionController = FindFirstObjectByType<AnatomyInteractionController>();
             if (interactionController == null) return false;
+            // Nested targets: when the tip also touches a more specific target that the current step needs (e.g. the marking
+            // site inside the wound box), that target's own trigger counts the application; this enclosing box stays quiet.
+            if (inst.tip != null)
+            {
+                var near = AnatomyInteractionController.TargetsNear(inst.tip.position, tipTolerance);
+                if (near.Count > 1) { var best = interactionController.ResolveTarget(near); if (!string.IsNullOrEmpty(best) && best != targetId) return false; }
+            }
+            e.fired = true;
             Applied++;
             interactionController.HandleContact(inst.instrumentId, targetId);
             return true;

@@ -41,6 +41,14 @@ namespace MedSimAI.Surgery.Mechanics
         /// together, through SurgerySessionController.Restart) instead of resetting only the mechanics.
         /// </summary>
         public static Action ResetRequested;
+        /// <summary>Shows/clears the "press R again" confirmation (host HUD). Empty string = clear.</summary>
+        public static Action<string> ResetPrompt;
+        float resetArmedAt = -10f;
+        /// <summary>The point on the patient the desktop aim ray is on (for guided drawing), or null.</summary>
+        public Ray AimRay => playerCamera ? playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0)) : new Ray();
+        public Transform HeldObject => heldObject;
+        /// <summary>Guided drawing (site marking): world point the held tool's tip is held on; null = normal hold.</summary>
+        public Vector3? TipLock { get; set; }
         public string HeldToolId => heldToolId;
         public string HeldImplantId => heldImplantId;
 
@@ -67,13 +75,17 @@ namespace MedSimAI.Surgery.Mechanics
             var keyboard = Keyboard.current;
             if (mouse == null || keyboard == null) return;
 
-            // R: Reset simulation
+            // R: Reset simulation — deliberate only: press R twice within 3 s (one accidental R restarted the whole operation
+            // during manual testing). The first press only shows the confirmation prompt.
             if (keyboard.rKey.wasPressedThisFrame && (resetController != null || ResetRequested != null))
             {
+                if (Time.unscaledTime - resetArmedAt > 3f) { resetArmedAt = Time.unscaledTime; ResetPrompt?.Invoke("Press R again to restart the operation from step 1"); return; }
+                resetArmedAt = -10f; ResetPrompt?.Invoke("");
                 DropHeldItem();
                 if (ResetRequested != null) ResetRequested(); else resetController.ExecuteReset();
                 return;
             }
+            if (resetArmedAt > 0 && Time.unscaledTime - resetArmedAt > 3f) { resetArmedAt = -10f; ResetPrompt?.Invoke(""); }
 
             // Left-Click: Pick up or Interact
             if (mouse.leftButton.wasPressedThisFrame)
@@ -202,17 +214,25 @@ namespace MedSimAI.Surgery.Mechanics
             if (playerCamera == null) return;
 
             Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
-            if (Physics.Raycast(ray, out RaycastHit hit, pickupRange))
+            // Every anatomy target along the aim ray (they are nested boxes); the resolver picks the one the current step needs.
+            var hits = Physics.RaycastAll(ray, pickupRange, ~0, QueryTriggerInteraction.Collide);
+            var candidates = new System.Collections.Generic.List<(string, Collider)>();
+            float firstSolid = float.MaxValue;
+            foreach (var h in hits) if (!h.collider.isTrigger && !h.collider.GetComponentInParent<SurgeryInstrumentTag>() && !h.collider.GetComponentInParent<SurgeryImplantTag>()) firstSolid = Mathf.Min(firstSolid, h.distance);
+            foreach (var h in hits)
             {
-                var anatomyTag = hit.collider.GetComponent<SurgeryAnatomyTag>();
-                if (anatomyTag != null && !string.IsNullOrEmpty(heldToolId) && anatomyController != null)
-                {
-                    anatomyController.HandleContact(heldToolId, anatomyTag.targetId);
-                }
-                else if (anatomyTag != null && !string.IsNullOrEmpty(heldImplantId) && implantController != null)
-                {
-                    implantController.CheckPlacementAttempt(heldImplantId);
-                }
+                var tag = h.collider.GetComponent<SurgeryAnatomyTag>();
+                if (tag != null && h.distance <= firstSolid + 0.25f) candidates.Add((tag.targetId, h.collider));   // not through walls/furniture
+            }
+            if (candidates.Count == 0) return;
+            string targetId = anatomyController != null ? anatomyController.ResolveTarget(candidates) : candidates[0].Item1;
+            if (!string.IsNullOrEmpty(heldToolId) && anatomyController != null)
+            {
+                anatomyController.HandleContact(heldToolId, targetId);
+            }
+            else if (!string.IsNullOrEmpty(heldImplantId) && implantController != null)
+            {
+                implantController.CheckPlacementAttempt(heldImplantId);
             }
         }
 
@@ -220,12 +240,25 @@ namespace MedSimAI.Surgery.Mechanics
         {
             if (heldObject == null || playerCamera == null) return;
 
+            var tag = heldObject.GetComponent<SurgeryInstrumentTag>();
+            if (TipLock.HasValue && tag && tag.tip)
+            {   // guided drawing: the working tip rests on the skin, the tool tilted toward the student like a held pen
+                var camFlat = Vector3.ProjectOnPlane(playerCamera.transform.forward, Vector3.up).normalized;
+                var lockRot = Quaternion.LookRotation((Vector3.down * 0.8f + camFlat * 0.6f).normalized, camFlat);
+                heldObject.rotation = Quaternion.Slerp(heldObject.rotation, lockRot, Time.deltaTime * followSpeed);
+                heldObject.position += TipLock.Value - tag.tip.position;
+                return;
+            }
+
             Vector3 targetPos = playerCamera.transform.position +
                                 playerCamera.transform.forward * currentHoldDistance +
                                 playerCamera.transform.right * 0.15f -
                                 playerCamera.transform.up * 0.12f;
 
-            Quaternion targetRot = playerCamera.transform.rotation * targetHoldRotation;
+            // Natural hold: the grip (pivot) sits low-right in view and the working tip points forward, slightly down and toward
+            // the centre of view (where the student aims), instead of straight away from the camera.
+            Quaternion grip = Quaternion.Euler(18f, -10f, 0f);
+            Quaternion targetRot = playerCamera.transform.rotation * grip * targetHoldRotation;
 
             heldObject.position = Vector3.Lerp(heldObject.position, targetPos, Time.deltaTime * followSpeed);
             heldObject.rotation = Quaternion.Slerp(heldObject.rotation, targetRot, Time.deltaTime * followSpeed);

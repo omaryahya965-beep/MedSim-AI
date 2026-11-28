@@ -71,7 +71,7 @@ namespace MedSimAI.Hospital
             // The original clinical experience remains available on its own: MedSimAI.exe -clinical-only
             if (System.Environment.GetCommandLineArgs().Any(a => a == "-clinical-only")) { UnityEngine.SceneManagement.SceneManager.LoadScene("MedSim_ER"); return; }
             Instance = this;
-            VoiceInteractionManager.UtteranceInterceptor = (p, text) => HandleUtterance(text);
+            VoiceInteractionManager.UtteranceInterceptor = (p, text) => HandleDemonstrationRequest(p, text) || HandleUtterance(text);
             VoiceInteractionManager.TargetAvailable = p => p != Persona.Patient || PlayerRoom == HospitalRoomId.Room01;   // Mr. Reyes only in Room 01
             LiveAIClient.LocationProvider = () => PlayerRoom == HospitalRoomId.Room01 ? "room01" : PlayerRoom == HospitalRoomId.Room02 ? "room02" : Head && Head.position.x > 9.6f ? "reception" : "corridor";   // the doctor knows where the student is
             SurgerySessionController.UtteranceInterceptor = text => HandleUtterance(text);
@@ -106,6 +106,7 @@ namespace MedSimAI.Hospital
             }
             if (AIProviderManager.Instance) AIProviderManager.Instance.LanguageChanged += _ => directory?.Refresh();
             while (clinical && clinical.State == AppState.Loading) yield return null;
+            MedSimAI.UI.LiveTextPolicy.ScrubScene();   // no draft/validation labels on world props in the live experience
             yield return new WaitForSeconds(welcomeDelay);
             Welcome(false);
         }
@@ -124,12 +125,16 @@ namespace MedSimAI.Hospital
         public void SayLine(string id)
         {
             var text = HospitalLines.Get(id, Language); if (string.IsNullOrEmpty(text)) return;
+            // the same guide line again within a few seconds (e.g. three "follow me" in a row in manual testing): say it once
+            if (lastLineId == id && Time.time - lastLineAt < 12f) { Note("say:" + id + " (skipped: just said)"); return; }
+            lastLineId = id; lastLineAt = Time.time;
             GuideSaid?.Invoke(id); Note("say:" + id);
             if (surgery && surgery.Active) { surgery.Say(text); return; }
             var v = VoiceInteractionManager.Instance;
             if (v) _ = v.SayLive(Persona.Instructor, "hospital", text);
         }
 
+        string lastLineId; float lastLineAt = -100f;
         void Note(string s) { Log.Add($"{Time.time:0.0}s {s}"); Debug.Log("[Hospital] " + s); }
 
         // ------------------------------------------------------------------ understanding the student
@@ -148,6 +153,45 @@ namespace MedSimAI.Hospital
             Note("heard '" + text + "' → " + intent);
             Execute(intent, "voice");
             return true;
+        }
+
+        // ------------------------------------------------------------------ demonstrations (explain → demonstrate → let me try)
+        string pendingDemo;   // asked in the corridor: started once the student and the doctor are in Room 01
+        /// <summary>
+        /// "Show me / do it in front of me / I want to learn from you" addressed to the doctor. In Room 01 she demonstrates at
+        /// the bedside right away; in the corridor she first walks the student to Room 01 (the request usually also says "go
+        /// and see the patient"). "Enough, let me try" stops a running demonstration. Returns true when consumed.
+        /// </summary>
+        public bool HandleDemonstrationRequest(Persona addressed, string text)
+        {
+            var d = MedSimAI.Surgery.Shared.DemonstrationIntent.Detect(text);
+            var demo = ClinicalDemonstrator.Instance;
+            if (d.stop && demo && demo.Running) { Note("heard '" + text + "' → stop demonstration"); demo.Abort("stopped_by_student", true); return true; }
+            if (!d.demo || addressed == Persona.Patient) return false;
+            if (PlayerRoom == HospitalRoomId.Room01) { Note($"heard '{text}' → {d}"); StartClinicalDemo(d.full ? "full" : d.topic); return true; }
+            if (PlayerRoom == HospitalRoomId.Corridor)
+            {
+                Note($"heard '{text}' → {d} (in Room 01)");
+                pendingDemo = d.full ? "full" : (string.IsNullOrEmpty(d.topic) ? "interview" : d.topic);
+                SayLine("demo_go_room01");
+                RequestRoom(HospitalRoomId.Room01, "demonstration");
+                return true;
+            }
+            return false;   // the operating room handles its own demonstrations
+        }
+
+        public void StartClinicalDemo(string topic)
+        {
+            var demo = ClinicalDemonstrator.Ensure(); if (!demo) return;
+            Note("clinical demonstration " + (string.IsNullOrEmpty(topic) ? "(next)" : topic));
+            demo.Begin(topic);
+        }
+
+        IEnumerator StartPendingDemo()
+        {
+            float t0 = Time.time;
+            while (Time.time - t0 < 25f && (PlayerRoom != HospitalRoomId.Room01 || (VoiceInteractionManager.Instance && VoiceInteractionManager.Instance.Busy))) yield return null;
+            if (pendingDemo != null && PlayerRoom == HospitalRoomId.Room01) { var t = pendingDemo; pendingDemo = null; StartClinicalDemo(t); }
         }
 
         public void Execute(HospitalIntent intent, string via)
@@ -308,6 +352,7 @@ namespace MedSimAI.Hospital
             SessionRoom = HospitalRoomId.Room01;
             current = new HospitalSessionRecord { room = HospitalRoomId.Room01, scenarioId = ClinicalScenarioManager.Instance ? ClinicalScenarioManager.Instance.Scenario.scenarioId : "ER_CHEST_PAIN_001", sessionId = "clinical-" + Guid.NewGuid().ToString("N").Substring(0, 8), startedAt = Time.time, guided = guidedMode };
             Note($"clinical session started ({why}) {current.sessionId}");
+            if (pendingDemo != null) StartCoroutine(StartPendingDemo());
             // Student already inside with the door open (e.g. came back in): the doctor follows to her observation spot.
             if (PlayerRoom == HospitalRoomId.Room01 && clinical.examDoor && clinical.examDoor.IsOpen && clinical.doctorMovement && clinical.doctorObserveMark)
                 clinical.doctorMovement.GoTo(clinical.doctorObserveMark, clinical.doctorDoorwayMark);
@@ -330,6 +375,7 @@ namespace MedSimAI.Hospital
             if (SessionRoom == HospitalRoomId.None) return;
             var room = SessionRoom; SessionRoom = HospitalRoomId.None;
             bool finished = current != null && current.outcome == "completed";
+            if (room == HospitalRoomId.Room01 && ClinicalDemonstrator.Instance) ClinicalDemonstrator.Instance.Abort("left_room", false);
             if (room == HospitalRoomId.Room01 && clinical) clinical.EndClinicalSession();
             if (room == HospitalRoomId.Room02 && surgery) surgery.End();
             if (current != null) { if (!finished) { current.outcome = "left unfinished"; current.endedAt = Time.time; Records.Add(current); } current = null; }
@@ -387,6 +433,9 @@ namespace MedSimAI.Hospital
             if (kb.digit2Key.wasPressedThisFrame || kb.numpad2Key.wasPressedThisFrame) RequestRoom(HospitalRoomId.Room02, "key");
             if (kb.digit3Key.wasPressedThisFrame || kb.numpad3Key.wasPressedThisFrame) RequestRoom(HospitalRoomId.Corridor, "key");
             if (kb.f2Key.wasPressedThisFrame) SetGuidedMode(!guidedMode);
+            // G: "show me" (next part of the examination), Shift+G: the whole examination — Room 01 (the OR has its own G)
+            if (kb.gKey.wasPressedThisFrame && PlayerRoom == HospitalRoomId.Room01 && SessionRoom == HospitalRoomId.Room01)
+                StartClinicalDemo(kb.leftShiftKey.isPressed || kb.rightShiftKey.isPressed ? "full" : "");
         }
     }
 }

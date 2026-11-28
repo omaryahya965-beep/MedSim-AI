@@ -32,6 +32,8 @@ namespace MedSimAI.XR
         XROrigin origin; XRPlayerController player; Transform cam; Camera camera; CharacterController cc;
         float yaw, pitch, vy, ecgGaze, rejectCooldown, helpUntil;
         MedicalInstrumentBase held;
+        /// <summary>The clinical instrument currently held in Desktop Mode (null when none).</summary>
+        public MedicalInstrumentBase Held => held;
         TextMeshProUGUI prompt, status, help, toast; Image crosshair; float toastUntil;
         bool initialised;
 

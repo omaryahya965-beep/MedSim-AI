@@ -39,9 +39,17 @@ namespace MedSimAI.Instruments
             }
         }
 
+        /// <summary>The cuff goes on bare skin: the gown sleeve on that side is rolled up to the shoulder (no fabric under the cuff).</summary>
+        void RollSleeve(PlacementZone zone)
+        {
+            var roll = zone ? zone.GetComponentInParent<MedSimAI.Characters.GownSleeveRoll>() : null;
+            if (roll) roll.Roll(zone.zoneId.EndsWith("_L") ? "left" : "right");
+        }
+
         protected override void OnPlaced(PlacementZone zone)
         {
             if (cycle != null) { StopCoroutine(cycle); cycle = null; }
+            RollSleeve(zone);
             if (!requireStart) { cycle = StartCoroutine(Measure(zone)); return; }
             readyZone = zone;
             if (deviceDisplay) deviceDisplay.text = "READY\n<size=50%>START</size>";
@@ -75,13 +83,21 @@ namespace MedSimAI.Instruments
             }
             if (sfx) { sfx.loop = false; sfx.Stop(); }
             if (cuffVisual) cuffVisual.localScale = Vector3.one;
-            var r = Session.PerformExam(InstrumentId, zone.zoneId);
-            if (!r.success) { ClinicalFeedbackBus.Publish("Blood pressure", r.message); yield break; }
-            var v = r.vitals;
+            Vitals v;
+            if (DemonstrationUse) v = Session.Patient.Vitals;   // a teacher's demonstration: current authored values, no exam recorded for the student
+            else
+            {
+                var r = Session.PerformExam(InstrumentId, zone.zoneId);
+                if (!r.success) { ClinicalFeedbackBus.Publish("Blood pressure", r.message); cycle = null; yield break; }
+                v = r.vitals;
+            }
             if (deviceDisplay) deviceDisplay.text = $"{v.systolic}/{v.diastolic}\n<size=50%>PR {v.heartRate}</size>";
             if (monitor) monitor.RevealBloodPressure(v.systolic, v.diastolic);
             Play(confirmClip);
             ClinicalFeedbackBus.Publish("Blood pressure", $"{v.systolic}/{v.diastolic} mmHg, pulse {v.heartRate}/min ({zone.displayName}).");
+            // a clear result card for the student (readable in the headset), as well as the device and the bedside monitor
+            MedSimAI.UI.VitalsResultPanel.Ensure().Show(Arabic ? "ضغط الدم" : "BLOOD PRESSURE", $"{v.systolic}/{v.diastolic}", Arabic ? $"النبض {v.heartRate} /دقيقة" : $"Pulse {v.heartRate} /min",
+                (Arabic ? "ملم زئبق · " : "mmHg · ") + zone.displayName + (DemonstrationUse ? (Arabic ? " · عرض توضيحي" : " · demonstration") : ""), zone.transform);
             cycle = null;
         }
 

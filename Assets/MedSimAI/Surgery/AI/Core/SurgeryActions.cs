@@ -19,9 +19,13 @@ namespace MedSimAI.Surgery.AI
             HandInstrument = "hand_instrument", LocateInstrument = "locate_instrument", ReturnToPosition = "return_to_position", Wait = "wait", LookAtStudent = "look_at_student";
         // surgeon
         public const string StepBack = "step_back", ReturnToObservation = "return_to_observation", LookAtSite = "look_at_site", ExplainObjective = "explain_objective";
+        // both: embodied teaching — perform the current step (or the whole procedure) visibly, narrating, then the student tries.
+        // Demonstrations never change the student's progress or earn credit; they are logged as assistance.
+        public const string DemonstrateStep = "demonstrate_step", DemonstrateProcedure = "demonstrate_procedure";
 
-        public static readonly string[] Assistant = { None, ComeToStudent, StandBesideStudent, GoToInstrumentTable, HandInstrument, LocateInstrument, ReturnToPosition, Wait, LookAtStudent, OtherPhysical };
-        public static readonly string[] Surgeon = { None, ComeToStudent, StepBack, ReturnToObservation, LookAtStudent, LookAtSite, ExplainObjective, Wait, OtherPhysical };
+        public static readonly string[] Assistant = { None, ComeToStudent, StandBesideStudent, GoToInstrumentTable, HandInstrument, LocateInstrument, ReturnToPosition, Wait, LookAtStudent, DemonstrateStep, DemonstrateProcedure, OtherPhysical };
+        public static readonly string[] Surgeon = { None, ComeToStudent, StepBack, ReturnToObservation, LookAtStudent, LookAtSite, ExplainObjective, Wait, DemonstrateStep, DemonstrateProcedure, OtherPhysical };
+        public static bool IsDemonstration(string action) => action == DemonstrateStep || action == DemonstrateProcedure;
 
         public static string[] For(string characterId) => characterId == SurgeryCharacterIds.Surgeon ? Surgeon : characterId == SurgeryCharacterIds.Assistant ? Assistant : new string[0];
         /// <summary>Actions that need an instrument id.</summary>
@@ -104,7 +108,7 @@ namespace MedSimAI.Surgery.AI
             return v;
         }
 
-        static string AckKey(string a) => a == SurgeryActionCatalog.HandInstrument ? "ack_hand" : a == SurgeryActionCatalog.LocateInstrument ? "ack_locate" : a == SurgeryActionCatalog.Wait ? "ack_wait" : a == SurgeryActionCatalog.ExplainObjective ? "" : "ack_move";
+        static string AckKey(string a) => a == SurgeryActionCatalog.HandInstrument ? "ack_hand" : a == SurgeryActionCatalog.LocateInstrument ? "ack_locate" : a == SurgeryActionCatalog.Wait ? "ack_wait" : a == SurgeryActionCatalog.ExplainObjective || SurgeryActionCatalog.IsDemonstration(a) ? "" : "ack_move";   // a demonstration narrates itself
         static ValidatedAction Deny(ValidatedAction v, string reason, string line) { v.status = ActionStatus.Denied; v.reason = reason; v.lineKey = line; return v; }
         static ValidatedAction Clarify(ValidatedAction v, string reason, string line) { v.status = ActionStatus.Clarify; v.reason = reason; v.lineKey = line; return v; }
     }
@@ -184,7 +188,7 @@ namespace MedSimAI.Surgery.AI
         {
             public string addressed = "";          // surgeon | assistant | "" (unknown)
             public ProposedAction action = new ProposedAction();
-            public bool helpRequest, explainRequest;
+            public bool helpRequest, explainRequest, stopDemo;
             public string languageCommand = "";    // "ar" | "en" | ""
             public override string ToString() => $"to={addressed} action={action.action}({action.instrumentId}) help={helpRequest} explain={explainRequest} lang={languageCommand}";
         }
@@ -220,6 +224,8 @@ namespace MedSimAI.Surgery.AI
                 Set(it, SurgeryCharacterIds.Assistant, SurgeryActionCatalog.HandInstrument, instrument, needed);
             else if (Where.IsMatch(n) && mentionsTool)
                 Set(it, SurgeryCharacterIds.Assistant, SurgeryActionCatalog.LocateInstrument, instrument, needed);
+            else if (DemonstrationIntent.Detect(u) is var demo && demo.demo)   // "show me / do it in front of me" → a practical demonstration
+                Set(it, Or(who, SurgeryCharacterIds.Surgeon), demo.full ? SurgeryActionCatalog.DemonstrateProcedure : SurgeryActionCatalog.DemonstrateStep, null, false);
             else if (Explain.IsMatch(n) || Explain.IsMatch(u)) { it.explainRequest = true; Set(it, SurgeryCharacterIds.Surgeon, SurgeryActionCatalog.ExplainObjective, null, false); }
             else if (Beside.IsMatch(n)) Set(it, Or(who, SurgeryCharacterIds.Assistant), Or(who, SurgeryCharacterIds.Assistant) == SurgeryCharacterIds.Assistant ? SurgeryActionCatalog.StandBesideStudent : SurgeryActionCatalog.ComeToStudent, null, false);
             else if (Come.IsMatch(n)) Set(it, Or(who, SurgeryCharacterIds.Surgeon), SurgeryActionCatalog.ComeToStudent, null, false);
@@ -227,6 +233,7 @@ namespace MedSimAI.Surgery.AI
             else if (Back.IsMatch(n)) Set(it, Or(who, SurgeryCharacterIds.Surgeon), Or(who, SurgeryCharacterIds.Surgeon) == SurgeryCharacterIds.Surgeon ? SurgeryActionCatalog.StepBack : SurgeryActionCatalog.ReturnToPosition, null, false);
             else if (Wait.IsMatch(n)) Set(it, Or(who, SurgeryCharacterIds.Assistant), SurgeryActionCatalog.Wait, null, false);
 
+            if (DemonstrationIntent.Detect(u).stop) it.stopDemo = true;
             if (Help.IsMatch(n) || Help.IsMatch(u)) { it.helpRequest = true; if (it.action.action == SurgeryActionCatalog.None) it.action.characterId = SurgeryCharacterIds.Surgeon; }
             if (string.IsNullOrEmpty(it.action.characterId)) it.action.characterId = Or(who, SurgeryCharacterIds.Surgeon);
             if (string.IsNullOrEmpty(it.addressed)) it.addressed = it.action.characterId;
@@ -260,6 +267,8 @@ namespace MedSimAI.Surgery.AI
             ["ask_surgeon"] = ("Dr. Hassan, could you guide us on this step?", "دكتورة سارة، بتقدري توجهينا بهالخطوة؟"),
             ["handoff_not_taken"] = ("I'll put it back on the table for now.", "رح أرجعها عالطاولة هلأ."),
             ["action_unavailable"] = ("Sorry, I can't get there right now.", "معلش، ما بقدر أوصل هلأ."),
+            ["ack_demo"] = ("Sure. Watch me first, then you try.", "أكيد. تابعني أول، وبعدين بتجرب إنت."),
+            ["ack_demo_full"] = ("Sure. I'll take you through the whole procedure step by step. Watch closely.", "أكيد. رح أمشي معك بالعملية كاملة خطوة خطوة. تابع منيح."),
         };
         public static string Get(string key, string lang, string arg = "")
         {

@@ -110,6 +110,15 @@ namespace MedSimAI.Hospital.PlayTests
 
         string LastReject() => Bus.Log.LastOrDefault(e => e.id == SurgeryEventIds.InteractionRejected)?.reason;
 
+        /// <summary>The student draws the site mark along the projected guide (desktop: hold left click and move).</summary>
+        void Mark()
+        {
+            Adapter.PickupInstrument(Tool(InstrumentIds.SkinMarker));
+            var g = SiteMarkingGuide.Instance; Assert.IsNotNull(g, "marking guide present"); Assert.Greater(g.Total, 3, "guide projected onto the knee skin");
+            g.TestStroke(g.GuideWorldPoints);
+            Adapter.DropHeldItem();
+        }
+
         // ------------------------------------------------------------------ tests
         [UnityTest]
         public IEnumerator Start_InReception_DoctorWelcomes_NoSessionRunning()
@@ -161,7 +170,9 @@ namespace MedSimAI.Hospital.PlayTests
             Assert.IsFalse(Use(InstrumentIds.SkinMarker, "knee_l.site_marking"), "wrong knee");
             Assert.AreEqual(RejectReasons.WrongSide, LastReject());
 
-            Assert.IsTrue(Use(InstrumentIds.SkinMarker, AnatomyTargetIds.SiteMarking));
+            Assert.IsFalse(Use(InstrumentIds.SkinMarker, AnatomyTargetIds.SiteMarking), "a single touch no longer marks: the mark is drawn");
+            Assert.AreEqual(AnatomyStates.Intact, View(AnatomyTargetIds.SiteMarking).CurrentState);
+            Mark();
             Assert.AreEqual(AnatomyStates.Marked, View(AnatomyTargetIds.SiteMarking).CurrentState);
             Assert.IsTrue(Use(InstrumentIds.Scalpel, AnatomyTargetIds.IncisionLine));
             Assert.IsTrue(Use(InstrumentIds.Retractor, AnatomyTargetIds.JointCapsule));
@@ -326,6 +337,7 @@ namespace MedSimAI.Hospital.PlayTests
         public IEnumerator VrContact_OnlyDeliberateTipApplication_Counts_BrushesAreIgnored()
         {
             yield return EnterOperatingRoom();
+            if (SiteMarkingGuide.Instance) SiteMarkingGuide.Instance.enabled = false;   // the contact rules in isolation (the drawn mark is tested separately)
             var trig = UnityEngine.Object.FindObjectsByType<AnatomyContactTrigger>(FindObjectsInactive.Include, FindObjectsSortMode.None)
                 .First(t => t.GetComponent<SurgeryAnatomyTag>() && t.GetComponent<SurgeryAnatomyTag>().targetId == AnatomyTargetIds.SiteMarking);
             var target = trig.GetComponent<Collider>();

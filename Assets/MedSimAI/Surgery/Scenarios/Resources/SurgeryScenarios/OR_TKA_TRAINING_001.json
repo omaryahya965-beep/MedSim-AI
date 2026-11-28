@@ -73,7 +73,7 @@
     },
     {
       "id": "obj.exposure", "order": 3,
-      "title": { "en": "Expose the joint", "ar": "كشف المفصل" },
+      "title": { "en": "Expose the joint", "ar": "كشف مفصل الركبة" },
       "explanation": { "en": "The tissues are held apart so the joint surfaces can be seen. Place the retractor on the joint capsule.", "ar": "الأنسجة بتنمسك لبرّا عشان تبيّن أسطح المفصل. حط المبعد على محفظة المفصل." },
       "prerequisites": ["obj.incision"], "requiredTools": ["inst.retractor"], "targets": ["knee_r.joint_capsule"],
       "completionEvent": "objective.completed", "completionState": "exposed", "safetyCritical": false,
@@ -84,30 +84,30 @@
     },
     {
       "id": "obj.femoral_resection", "order": 4,
-      "title": { "en": "Prepare the end of the femur", "ar": "تحضير نهاية عظمة الفخذ" },
-      "explanation": { "en": "The damaged surface at the end of the thigh bone is removed so the implant can sit on it. Position the femoral cutting guide first, then use the saw through the guide.", "ar": "السطح التالف بنهاية عظمة الفخذ بينشال عشان يركب عليه المفصل. ركّب دليل القطع الخاص بالفخذ أول، وبعدين استخدم المنشار من خلال الدليل." },
+      "title": { "en": "Prepare the end of the femur", "ar": "تحضير النهاية السفلية لعظم الفخذ" },
+      "explanation": { "en": "The damaged surface at the end of the thigh bone is removed so the implant can sit on it. Position the femoral cutting guide first, then use the saw through the guide.", "ar": "السطح التالف بنهاية عظم الفخذ بينشال عشان يركب عليه المفصل. ركّب دليل القطع الخاص بالفخذ أول، وبعدين استخدم المنشار من خلال الدليل." },
       "prerequisites": ["obj.exposure"], "requiredTools": ["inst.cutting_guide_femoral", "inst.oscillating_saw"], "targets": ["knee_r.distal_femur"],
       "completionEvent": "objective.completed", "completionState": "resected", "toleranceMm": 3, "toleranceDeg": 3, "safetyCritical": true,
       "hints": [
-        { "en": "The femur needs to be shaped to fit the implant.", "ar": "عظمة الفخذ لازم تتشكّل عشان تناسب المفصل." },
-        { "en": "Place the femoral cutting guide on the end of the femur before using the saw.", "ar": "ركّب دليل القطع على نهاية عظمة الفخذ قبل ما تستخدم المنشار." },
+        { "en": "The femur needs to be shaped to fit the implant.", "ar": "عظم الفخذ لازم يتشكّل عشان يناسب المفصل." },
+        { "en": "Place the femoral cutting guide on the end of the femur before using the saw.", "ar": "ركّب دليل القطع على نهاية عظم الفخذ قبل ما تستخدم المنشار." },
         { "en": "Once the guide is in place, use the oscillating saw through the guide slot.", "ar": "لما يركب الدليل، استخدم المنشار من خلال فتحة الدليل." }
       ]
     },
     {
       "id": "obj.tibial_resection", "order": 5,
-      "title": { "en": "Prepare the top of the tibia", "ar": "تحضير رأس عظمة الساق" },
-      "explanation": { "en": "The damaged top surface of the shin bone is removed to make a flat base. Position the tibial cutting guide, then use the saw.", "ar": "السطح العلوي التالف لعظمة الساق بينشال عشان تصير قاعدة مستوية. ركّب دليل القطع الخاص بالساق، وبعدين استخدم المنشار." },
+      "title": { "en": "Prepare the top of the tibia", "ar": "تحضير النهاية العلوية لعظم الظنبوب" },
+      "explanation": { "en": "The damaged top surface of the shin bone is removed to make a flat base. Position the tibial cutting guide, then use the saw.", "ar": "السطح العلوي التالف لعظم الظنبوب بينشال عشان تصير قاعدة مستوية. ركّب دليل القطع الخاص بالساق، وبعدين استخدم المنشار." },
       "prerequisites": ["obj.femoral_resection"], "requiredTools": ["inst.cutting_guide_tibial", "inst.oscillating_saw"], "targets": ["knee_r.proximal_tibia"],
       "completionEvent": "objective.completed", "completionState": "resected", "toleranceMm": 3, "toleranceDeg": 3, "safetyCritical": true,
       "hints": [
-        { "en": "Now the top of the tibia needs a flat surface.", "ar": "هلأ رأس عظمة الساق بدّه سطح مستوي." },
-        { "en": "Place the tibial cutting guide first, then use the saw.", "ar": "ركّب دليل قطع الساق أول، وبعدين المنشار." }
+        { "en": "Now the top of the tibia needs a flat surface.", "ar": "هلأ رأس عظم الظنبوب بدّه سطح مستوي." },
+        { "en": "Place the tibial cutting guide first, then use the saw.", "ar": "ركّب دليل قطع عظم الظنبوب أول، وبعدين المنشار." }
       ]
     },
     {
       "id": "obj.trial_reduction", "order": 6,
-      "title": { "en": "Trial components", "ar": "تجربة القطع المؤقتة" },
+      "title": { "en": "Trial components", "ar": "تركيب المكوّنات التجريبية" },
       "explanation": { "en": "Temporary trial components are fitted first to check fit and movement before the final implants. Place the femoral and tibial trials.", "ar": "بنركّب قطع تجريبية مؤقتة أول عشان نتأكد من الملاءمة والحركة قبل المفصل النهائي. ركّب القطعة التجريبية للفخذ وللساق." },
       "prerequisites": ["obj.tibial_resection"], "requiredTools": [], "targets": ["knee_r.distal_femur", "knee_r.proximal_tibia"],
       "completionEvent": "objective.completed", "completionState": "trial_fitted", "implantId": "implant.femoral_trial", "toleranceMm": 4, "toleranceDeg": 4, "safetyCritical": false,
@@ -119,7 +119,7 @@
     {
       "id": "obj.implant_femoral", "order": 7,
       "title": { "en": "Place the femoral component", "ar": "تركيب مكوّن الفخذ" },
-      "explanation": { "en": "The metal femoral component resurfaces the end of the femur. Align it with the prepared bone and seat it with the impactor and mallet.", "ar": "مكوّن الفخذ المعدني بيغطي نهاية عظمة الفخذ. صفّه مع العظم المحضّر وثبّته بالدافع والمطرقة." },
+      "explanation": { "en": "The metal femoral component resurfaces the end of the femur. Align it with the prepared bone and seat it with the impactor and mallet.", "ar": "مكوّن الفخذ المعدني بيغطي نهاية عظم الفخذ. صفّه مع العظم المحضّر وثبّته بالدافع والمطرقة." },
       "prerequisites": ["obj.trial_reduction"], "requiredTools": ["inst.impactor", "inst.mallet"], "targets": ["knee_r.distal_femur"],
       "completionEvent": "objective.completed", "completionState": "implanted", "implantId": "implant.femoral_component", "toleranceMm": 2, "toleranceDeg": 3, "safetyCritical": false,
       "hints": [
@@ -129,13 +129,13 @@
     },
     {
       "id": "obj.implant_tibial", "order": 8,
-      "title": { "en": "Place the tibial tray and insert", "ar": "تركيب صينية الساق والفاصل" },
-      "explanation": { "en": "A metal tray resurfaces the tibia and a plastic insert sits on it, so metal glides on plastic. Place the tray first, then the insert.", "ar": "صينية معدنية بتغطي عظمة الساق وفوقها فاصل بلاستيكي، عشان المعدن يتزحلق على البلاستيك. ركّب الصينية أول، وبعدين الفاصل." },
+      "title": { "en": "Place the tibial tray and insert", "ar": "تركيب صينية الظنبوب والبطانة البلاستيكية" },
+      "explanation": { "en": "A metal tray resurfaces the tibia and a plastic insert sits on it, so metal glides on plastic. Place the tray first, then the insert.", "ar": "صينية معدنية بتغطي عظم الظنبوب وفوقها فاصل بلاستيكي، عشان المعدن يتزحلق على البلاستيك. ركّب الصينية أول، وبعدين الفاصل." },
       "prerequisites": ["obj.trial_reduction"], "requiredTools": ["inst.impactor", "inst.mallet"], "targets": ["knee_r.proximal_tibia"],
       "completionEvent": "objective.completed", "completionState": "implanted", "implantId": "implant.tibial_tray", "toleranceMm": 2, "toleranceDeg": 3, "safetyCritical": false,
       "hints": [
         { "en": "Now the tibial side of the implant.", "ar": "هلأ الجهة الخاصة بالساق من المفصل." },
-        { "en": "Place the tibial tray first, then the plastic insert on top.", "ar": "ركّب صينية الساق أول، وبعدين الفاصل البلاستيكي فوقها." }
+        { "en": "Place the tibial tray first, then the plastic insert on top.", "ar": "ركّب صينية الظنبوب أول، وبعدين الفاصل البلاستيكي فوقها." }
       ]
     },
     {
@@ -146,37 +146,37 @@
       "completionEvent": "objective.completed", "completionState": "closed", "safetyCritical": false,
       "hints": [
         { "en": "The last step is closing the wound.", "ar": "آخر خطوة إغلاق الجرح." },
-        { "en": "Use the needle driver or the skin stapler along the wound.", "ar": "استخدم ماسك الإبرة أو دبّاسة الجلد على طول الجرح." }
+        { "en": "Use the needle driver or the skin stapler along the wound.", "ar": "استخدم ماسك الإبر أو الدبّاسة الجراحية على طول الجرح." }
       ]
     }
   ],
   "instruments": [
-    { "id": "inst.skin_marker", "name": { "en": "skin marker", "ar": "قلم تعليم الجلد" }, "purpose": { "en": "confirming and marking the operative site", "ar": "تأكيد وتعليم مكان العملية" }, "aliases": ["marker", "pen", "قلم", "ماركر"] },
-    { "id": "inst.scalpel", "name": { "en": "scalpel", "ar": "مشرط" }, "purpose": { "en": "skin incision", "ar": "شق الجلد" }, "aliases": ["knife", "blade", "مشرط", "شفرة"] },
-    { "id": "inst.retractor", "name": { "en": "retractor", "ar": "مبعد" }, "purpose": { "en": "holding tissues apart", "ar": "إبعاد الأنسجة" }, "aliases": ["retractor", "مبعد", "مباعد"] },
-    { "id": "inst.cutting_guide_femoral", "name": { "en": "femoral cutting guide", "ar": "دليل قطع الفخذ" }, "purpose": { "en": "guiding the femoral bone cut", "ar": "توجيه قطع عظمة الفخذ" }, "aliases": ["femoral guide", "femur guide", "دليل الفخذ", "جيج الفخذ"] },
-    { "id": "inst.cutting_guide_tibial", "name": { "en": "tibial cutting guide", "ar": "دليل قطع الساق" }, "purpose": { "en": "guiding the tibial bone cut", "ar": "توجيه قطع عظمة الساق" }, "aliases": ["tibial guide", "tibia guide", "دليل الساق", "جيج الساق"] },
-    { "id": "inst.oscillating_saw", "name": { "en": "oscillating saw", "ar": "منشار هزّاز" }, "purpose": { "en": "bone cuts through a guide", "ar": "قطع العظم من خلال الدليل" }, "aliases": ["saw", "منشار"] },
+    { "id": "inst.skin_marker", "name": { "en": "skin marker", "ar": "قلم التعليم الجراحي" }, "purpose": { "en": "confirming and marking the operative site", "ar": "تأكيد وتعليم مكان العملية" }, "aliases": ["marker", "pen", "قلم", "ماركر"] },
+    { "id": "inst.scalpel", "name": { "en": "scalpel", "ar": "المِشرط" }, "purpose": { "en": "skin incision", "ar": "شق الجلد" }, "aliases": ["knife", "blade", "مشرط", "شفرة"] },
+    { "id": "inst.retractor", "name": { "en": "retractor", "ar": "المُبعِد" }, "purpose": { "en": "holding tissues apart", "ar": "إبعاد الأنسجة" }, "aliases": ["retractor", "مبعد", "مباعد"] },
+    { "id": "inst.cutting_guide_femoral", "name": { "en": "femoral cutting guide", "ar": "دليل قطع عظم الفخذ" }, "purpose": { "en": "guiding the femoral bone cut", "ar": "توجيه قطع عظم الفخذ" }, "aliases": ["femoral guide", "femur guide", "دليل الفخذ", "جيج الفخذ"] },
+    { "id": "inst.cutting_guide_tibial", "name": { "en": "tibial cutting guide", "ar": "دليل قطع الساق" }, "purpose": { "en": "guiding the tibial bone cut", "ar": "توجيه قطع عظم الظنبوب" }, "aliases": ["tibial guide", "tibia guide", "دليل الساق", "جيج الساق"] },
+    { "id": "inst.oscillating_saw", "name": { "en": "oscillating saw", "ar": "المنشار المتذبذب" }, "purpose": { "en": "bone cuts through a guide", "ar": "قطع العظم من خلال الدليل" }, "aliases": ["saw", "منشار"] },
     { "id": "inst.drill", "name": { "en": "surgical drill", "ar": "مثقب جراحي" }, "purpose": { "en": "drilling (not needed in this simplified scenario)", "ar": "الثقب (مش مطلوب بهالسيناريو المبسّط)" }, "aliases": ["drill", "دريل", "مثقب"] },
-    { "id": "inst.mallet", "name": { "en": "mallet", "ar": "مطرقة" }, "purpose": { "en": "seating components with the impactor", "ar": "تثبيت القطع مع الدافع" }, "aliases": ["hammer", "مطرقة", "شاكوش"] },
-    { "id": "inst.impactor", "name": { "en": "impactor", "ar": "دافع" }, "purpose": { "en": "seating implant components", "ar": "تثبيت مكونات المفصل" }, "aliases": ["impactor", "pusher", "دافع"] },
+    { "id": "inst.mallet", "name": { "en": "mallet", "ar": "المطرقة الجراحية" }, "purpose": { "en": "seating components with the impactor", "ar": "تثبيت القطع مع الدافع" }, "aliases": ["hammer", "مطرقة", "شاكوش"] },
+    { "id": "inst.impactor", "name": { "en": "impactor", "ar": "أداة الدفع والتثبيت" }, "purpose": { "en": "seating implant components", "ar": "تثبيت مكونات المفصل" }, "aliases": ["impactor", "pusher", "دافع"] },
     { "id": "inst.needle_driver", "name": { "en": "needle driver", "ar": "ماسك الإبرة" }, "purpose": { "en": "suturing the wound", "ar": "تقطيب الجرح" }, "aliases": ["needle holder", "suture", "ماسك الابرة", "خياطة", "قطب"] },
     { "id": "inst.skin_stapler", "name": { "en": "skin stapler", "ar": "دبّاسة الجلد" }, "purpose": { "en": "closing the skin", "ar": "إغلاق الجلد" }, "aliases": ["stapler", "staples", "دباسة", "كبّاس"] }
   ],
   "targets": [
     { "id": "knee_r.site_marking", "name": { "en": "marked site on the right knee", "ar": "مكان التعليم على الركبة اليمنى" }, "states": ["intact", "marked"] },
-    { "id": "knee_r.incision_line", "name": { "en": "incision line", "ar": "خط الشق" }, "states": ["intact", "incised"] },
+    { "id": "knee_r.incision_line", "name": { "en": "incision line", "ar": "خط الشق الجراحي" }, "states": ["intact", "incised"] },
     { "id": "knee_r.joint_capsule", "name": { "en": "joint capsule", "ar": "محفظة المفصل" }, "states": ["intact", "exposed"] },
-    { "id": "knee_r.distal_femur", "name": { "en": "end of the femur", "ar": "نهاية عظمة الفخذ" }, "states": ["intact", "guide_placed", "resected", "trial_fitted", "implanted"] },
-    { "id": "knee_r.proximal_tibia", "name": { "en": "top of the tibia", "ar": "رأس عظمة الساق" }, "states": ["intact", "guide_placed", "resected", "trial_fitted", "implanted"] },
+    { "id": "knee_r.distal_femur", "name": { "en": "end of the femur", "ar": "النهاية السفلية لعظم الفخذ" }, "states": ["intact", "guide_placed", "resected", "trial_fitted", "implanted"] },
+    { "id": "knee_r.proximal_tibia", "name": { "en": "top of the tibia", "ar": "النهاية العلوية لعظم الظنبوب" }, "states": ["intact", "guide_placed", "resected", "trial_fitted", "implanted"] },
     { "id": "knee_r.wound", "name": { "en": "wound", "ar": "الجرح" }, "states": ["intact", "closed"] }
   ],
   "implants": [
-    { "id": "implant.femoral_trial", "name": { "en": "femoral trial", "ar": "قطعة الفخذ التجريبية" }, "targetId": "knee_r.distal_femur" },
-    { "id": "implant.tibial_trial", "name": { "en": "tibial trial", "ar": "قطعة الساق التجريبية" }, "targetId": "knee_r.proximal_tibia" },
-    { "id": "implant.femoral_component", "name": { "en": "femoral component", "ar": "مكوّن الفخذ" }, "targetId": "knee_r.distal_femur" },
+    { "id": "implant.femoral_trial", "name": { "en": "femoral trial", "ar": "المكوّن التجريبي لعظم الفخذ" }, "targetId": "knee_r.distal_femur" },
+    { "id": "implant.tibial_trial", "name": { "en": "tibial trial", "ar": "المكوّن التجريبي لعظم الظنبوب" }, "targetId": "knee_r.proximal_tibia" },
+    { "id": "implant.femoral_component", "name": { "en": "femoral component", "ar": "مكوّن عظم الفخذ" }, "targetId": "knee_r.distal_femur" },
     { "id": "implant.tibial_tray", "name": { "en": "tibial tray", "ar": "صينية الساق" }, "targetId": "knee_r.proximal_tibia" },
-    { "id": "implant.poly_insert", "name": { "en": "plastic insert", "ar": "الفاصل البلاستيكي" }, "targetId": "knee_r.proximal_tibia" }
+    { "id": "implant.poly_insert", "name": { "en": "plastic insert", "ar": "البطانة البلاستيكية (بولي إيثيلين)" }, "targetId": "knee_r.proximal_tibia" }
   ],
   "supervisorPolicy": { "globalCooldownSeconds": 12, "silentOnCorrectActions": true, "maxHintsPerObjective": 3 },
   "supervisorRules": [
@@ -208,9 +208,9 @@
     { "id": "crit.site_clean", "kind": "objective_clean", "objectiveId": "obj.site_confirmation", "weight": 2, "label": { "en": "No wrong-side or invalid actions during site confirmation", "ar": "ما في أخطاء جهة أو حركات غلط أثناء تأكيد المكان" } },
     { "id": "crit.incision", "kind": "objective_completed", "objectiveId": "obj.incision", "weight": 1, "label": { "en": "Completed the skin incision", "ar": "أكمل شق الجلد" } },
     { "id": "crit.exposure", "kind": "objective_completed", "objectiveId": "obj.exposure", "weight": 1, "label": { "en": "Exposed the joint", "ar": "كشف المفصل" } },
-    { "id": "crit.femur", "kind": "objective_completed", "objectiveId": "obj.femoral_resection", "weight": 1, "label": { "en": "Prepared the femur", "ar": "حضّر عظمة الفخذ" } },
+    { "id": "crit.femur", "kind": "objective_completed", "objectiveId": "obj.femoral_resection", "weight": 1, "label": { "en": "Prepared the femur", "ar": "حضّر عظم الفخذ" } },
     { "id": "crit.femur_clean", "kind": "objective_clean", "objectiveId": "obj.femoral_resection", "weight": 1, "label": { "en": "Used the guide before the saw on the femur", "ar": "استخدم الدليل قبل المنشار على الفخذ" } },
-    { "id": "crit.tibia", "kind": "objective_completed", "objectiveId": "obj.tibial_resection", "weight": 1, "label": { "en": "Prepared the tibia", "ar": "حضّر عظمة الساق" } },
+    { "id": "crit.tibia", "kind": "objective_completed", "objectiveId": "obj.tibial_resection", "weight": 1, "label": { "en": "Prepared the tibia", "ar": "حضّر عظم الظنبوب" } },
     { "id": "crit.trial", "kind": "objective_completed", "objectiveId": "obj.trial_reduction", "weight": 1, "label": { "en": "Fitted the trial components", "ar": "ركّب القطع التجريبية" } },
     { "id": "crit.femoral_component", "kind": "objective_completed", "objectiveId": "obj.implant_femoral", "weight": 1, "label": { "en": "Placed the femoral component", "ar": "ركّب مكوّن الفخذ" } },
     { "id": "crit.femoral_accuracy", "kind": "placement_within_tolerance", "objectiveId": "obj.implant_femoral", "implantId": "implant.femoral_component", "weight": 2, "label": { "en": "Femoral component placed within the simulation tolerance", "ar": "تركيب مكوّن الفخذ ضمن حدود دقة المحاكاة" } },

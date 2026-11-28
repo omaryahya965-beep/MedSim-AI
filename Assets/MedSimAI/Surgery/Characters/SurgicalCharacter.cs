@@ -125,7 +125,9 @@ namespace MedSimAI.Surgery.Characters
         public bool Pick(Transform instrument)
         {
             if (!instrument) return false;
-            var rb = instrument.GetComponent<Rigidbody>(); if (rb) rb.isKinematic = true;
+            // Kinematic, and NOT interpolated: an interpolated body keeps writing its own world pose every frame, so a held
+            // instrument would stay behind (or drift away) instead of moving with the hand.
+            var rb = instrument.GetComponent<Rigidbody>(); if (rb) { heldInterp = rb.interpolation; rb.isKinematic = true; rb.interpolation = RigidbodyInterpolation.None; }
             // Integration: XRI would otherwise put the instrument back under the assistant's hand when the student lets go.
             var grab = instrument.GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>(); if (grab) grab.retainTransformParent = false;
             instrument.SetParent(handSocket, true);
@@ -135,7 +137,7 @@ namespace MedSimAI.Surgery.Characters
         }
 
         /// <summary>Called when the player has taken the instrument (verified tool.grabbed): forget it without moving it.</summary>
-        public void ReleaseToPlayer() { if (Held && Held.parent == handSocket) Held.SetParent(null, true); Held = null; }
+        public void ReleaseToPlayer() { if (Held) { var rb = Held.GetComponent<Rigidbody>(); if (rb) rb.interpolation = heldInterp; } if (Held && Held.parent == handSocket) Held.SetParent(null, true); Held = null; }
 
         /// <summary>Puts a held instrument back at a slot (hand-over not taken, or reset).</summary>
         public void PutBack(Transform slot)
@@ -143,9 +145,10 @@ namespace MedSimAI.Surgery.Characters
             if (!Held) return;
             Held.SetParent(null, true);
             if (slot) Held.SetPositionAndRotation(slot.position, slot.rotation);
-            var rb = Held.GetComponent<Rigidbody>(); if (rb) rb.isKinematic = false;
+            var rb = Held.GetComponent<Rigidbody>(); if (rb) { rb.position = Held.position; rb.rotation = Held.rotation; rb.interpolation = heldInterp; rb.isKinematic = false; }
             Held = null;
         }
+        RigidbodyInterpolation heldInterp = RigidbodyInterpolation.Interpolate;
 
         public Vector3 BesideStudent(float side = 0.7f, float forward = 0.3f)
         {

@@ -36,6 +36,8 @@ namespace MedSimAI.Surgery.AI
         readonly Dictionary<string, int> hintIndex = new Dictionary<string, int>();
         readonly HashSet<string> idleFiredSinceActivity = new HashSet<string>();
         double lastSpoke = double.NegativeInfinity, lastActivity;
+        /// <summary>Set by the host while a demonstration runs (see Tick).</summary>
+        public bool Demonstrating { get; set; }
         int rejectionsInObjective;
         bool active;
 
@@ -99,6 +101,9 @@ namespace MedSimAI.Surgery.AI
         {
             if (!active) return null;
             double t = now();
+            // A demonstration is running: the teacher is already showing the step, so no idle nudges or queued coaching
+            // interrupt it; the idle clock restarts when it ends.
+            if (Demonstrating) { lastActivity = t; pending.Clear(); return null; }
             if (!string.IsNullOrEmpty(CurrentObjectiveId))
                 foreach (var r in s.supervisorRules.Where(r => r.trigger.type == "idle" && r.trigger.seconds > 0))
                     if (t - lastActivity >= r.trigger.seconds && idleFiredSinceActivity.Add(r.id)) Enqueue(r, CurrentObjectiveId, "", false);

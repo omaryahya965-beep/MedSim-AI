@@ -67,9 +67,25 @@ namespace MedSimAI.Hospital
         public void GuideTo(Vector3 destination, Action<bool, string> done, params Vector3[] via)
         {
             Release();
-            if (!CanReach(destination)) { done?.Invoke(false, "no_path"); return; }
+            if (CanReach(destination)) { Begin(destination, via, done); return; }
+            if (AutoSlidingDoor.All.Count == 0) { done?.Invoke(false, "no_path"); return; }
+            // Closed automatic doors (the operating room) carve the NavMesh shut: like real sensor doors they open when someone
+            // walks up to them, so open them and plan again once the opening exists. A closed manual door stays "no_path".
+            StartCoroutine(RetryThroughAutomaticDoors(destination, via, done));
+        }
+
+        void Begin(Vector3 destination, Vector3[] via, Action<bool, string> done)
+        {
             State = Mode.Guiding; Destination = destination; pendingDone = done;
             run = StartCoroutine(GuideRoutine(destination, via, done));
+        }
+
+        IEnumerator RetryThroughAutomaticDoors(Vector3 destination, Vector3[] via, Action<bool, string> done)
+        {
+            foreach (var d in AutoSlidingDoor.All) d.HoldOpen(6f);
+            float t0 = Time.time;
+            while (Time.time - t0 < 2.5f) { yield return null; if (AutoSlidingDoor.All.TrueForAll(d => d.IsOpen) && CanReach(destination)) break; }
+            if (CanReach(destination)) Begin(destination, via, done); else done?.Invoke(false, "no_path");
         }
 
         IEnumerator GuideRoutine(Vector3 destination, Vector3[] via, Action<bool, string> done)

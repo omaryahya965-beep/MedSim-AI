@@ -64,6 +64,8 @@ namespace MedSimAI.Hospital
             if (doctorRole) doctorRole.enabled = true;
             if (desktopAdapter) desktopAdapter.enabled = DisplayModeManager.Mode != DisplayMode.VR;
             SurgicalDesktopInteractionAdapter.ResetRequested = () => { if (Active && controller) controller.Restart(); };
+            SurgicalDesktopInteractionAdapter.ResetPrompt = text => { if (controller && controller.hud) controller.hud.SetBanner(text); };
+            HandPresence.ExtraHeld = () => Active && desktopAdapter && desktopAdapter.isActiveAndEnabled ? desktopAdapter.HeldObject : null;   // gloved hand around the held instrument
             // Physical tool–tissue contact is the VR way of acting; on desktop the student acts by clicking (no accidental touches).
             foreach (var t in FindObjectsByType<AnatomyContactTrigger>(FindObjectsInactive.Include, FindObjectsSortMode.None)) t.enabled = DisplayModeManager.Mode == DisplayMode.VR;
             var entry = FindAnyObjectByType<MedSimAI.Surgery.Environment.RoomEntryPublisher>();
@@ -75,7 +77,11 @@ namespace MedSimAI.Hospital
             ApplyMode();
             if (!first) controller.Restart();   // first visit: the controller's Start() runs the session itself
             Active = true; StartedAt = Time.time;
+            ObjectiveHighlighter.Language = lang;
             if (highlighter) highlighter.SetEnabled(GuidedMode);
+            EnsureMarkingGuide(lang);
+            if (!demonstrator) { demonstrator = GetComponent<SurgicalDemonstrator>(); if (!demonstrator) demonstrator = gameObject.AddComponent<SurgicalDemonstrator>(); demonstrator.bridge = this; }
+            demonstrator.enabled = true;
             StartCoroutine(TrackSessionId());
         }
 
@@ -117,12 +123,33 @@ namespace MedSimAI.Hospital
             return c;
         }
 
-        public void SetGuidedMode(bool guided) { GuidedMode = guided; ApplyMode(); if (highlighter) highlighter.SetEnabled(guided && Active); }
+        public void SetGuidedMode(bool guided) { GuidedMode = guided; ApplyMode(); if (highlighter) highlighter.SetEnabled(guided && Active); SiteMarkingGuide.ShowGuide = guided; }
+
+        // ------------------------------------------------------------------ guided site marking (draw the mark on the knee)
+        SiteMarkingGuide marking;
+        /// <summary>Embodied demonstrations (explain → demonstrate → let the student try).</summary>
+        public SurgicalDemonstrator demonstrator;
+        void EnsureMarkingGuide(string lang)
+        {
+            if (!marking && mechanics) { marking = mechanics.GetComponent<SiteMarkingGuide>(); if (!marking) marking = mechanics.gameObject.AddComponent<SiteMarkingGuide>(); }
+            SiteMarkingGuide.ShowGuide = GuidedMode; SiteMarkingGuide.Language = lang; SiteMarkingGuide.TextSetter = (t, s) => MedSimAI.UI.ArabicShaper.Apply(t, s);
+            SiteMarkingGuide.Feedback -= OnMarkingFeedback; SiteMarkingGuide.Feedback += OnMarkingFeedback;
+            if (marking) { marking.enabled = true; marking.ResetDrawing(); }
+        }
+
+        /// <summary>A marking mistake is explained by the doctor (approved bilingual line), not only shown.</summary>
+        void OnMarkingFeedback(string what)
+        {
+            if (!Active || what != "off_guide") return;
+            bool ar = lastLang == "ar";
+            Say(ar ? "هذا خارج مكان التعليم. خلّي العلامة على الخط المنقّط فوق مقدّمة الركبة اليمنى." : "That's off the marking site. Keep the mark on the dotted line over the front of the right knee.");
+        }
 
         /// <summary>The student left the operating room: stop the session and put the room back to its start state.</summary>
         public void End()
         {
             if (!Active) return;
+            if (demonstrator) { demonstrator.Abort("left_room", false); demonstrator.enabled = false; }
             Active = false;
             if (controller) controller.Suspend();
             if (desktopAdapter) { desktopAdapter.DropHeldItem(); desktopAdapter.enabled = false; }
@@ -136,8 +163,10 @@ namespace MedSimAI.Hospital
             if (doctorRole) { doctorRole.Interrupt(); doctorRole.enabled = false; }
             if (robot) robot.Park();
             if (highlighter) highlighter.SetEnabled(false);
+            if (marking) { marking.ResetDrawing(); marking.enabled = false; }
+            SiteMarkingGuide.Feedback -= OnMarkingFeedback;
             if (sessionRoot) sessionRoot.SetActive(false);
-            SurgicalDesktopInteractionAdapter.ResetRequested = null;
+            SurgicalDesktopInteractionAdapter.ResetRequested = null; SurgicalDesktopInteractionAdapter.ResetPrompt = null;
             var er = VoiceInteractionManager.Instance; if (er) er.enabled = true;
             DesktopPlayerController.SurgeryKeysActive = false;
             if (SessionManager.Instance) SessionManager.Instance.suppressPause = false;
@@ -150,7 +179,7 @@ namespace MedSimAI.Hospital
         {
             if (!Active || !controller || controller.Core == null) return;
             var lang = controller.Core.Language;
-            if (lang != lastLang) { lastLang = lang; LanguageChanged?.Invoke(lang); }
+            if (lang != lastLang) { lastLang = lang; LanguageChanged?.Invoke(lang); SiteMarkingGuide.Language = lang; ObjectiveHighlighter.Language = lang; if (highlighter) highlighter.SetEnabled(GuidedMode); }
         }
     }
 }

@@ -120,3 +120,33 @@ test('HTTP: surgical routes need the client token and are isolated from clinical
     assert.equal((await call('/v1/surgery/session/end', { sessionId: st.json.sessionId })).status, 200);
   } finally { srv.close(); }
 });
+
+test('demonstration requests are catalogue actions for both characters (the student sees it done, then tries)', async () => {
+  for (const who of ['surgeon', 'assistant']) for (const action of ['demonstrate_step', 'demonstrate_procedure']) {
+    const { e, s } = engine({ intent: intent({ addressedTo: who, action }), reply: 'Sure, watch me.' });
+    const r = await e.turn(s, { characterId: who, utterance: action === 'demonstrate_step' ? 'ورجيني كيف أعلم على الركبة' : 'show me the whole procedure', context: { objectiveId: 'obj.site_confirmation' } });
+    assert.equal(r.json.intent.action, action, who + ' ' + action);
+    assert.equal(r.json.intent.characterId, who, 'the addressed character demonstrates');
+  }
+});
+
+test('Arabic medical spelling is corrected in spoken replies («راكبة» → «ركبة»)', async () => {
+  const { fixArabicTerms } = await import('./lib/live.mjs');
+  assert.equal(fixArabicTerms('رح نعلّم على الراكبة اليمنى'), 'رح نعلّم على الركبة اليمنى');
+  assert.equal(fixArabicTerms('الركبه اليمنى وبالراكبة'), 'الركبة اليمنى وبالركبة');
+  assert.equal(fixArabicTerms('the knee stays'), 'the knee stays');
+  assert.equal(fixArabicTerms('مركبة'), 'مركبة', 'other words untouched');
+  const { e, s } = engine({ intent: intent(), reply: 'هاي الراكبة اليمنى.' });
+  const r = await e.turn(s, { characterId: 'surgeon', utterance: 'أي ركبة؟', context: { objectiveId: 'obj.site_confirmation' } });
+  assert.ok(!r.json.text.includes('راكبة'), r.json.text);
+});
+
+test('a line repeated in the same visit is re-worded, not replayed word for word', async () => {
+  const { e, s, ai } = engine({ line: 'Start by confirming the site.' });
+  const base = 'Start by confirming which knee we are operating on.';
+  await e.say(s, { characterId: 'surgeon', kind: 'hint', baseText: base, language: 'en' });
+  await e.say(s, { characterId: 'surgeon', kind: 'hint', baseText: base, language: 'en' });
+  const sys = ai.calls.map(c => c.system);
+  assert.ok(!/already said/.test(sys[0]), 'first time: plain');
+  assert.ok(/already said this once/.test(sys[1]), 'second time: told to vary the wording');
+});
