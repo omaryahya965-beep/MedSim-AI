@@ -38,6 +38,8 @@ namespace MedSimAI.Hospital
         public ObjectiveHighlighter highlighter;
 
         public bool Active { get; private set; }
+        /// <summary>The student has already been in the operating room during this visit: the welcome rule says a short line.</summary>
+        public bool Returning { get; private set; }
         public bool GuidedMode { get; private set; } = true;
         public string SessionId { get; private set; } = "";
         public float StartedAt { get; private set; }
@@ -50,9 +52,9 @@ namespace MedSimAI.Hospital
         void Awake() { if (sessionRoot && sessionRoot.activeSelf) sessionRoot.SetActive(false); }
 
         /// <summary>The student entered the operating room: start a fresh surgical session.</summary>
-        public void Begin(string lang, bool guided)
+        public void Begin(string lang, bool guided, bool returning = false)
         {
-            GuidedMode = guided;
+            GuidedMode = guided; Returning = returning;
             ScenarioRouter.Language = lang; lastLang = lang;
             var er = VoiceInteractionManager.Instance; if (er) { er.Interrupt(); er.enabled = false; }   // one voice pipeline at a time
             DesktopPlayerController.SurgeryKeysActive = true;
@@ -102,8 +104,17 @@ namespace MedSimAI.Hospital
         void ApplyMode()
         {
             if (allRules == null) return;
-            controller.Scenario.supervisorRules = GuidedMode ? allRules
+            var rules = GuidedMode ? allRules
                 : allRules.Where(r => !(r.kind == "hint" && (r.trigger.type == "rejected" || r.trigger.type == "idle"))).ToArray();
+            if (Returning) rules = rules.Select(r => r.kind != "welcome" ? r : ShortWelcome(r)).ToArray();
+            controller.Scenario.supervisorRules = rules;
+        }
+
+        static SupervisorRule ShortWelcome(SupervisorRule r)
+        {
+            var c = JsonUtility.FromJson<SupervisorRule>(JsonUtility.ToJson(r));   // a copy: the scenario's own rule is never changed
+            c.line.en = HospitalLines.Get("room02_again", "en"); c.line.ar = HospitalLines.Get("room02_again", "ar");
+            return c;
         }
 
         public void SetGuidedMode(bool guided) { GuidedMode = guided; ApplyMode(); if (highlighter) highlighter.SetEnabled(guided && Active); }

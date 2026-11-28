@@ -39,6 +39,13 @@ export function isNoSpeech(h) {
   return !t || /^[<\[(].*[>\])]$/.test(t) || /^(unknown|inaudible|unintelligible|silence|noise|no speech|\.+|…)$/.test(t);
 }
 
+/** Integrated hospital: outside the examination room the doctor is the student's guide, not yet their supervisor on the case. */
+export function outsideRoomNote(ctx) {
+  if (ctx.location !== 'reception' && ctx.location !== 'corridor') return '';
+  return `WHERE YOU ARE NOW: in the hospital ${ctx.location}, walking with the student. The student has NOT met the patient yet and is not in the examination room. Act as their friendly guide and teacher: answer what they actually ask (general educational questions are fine within your boundaries; say honestly when something is outside what you can cover here). If it helps, mention the two training rooms: Room 01 (clinical examination of a patient with chest pain) and Room 02 (simulated knee-replacement training). Do not ask about the patient's history, symptoms or findings here, and do not start the case.
+`;
+}
+
 export class LiveEngine {
   constructor({ ai, scenarios, limits = {} }) {
     this.ai = ai; this.scenarios = scenarios;
@@ -83,7 +90,9 @@ export class LiveEngine {
       'ECG_REVIEWED', 'ESCALATION_REQUESTED', 'SUMMARY_GIVEN', 'HINT_REQUESTED', 'HANDS_SANITIZED', 'INSTRUMENT_ON_PATIENT', 'ZONE_REJECTED', 'INSTRUMENT_REMOVED_EARLY', 'DIAGNOSIS_NAMED', 'DIAGNOSTIC_QUESTION', 'DOOR_OPENED', 'ENTERED_ROOM']);
     const events = (Array.isArray(c.events) ? c.events : []).map(String).filter(e => valid.has(e) || e.startsWith('INTERVENTION:')).slice(0, 80);
     const stages = ['Introduction', 'HistoryTaking', 'InitialAssessment', 'PhysicalExamination', 'Investigations', 'ClinicalReasoning', 'SupervisorFeedback', 'Debriefing'];
-    return { stage: stages.includes(c.stage) ? c.stage : 'Introduction', stateId: String(c.stateId || ''), events, discussionId: String(c.discussionId || ''), missing: Array.isArray(c.missing) ? c.missing.map(String).slice(0, 30) : [] };
+    // location (integrated hospital): where the student is now; a fixed set of values, anything else is dropped
+    const location = ['reception', 'corridor', 'room01', 'room02'].includes(c.location) ? c.location : '';
+    return { stage: stages.includes(c.stage) ? c.stage : 'Introduction', stateId: String(c.stateId || ''), events, discussionId: String(c.discussionId || ''), missing: Array.isArray(c.missing) ? c.missing.map(String).slice(0, 30) : [], location };
   }
   revealedTexts(sess, ctx, lang) {
     const S = sess.entry.data; const out = [];
@@ -283,7 +292,7 @@ ${actionContext(sess)}`;
     const sys = langRule => `You are ${P.summary} This is a medical education SIMULATION with a fictional patient.
 How you speak: ${P.speechStyle}
 Boundaries: ${P.boundaries}
-Current stage: ${ctx.stage}. Patient condition: ${st?.label || ''} — ${st?.context || ''}
+${outsideRoomNote(ctx)}Current stage: ${ctx.stage}. Patient condition: ${st?.label || ''} — ${st?.context || ''}
 Findings the student has obtained so far (you may refer ONLY to these):\n${revealed.map(x => '- ' + x).join('\n') || '- none yet'}
 Approved coaching hints for this stage (use their ideas when the student asks for help):\n${hints.map(h => '- ' + h).join('\n') || '- (none)'}${hintsAr.length ? '\nSame hints in Arabic:\n' + hintsAr.map(h => '- ' + h).join('\n') : ''}
 ${dq ? `You are in the clinical discussion. Your current question to the student was: "${dq.question}"${dqAr ? ` (Arabic: «${dqAr}»)` : ''}. Judge their answer, then either acknowledge briefly or ask ONE short follow-up that guides without giving the answer.` : ''}
@@ -395,7 +404,7 @@ Speak ${lang === 'ar' ? 'in natural Arabic' : 'in natural English'}: 4-6 sentenc
       if (lang === 'ar') fallback = [met.length ? `أحسنت في ${met.length > 1 ? 'عدة نقاط أساسية' : 'نقطة أساسية'} بالتقييم.` : '', critical.length ? 'بس في إشي مهم كتير للسلامة فاتك، ولازم تنتبهله المرة الجاية.' : (missed.length ? 'وفي كم نقطة فاتتك وبتستاهل تراجعها.' : ''), res.escalated ? 'وكان منيح إنك صعّدت الحالة للفريق الأعلى.' : '', 'اطّلع على التقرير المفصّل لتشوف كل التفاصيل.'].filter(Boolean).join(' ');
       else fallback = [met.length ? `You did well with ${met.slice(0, 2).join(' and ').toLowerCase()}.` : '', critical.length ? `The most important thing you missed: ${critical[0].toLowerCase()}` : (missed.length ? `Next time, remember: ${missed[0].toLowerCase()}` : ''), `For this patient, the key point is: ${S.expectedReasoning.keyPoints[S.expectedReasoning.keyPoints.length - 1].toLowerCase()}.`, 'Have a look at the detailed report when you are ready.'].filter(Boolean).join(' ');
     } else {
-      const purpose = { welcome: 'Welcome the student in the corridor and brief the task, using the approved brief below. 2-3 short sentences, under 15 seconds of speech.',
+      const purpose = { welcome: ctx.location === 'room01' ? 'The student has just come into the examination room with you (they are already inside, the door is open). Welcome them and brief the task, using the approved line below. 2-3 short sentences, under 15 seconds of speech. Do not tell them to open the door.' : 'Welcome the student in the corridor and brief the task, using the approved brief below. 2-3 short sentences, under 15 seconds of speech.',
         intervention: 'Say this coaching line to the student now, in your own natural words, keeping exactly the same meaning and the same level of hinting (do not give more of the answer).',
         discussion: 'Ask the student this discussion question in your own natural words. You may briefly connect it to what they just said.',
         result: 'Tell the student this investigation result conversationally. Keep every number and term exactly as given.',
@@ -403,7 +412,7 @@ Speak ${lang === 'ar' ? 'in natural Arabic' : 'in natural English'}: 4-6 sentenc
         state: 'React naturally, in character, to how you feel now.' }[kind] || 'Say this line naturally, keeping the same meaning.';
       system = `You are ${P?.summary || ''} ${P?.speechStyle || ''} Boundaries: ${P?.boundaries || ''}
 Task: ${purpose}
-Approved line/brief: "${kind === 'welcome' ? (S.instructorLines.welcomeBrief || base) : base}"${baseAr ? `\nApproved Arabic wording of the same line (use its meaning and terms): «${baseAr}»` : ''}
+Approved line/brief: "${kind === 'welcome' && ctx.location !== 'room01' ? (S.instructorLines.welcomeBrief || base) : base}"${baseAr ? `\nApproved Arabic wording of the same line (use its meaning and terms): «${baseAr}»` : ''}
 ${st ? `Patient condition now: ${st.label}.` : ''}
 Recent conversation:\n${recent || '(none)'}
 Reply ${lang === 'ar' ? (persona === 'Patient' ? 'in natural spoken Palestinian Arabic (colloquial)' : 'in clear, warm, professional spoken Arabic as a Palestinian doctor talks to a student (Levantine colloquial is good)') : 'in natural spoken English'}, ${kind === 'welcome' ? 'max 45 words' : 'max 30 words'}. Do not add any clinical fact, finding, number or diagnosis that is not in the approved line. Output only the words to be spoken.`;

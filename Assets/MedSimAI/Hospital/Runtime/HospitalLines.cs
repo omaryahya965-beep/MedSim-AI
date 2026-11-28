@@ -35,7 +35,11 @@ namespace MedSimAI.Hospital
                 case "resume": return ar ? "يلا نكمل." : "Let's carry on.";
                 case "wait_ack": return ar ? "أكيد، مستنية." : "Of course, I'll wait.";
                 case "walk_with_ack": return ar ? "أكيد، أنا معك." : "Of course, I'm with you.";
-                case "arrived_room02": return ar ? "هاي غرفة العمليات. الباب بيفتح لحاله لما نقرّب. تفضّل." : "This is the operating room. The doors open as we approach. After you.";
+                // Short on purpose: the surgeon's own welcome follows inside (no double introduction at the door).
+                case "arrived_room02": return ar ? "وصلنا. الباب بيفتح لحاله، تفضّل." : "Here we are. The doors open by themselves. After you.";
+                // Returning to a room already visited in this hospital visit: no second full introduction.
+                case "room01_again": return ar ? "رجعنا عند السيد رييس. منبلش الحالة من جديد، وأنا معك إذا احتجت إشي." : "We're back with Mr. Reyes. The case starts again from the beginning, and I'm here if you need me.";
+                case "room02_again": return ar ? "رجعنا لغرفة العمليات. منبلش من أول خطوة، وأنا وسامي معك." : "Back in the operating room. We start again from the first step; Sami and I are with you.";
                 case "back_corridor": return ar ? "رجعنا عالممر. وين بتحب نروح؟" : "We're back in the corridor. Where would you like to go?";
                 case "left_unfinished": return ar ? "وقفنا الحالة قبل ما تخلص. فيك ترجع تبلّشها من جديد وقت ما بدك." : "We stopped that case before it was finished. You can start it again whenever you like.";
                 case "no_path": return ar ? "ما قدرت أوصل من هون. اتبع اللافتات وأنا بلحقك." : "I can't get there from here. Follow the signs and I'll catch up with you.";

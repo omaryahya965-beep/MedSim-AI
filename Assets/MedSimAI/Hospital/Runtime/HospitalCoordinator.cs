@@ -73,6 +73,7 @@ namespace MedSimAI.Hospital
             Instance = this;
             VoiceInteractionManager.UtteranceInterceptor = (p, text) => HandleUtterance(text);
             VoiceInteractionManager.TargetAvailable = p => p != Persona.Patient || PlayerRoom == HospitalRoomId.Room01;   // Mr. Reyes only in Room 01
+            LiveAIClient.LocationProvider = () => PlayerRoom == HospitalRoomId.Room01 ? "room01" : PlayerRoom == HospitalRoomId.Room02 ? "room02" : Head && Head.position.x > 9.6f ? "reception" : "corridor";   // the doctor knows where the student is
             SurgerySessionController.UtteranceInterceptor = text => HandleUtterance(text);
             SurgerySessionController.StudentHeard = text => { if (VoiceInteractionManager.Instance) VoiceInteractionManager.Instance.ReportTranscript(text); };   // one conversation panel: the student's words from Room 02 too
             DoctorActionController.ExtensionHandler = HandleDoctorAction;
@@ -84,7 +85,7 @@ namespace MedSimAI.Hospital
         {
             if (Instance != this) return;
             Instance = null;
-            VoiceInteractionManager.UtteranceInterceptor = null; VoiceInteractionManager.TargetAvailable = null; SurgerySessionController.UtteranceInterceptor = null; SurgerySessionController.StudentHeard = null;
+            VoiceInteractionManager.UtteranceInterceptor = null; VoiceInteractionManager.TargetAvailable = null; LiveAIClient.LocationProvider = null; SurgerySessionController.UtteranceInterceptor = null; SurgerySessionController.StudentHeard = null;
             DoctorActionController.ExtensionHandler = null; ScenarioRouter.MenuOverride = null;
         }
 
@@ -191,6 +192,9 @@ namespace MedSimAI.Hospital
 
         /// <summary>DoctorActionController extension: the hospital actions. Returns null for anything else.</summary>
         int guideToken;
+        /// <summary>How many times each room was entered during this hospital visit (introductions are given once).</summary>
+        readonly Dictionary<HospitalRoomId, int> visits = new Dictionary<HospitalRoomId, int>();
+        public int Visits(HospitalRoomId room) => visits.TryGetValue(room, out var n) ? n : 0;
         bool? HandleDoctorAction(DoctorActionController ctl, string type, string arg)
         {
             switch (type)
@@ -299,7 +303,8 @@ namespace MedSimAI.Hospital
             // The student who opened the door and walked in keeps the door as it is (the v0.6 start resets it, which shut the
             // student inside the room).
             bool inside = PlayerRoom == HospitalRoomId.Room01 && clinical.examDoor && clinical.examDoor.IsOpen;
-            clinical.StartClinicalSession(guidedMode, inside);
+            visits.TryGetValue(HospitalRoomId.Room01, out var seen01); visits[HospitalRoomId.Room01] = seen01 + 1;
+            clinical.StartClinicalSession(guidedMode, inside, seen01 > 0 ? HospitalLines.Get("room01_again", Language) : null);   // full introduction once per visit
             SessionRoom = HospitalRoomId.Room01;
             current = new HospitalSessionRecord { room = HospitalRoomId.Room01, scenarioId = ClinicalScenarioManager.Instance ? ClinicalScenarioManager.Instance.Scenario.scenarioId : "ER_CHEST_PAIN_001", sessionId = "clinical-" + Guid.NewGuid().ToString("N").Substring(0, 8), startedAt = Time.time, guided = guidedMode };
             Note($"clinical session started ({why}) {current.sessionId}");
@@ -312,7 +317,8 @@ namespace MedSimAI.Hospital
         {
             if (!surgery) return;
             if (guide) guide.Release();
-            surgery.Begin(Language, guidedMode);
+            visits.TryGetValue(HospitalRoomId.Room02, out var seen02); visits[HospitalRoomId.Room02] = seen02 + 1;
+            surgery.Begin(Language, guidedMode, seen02 > 0);   // returning: a short line instead of the full welcome
             SessionRoom = HospitalRoomId.Room02;
             current = new HospitalSessionRecord { room = HospitalRoomId.Room02, scenarioId = "OR_TKA_TRAINING_001", sessionId = "surgical-" + Guid.NewGuid().ToString("N").Substring(0, 8), startedAt = Time.time, guided = guidedMode };
             Note("surgical session started " + current.sessionId);

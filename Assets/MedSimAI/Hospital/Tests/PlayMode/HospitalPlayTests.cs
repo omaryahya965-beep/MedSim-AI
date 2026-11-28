@@ -304,6 +304,23 @@ namespace MedSimAI.Hospital.PlayTests
             Assert.IsTrue(VoiceInteractionManager.TargetAvailable(Persona.Patient), "inside Room 01 the patient can be addressed");
         }
 
+        // No second full introduction: re-entering a room during the same visit gets a short line (the scenario rule is untouched).
+        [UnityTest]
+        public IEnumerator ReenteringTheOperatingRoom_GivesAShortWelcome_NotTheFullIntroduction()
+        {
+            yield return EnterOperatingRoom();
+            string Welcome() => HC.surgery.controller.Scenario.supervisorRules.First(r => r.kind == "welcome").line.en;
+            var full = Welcome();
+            Assert.AreNotEqual(HospitalLines.Get("room02_again", "en"), full, "first visit: the scenario's own welcome");
+            PlaceStudent(new Vector3(5.0f, 0, -3.8f), new Vector3(2f, 0, -3.8f));
+            float t = 0; while (HC.SessionRoom != HospitalRoomId.None && t < 6f) { t += Time.deltaTime; yield return null; }
+            yield return EnterOperatingRoom();
+            Assert.AreEqual(2, HC.Visits(HospitalRoomId.Room02));
+            Assert.AreEqual(HospitalLines.Get("room02_again", "en"), Welcome(), "second visit: a short welcome back");
+            Assert.AreEqual(full, ScenarioWelcomeFromFile(), "the authored scenario welcome is unchanged (the short line is a copy)");
+        }
+        static string ScenarioWelcomeFromFile() => JsonUtility.FromJson<SurgicalScenarioData>(Resources.Load<TextAsset>("SurgeryScenarios/OR_TKA_TRAINING_001").text).supervisorRules.First(r => r.kind == "welcome").line.en;
+
         [UnityTest]
         public IEnumerator Language_PersistsAcrossRooms()
         {
