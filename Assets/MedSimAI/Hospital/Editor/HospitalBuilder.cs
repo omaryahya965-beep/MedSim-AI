@@ -169,6 +169,23 @@ namespace MedSimAI.Hospital.EditorTools
             var g = Object.Instantiate(src, parent); g.name = name; g.transform.SetPositionAndRotation(pos, rot); return g;
         }
 
+        const float PlateScale = 1.7f, HangingScale = 1.45f;
+
+        /// <summary>Copies every text of a flat sign onto its back face (mirrored so both faces read left-to-right the same way).</summary>
+        static void DoubleSided(GameObject sign)
+        {
+            foreach (var t in sign.GetComponentsInChildren<TMP_Text>(true).ToList())
+            {
+                var lp = t.transform.localPosition;
+                var back = Object.Instantiate(t.gameObject, t.transform.parent); back.name = t.name + " (back)";
+                back.transform.localPosition = new Vector3(-lp.x, lp.y, -lp.z);
+                back.transform.localRotation = Quaternion.Euler(0, 180, 0) * t.transform.localRotation;
+                var bt = back.GetComponent<TMP_Text>();   // seen from the other side, left and right swap: mirror the alignment too
+                var h = bt.horizontalAlignment;
+                bt.horizontalAlignment = h == HorizontalAlignmentOptions.Left ? HorizontalAlignmentOptions.Right : h == HorizontalAlignmentOptions.Right ? HorizontalAlignmentOptions.Left : h;
+            }
+        }
+
         /// <summary>Sets a cloned sign's texts: Arabic objects are the ones using the Arabic font. Halves (by local x) get their own pair.</summary>
         static void SetTexts(GameObject sign, string en, string ar, string en2 = null, string ar2 = null)
         {
@@ -439,14 +456,24 @@ namespace MedSimAI.Hospital.EditorTools
             var corridor = Root("Redesign_Corridor").transform;
             var plates = corridor.Cast<Transform>().Where(t => t.name == "Room_Plate").ToList();
             var erPlate = plates.OrderBy(t => Vector3.Distance(t.position, new Vector3(2.6f, 1.5f, -2.63f))).FirstOrDefault();
-            if (erPlate) SetTexts(erPlate.gameObject, "Room 01 · Examination", "الغرفة 01");
-            if (erPlate) { var orPlate = CloneUnder(erPlate.gameObject, corridor, "Room_Plate_Room02", new Vector3(OrRoot.x - 0.55f, erPlate.position.y, erPlate.position.z), erPlate.rotation); SetTexts(orPlate, "Room 02 · Surgery", "الغرفة 02"); }
+            // The v0.2 corridor was entered from its west end; in the hospital the student arrives from the lobby (east). Wall plates
+            // are enlarged so each door reads from the corridor, and the hanging signs get text on BOTH faces (TMP is single-sided:
+            // from the lobby the original signs showed only their blank back).
+            Vector3 erPlateOriginal = erPlate ? erPlate.position : Vector3.zero;
+            if (erPlate) { SetTexts(erPlate.gameObject, "Room 01 · Clinical Examination", "الغرفة 01 · الفحص السريري"); erPlate.localScale = Vector3.one * PlateScale; erPlate.position = new Vector3(erPlate.position.x + 0.12f, 1.80f, erPlate.position.z); }   // beside the door, above the sanitiser sign
+            if (erPlate) { var orPlate = CloneUnder(erPlate.gameObject, corridor, "Room_Plate_Room02", new Vector3(OrRoot.x - 0.55f, erPlateOriginal.y, erPlateOriginal.z), erPlate.rotation); SetTexts(orPlate, "Room 02 · Surgical Training", "الغرفة 02 · التدريب الجراحي"); }
+            // The closed corridor end door (west) carried a decorative "Exam Room 2" plate: in the hospital it looked like a training
+            // room that never opens. It is labelled as what it is.
+            foreach (var other in plates.Where(p => p != erPlate)) SetTexts(other.gameObject, "Staff only", "للموظفين فقط");
+            var erDoorSign = Object.FindObjectsByType<TMP_Text>(FindObjectsInactive.Include, FindObjectsSortMode.None).FirstOrDefault(t => t.transform.parent && t.transform.parent.name == "Door_Sign" && t.text.Contains("EXAM ROOM 3"));
+            if (erDoorSign) erDoorSign.text = "<b>ROOM 01</b>  ·  CLINICAL EXAMINATION";
             var hanging = corridor.Find("Hanging_Sign");
             if (hanging)
             {
                 SetTexts(hanging.gameObject, "Room 01", "الغرفة 01", "Clinical Exam", "الفحص السريري");
                 var h2 = CloneUnder(hanging.gameObject, corridor, "Hanging_Sign_Room02", new Vector3(OrRoot.x - 1.92f, hanging.position.y, hanging.position.z), hanging.rotation);
                 SetTexts(h2, "Room 02", "الغرفة 02", "Surgical Training", "التدريب الجراحي");
+                foreach (var h in new[] { hanging.gameObject, h2 }) { DoubleSided(h); h.transform.localScale = Vector3.one * HangingScale; }
             }
             var welcome = corridor.Find("Welcome_Sign");
             if (welcome)
