@@ -2,6 +2,32 @@
 
 > **DRAFT — NOT CLINICALLY VALIDATED.** Educational technical demonstration with a fictional patient. Not for real-patient diagnosis or treatment, and not a competency certification.
 
+## Integrated training hospital (branch `integration/surgery-final`)
+The four team contributions are combined into one **training hospital**:
+- reception lobby and corridor;
+- **Room 01 · Clinical Examination** (the v0.6 chest-pain case below, unchanged);
+- **Room 02 · Surgical Training** (draft total knee arthroplasty: Person 1's operating room, Person 2's patient, anatomy and instruments, Person 3's mechanics, Person 4's AI surgeon, assistant and assessment).
+
+One persistent doctor, Dr. Sara Hassan, welcomes the student. She walks with them to either room when asked by voice («خديني على غرفة العمليات», "take me to room one"), by the lobby directory or by keys 1 / 2 / 3.
+
+| | |
+|---|---|
+| Scene | `Assets/MedSimAI/Hospital/Scenes/MedSim_Hospital.unity` (menu *MedSim AI → Hospital → Build Hospital Scene*) |
+| Desktop build | `D:\VRBuilds\MedSimAI_Integrated_Desktop\MedSimAI.exe` (add `-clinical-only` for the v0.6 scene alone) |
+| PCVR build | `D:\Medical-Test\Builds\MedSimAI_Integrated_PCVR\MedSimAI.exe` (**not yet tested on a headset**) |
+| Controls | [DESKTOP_CONTROLS](Docs/Surgery/FinalIntegration/DESKTOP_CONTROLS.md) |
+| Report | [INTEGRATION_REPORT](Docs/Surgery/FinalIntegration/INTEGRATION_REPORT.md) |
+
+Further documents:
+- **What was done:** [PR_REVIEW_REPORT](Docs/Surgery/FinalIntegration/PR_REVIEW_REPORT.md) · [MERGE_HISTORY](Docs/Surgery/FinalIntegration/MERGE_HISTORY.md)
+- **How it works:** [HOSPITAL_ARCHITECTURE](Docs/Surgery/FinalIntegration/HOSPITAL_ARCHITECTURE.md) · [COMPLETE_SCENARIO_FLOW](Docs/Surgery/FinalIntegration/COMPLETE_SCENARIO_FLOW.md) · [AI_GUIDE_ARCHITECTURE](Docs/Surgery/FinalIntegration/AI_GUIDE_ARCHITECTURE.md)
+- **Status:** [TEST_REPORT](Docs/Surgery/FinalIntegration/TEST_REPORT.md) · [PERFORMANCE_REPORT](Docs/Surgery/FinalIntegration/PERFORMANCE_REPORT.md) · [KNOWN_LIMITATIONS](Docs/Surgery/FinalIntegration/KNOWN_LIMITATIONS.md) · [CLINICAL_REVIEW](Docs/Surgery/FinalIntegration/CLINICAL_REVIEW.md)
+- **Licences and VR testing:** [ASSET_CREDITS](Docs/Surgery/FinalIntegration/ASSET_CREDITS.md) · [VR_MANUAL_TEST_CHECKLIST](Docs/Surgery/FinalIntegration/VR_MANUAL_TEST_CHECKLIST.md)
+- **Licence texts:** [Licenses/](Licenses/)
+
+Both scenarios are **DRAFT — NOT CLINICALLY VALIDATED**.
+
+## Clinical scenario (v0.6, Room 01)
 The experience runs as one continuous scene with no loading screens:
 
 1. **Corridor.** The student starts in a hospital corridor beside the supervising physician, Dr. Sara Hassan, who gives a short welcome generated live by AI. The provisional bilingual sign reads «جامعة بيرزيت — أهلاً وسهلاً» / *Birzeit University — Welcome*.
