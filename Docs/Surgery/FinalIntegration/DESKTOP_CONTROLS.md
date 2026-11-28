@@ -28,11 +28,12 @@ You can also just say it (hold T):
 - «خديني على غرفة العمليات», «بدي أروح على الغرفة الأولى», «رجعني عالممر», «وين لازم أروح؟», «استني», «امشي معي»
 - "take me to the operating room", "room one", "back to the corridor", "wait", "walk with me", "what rooms are there?"
 
-## Room 01: clinical examination (unchanged from v0.6)
+## Room 01: clinical examination
 | Key / mouse | Action |
 |---|---|
 | Left click | Grab or apply an instrument (cuff → upper arm, oximeter → fingertip, stethoscope → chest) |
 | Right click | Put the instrument back |
+| E (or left click) on the NIBP monitor | START the blood-pressure measurement once the cuff is on the upper arm (new; VR: poke or select the monitor) |
 | E on the ECG cart | Record ECG |
 
 ## Room 02: surgical training

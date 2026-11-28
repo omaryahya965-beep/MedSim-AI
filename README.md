@@ -13,10 +13,12 @@ One persistent doctor, Dr. Sara Hassan, welcomes the student. She walks with the
 | | |
 |---|---|
 | Scene | `Assets/MedSimAI/Hospital/Scenes/MedSim_Hospital.unity` (menu *MedSim AI → Hospital → Build Hospital Scene*) |
-| Desktop build | `D:\VRBuilds\MedSimAI_Integrated_Desktop\MedSimAI.exe` (add `-clinical-only` for the v0.6 scene alone) |
-| PCVR build | `D:\Medical-Test\Builds\MedSimAI_Integrated_PCVR\MedSimAI.exe` (**not yet tested on a headset**) |
-| Controls | [DESKTOP_CONTROLS](Docs/Surgery/FinalIntegration/DESKTOP_CONTROLS.md) |
-| Report | [INTEGRATION_REPORT](Docs/Surgery/FinalIntegration/INTEGRATION_REPORT.md) |
+| **Start (voice included)** | `D:\Medical-Test\Start_MedSim_AI_Desktop.cmd` or `Start_MedSim_AI_PCVR.cmd`. These start the AI proxy first (without it the characters are text only), then the app. |
+| Desktop build | `D:\VRBuilds\MedSim_Desktop\MedSimAI.exe` (add `-clinical-only` for the v0.6 scene alone; v0.6 backup: `D:\VRBuilds\Backup_v0.6_MedSim_Desktop_20261128`) |
+| PCVR build | `D:\Medical-Test\Builds\MedSimAI_PCVR_v0.2\MedSimAI.exe` (**not yet tested on a headset**; v0.6 backup: `…\Backup_v0.6_MedSimAI_PCVR_v0.2_20261128`) |
+| AI proxy | `D:\Medical-Test\Start_MedSim_Proxy_Integrated.cmd`: the integrated proxy (clinical + surgical routes) on the shared spending ledger |
+| Controls | [DESKTOP_CONTROLS](Docs/Surgery/FinalIntegration/DESKTOP_CONTROLS.md). New: after applying the cuff, press **E** on the NIBP monitor to START the blood-pressure measurement. |
+| Report | [INTEGRATION_REPORT](Docs/Surgery/FinalIntegration/INTEGRATION_REPORT.md) · realism upgrade, increment 1: [IMPLEMENTATION_REPORT](Docs/RealismUpgrade/IMPLEMENTATION_REPORT.md) · [AUDIO_ROOT_CAUSE](Docs/RealismUpgrade/AUDIO_ROOT_CAUSE.md) · [TEST_REPORT](Docs/RealismUpgrade/TEST_REPORT.md) · [KNOWN_LIMITATIONS](Docs/RealismUpgrade/KNOWN_LIMITATIONS.md) |
 
 Further documents:
 - **What was done:** [PR_REVIEW_REPORT](Docs/Surgery/FinalIntegration/PR_REVIEW_REPORT.md) · [MERGE_HISTORY](Docs/Surgery/FinalIntegration/MERGE_HISTORY.md)

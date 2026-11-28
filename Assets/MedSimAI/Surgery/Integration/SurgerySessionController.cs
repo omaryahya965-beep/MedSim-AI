@@ -268,7 +268,7 @@ namespace MedSimAI.Surgery.Integration
                 {   // consumed by the hospital (navigation): no surgical reply
                     stream.Cancel(); try { req.Abort(); } catch { } req.Dispose(); currentReq = null; currentStream = null; voiceTurnBusy = false; yield break;
                 }
-                if (!string.IsNullOrEmpty(meta.lang) && meta.lang != Core.Language && string.IsNullOrEmpty(Live.LangLock)) { /* follow the student's language for this reply only */ }
+                if ((meta.lang == "ar" || meta.lang == "en") && meta.lang != Core.Language && string.IsNullOrEmpty(Live.LangLock)) SetLanguage(meta.lang);   // no explicit language choice: follow the language the student just spoke (as the clinical room does)
                 var intent = ToIntent(meta, characterId);
                 if (!string.IsNullOrEmpty(intent.languageCommand)) SetLanguage(intent.languageCommand, lockIt: true);
                 if (!string.IsNullOrEmpty(meta.text) && c && c.Speech) { hud?.AddLine(NameOf(characterId), meta.text); currentSpeaker = c.Speech; c.Speech.SpeakStreaming(meta.text, stream); }
