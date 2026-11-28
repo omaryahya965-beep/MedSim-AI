@@ -34,9 +34,10 @@ const CFG = {
   ttsFallbackModel: process.env.MEDSIM_TTS_FALLBACK_MODEL || 'gpt-4o-mini-tts', // /v1/audio/speech shuts down 2027-01-06
   timeoutMs: Number(process.env.MEDSIM_UPSTREAM_TIMEOUT_MS || 20000),
   budgetUsd: Number(process.env.MEDSIM_BUDGET_USD || 2),
+  ledgerFile: SECRETS.ledgerFile,
   maxBody: 4 * 1024 * 1024,
 };
-export const ledger = new Ledger({ budgetUsd: CFG.budgetUsd });
+export const ledger = new Ledger({ budgetUsd: CFG.budgetUsd, ...(CFG.ledgerFile ? { file: path.resolve(CFG.ledgerFile) } : {}) });
 export const ai = new OpenAIClient({ apiKey: CFG.openaiKey, ledger, timeoutMs: CFG.timeoutMs, models: { chat: CFG.chatModel, stt: CFG.sttModel, tts: CFG.ttsModel, ttsFallback: CFG.ttsFallbackModel } });
 
 // ------------------------------------------------------------------ scenario loading (authoritative)
@@ -346,5 +347,5 @@ export function createServer() {
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   loadScenarios(); loadSurgery();
   if (!CFG.clientToken) console.warn('MEDSIM_CLIENT_TOKEN is not set: every API route will refuse requests (401).');
-  createServer().listen(CFG.port, CFG.host, () => console.log(`MedSim proxy http://${CFG.host}:${CFG.port} scenarios=[${[...scenarios.keys()]}] surgery=[${[...surgeryScenarios.keys()]}] provider=${CFG.openaiKey ? 'configured (' + SECRETS.source + ')' : 'NOT configured'} chat=${CFG.chatModel} stt=${CFG.sttModel} tts=${CFG.ttsModel} budget=$${CFG.budgetUsd} spent=$${ledger.spent.toFixed(4)}`));
+  createServer().listen(CFG.port, CFG.host, () => console.log(`MedSim proxy http://${CFG.host}:${CFG.port} scenarios=[${[...scenarios.keys()]}] surgery=[${[...surgeryScenarios.keys()]}] provider=${CFG.openaiKey ? 'configured (' + SECRETS.source + ')' : 'NOT configured'} chat=${CFG.chatModel} stt=${CFG.sttModel} tts=${CFG.ttsModel} budget=$${CFG.budgetUsd} spent=$${ledger.spent.toFixed(4)} ledger=${ledger.file}`));
 }
