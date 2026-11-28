@@ -224,6 +224,11 @@ namespace MedSimAI.Voice
                 AbortSayRequests(); nvEpoch++;
             }
             TranscriptReady?.Invoke(meta.heard);
+            if (UtteranceInterceptor != null && !string.IsNullOrEmpty(meta.heard) && UtteranceInterceptor(target, meta.heard))
+            {   // consumed by the host (e.g. hospital navigation): the clinical reply is never voiced
+                stream.Cancel(); if (nvReq == www) nvReq = null; try { www.Abort(); } catch { } www.Dispose();
+                if (State == VoiceState.Thinking) SetState(VoiceState.Idle); yield break;
+            }
             var speaker = target == Persona.Patient ? patientSpeech : instructorSpeech;
             if (!string.IsNullOrEmpty(meta.languageCommand))
             {

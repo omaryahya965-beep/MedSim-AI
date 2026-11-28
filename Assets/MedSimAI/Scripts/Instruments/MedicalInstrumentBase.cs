@@ -29,6 +29,12 @@ namespace MedSimAI.Instruments
         protected Vector3 homePos; protected Quaternion homeRot; Transform homeParent;
         readonly Collider[] hits = new Collider[8];
 
+        /// <summary>A teacher's demonstration is using the instrument: it shows the patient's current authored values but records
+        /// no exam for the student (no credit; the demonstration itself is logged as assistance).</summary>
+        public bool DemonstrationUse { get; set; }
+        /// <summary>The bilingual UI language of the conversation ("ar" / "en").</summary>
+        protected static bool Arabic => MedSimAI.AI.AIProviderManager.Instance && MedSimAI.AI.AIProviderManager.Instance.ConversationLanguage == "ar";
+
         /// <summary>Held by the desktop (keyboard + mouse) player instead of an XR interactor.</summary>
         public bool DesktopHeld { get; private set; }
         public bool IsHeld => holder != null || DesktopHeld;
@@ -99,6 +105,7 @@ namespace MedSimAI.Instruments
         /// <summary>Observation event for the SupervisorDirector (not scored). Safe when no session is running.</summary>
         protected void RecordEvent(string id, string detail)
         {
+            if (DemonstrationUse) return;   // the teacher's demonstration is not the student's examination
             var m = ClinicalScenarioManager.Instance; if (!m || m.Session == null) return;
             m.Session.Record(id, detail);
         }
@@ -195,6 +202,15 @@ namespace MedSimAI.Instruments
             if (!z.Accepts(InstrumentId)) { RecordEvent(ClinicalEvents.ZoneRejected, InstrumentId); return; }
             if (SupportsSnap) { RecordEvent(ClinicalEvents.InstrumentOnPatient, InstrumentId + "@" + z.zoneId); SnapTo(z); OnPlaced(z); }
         }
+
+        /// <summary>Demonstration: lifts an attached instrument off the patient where it is (no teleport); the caller carries it.</summary>
+        public void DemoTakeOff()
+        {
+            Detach();
+            if (body) { body.isKinematic = true; body.interpolation = RigidbodyInterpolation.None; }
+        }
+        /// <summary>The pose the instrument returns to on reset (its tray / trolley spot).</summary>
+        public Vector3 HomePosition => homePos;
 
         protected void Detach()
         {

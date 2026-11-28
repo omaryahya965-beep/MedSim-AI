@@ -96,16 +96,21 @@ namespace MedSimAI.Characters
             {
                 var rec = queues[who].Dequeue(); var a = rec.action;
                 current[who] = rec; rec.startedAt = Time.time; Set(rec, ActionState.InProgress);
-                bool ok = who == Persona.Patient ? patient && patient.Execute(a.type, a.side) : doctor && doctor.Execute(a.type, a.instrument);
+                starting = rec;   // while it starts, a controller may report its PREVIOUS action as interrupted: that must not hit this record
+                bool ok;
+                try { ok = who == Persona.Patient ? patient && patient.Execute(a.type, a.side) : doctor && doctor.Execute(a.type, a.instrument); }
+                finally { starting = null; }
                 Debug.Log($"[MedSim] Action {rec} {(ok ? "" : "→ unavailable")}");
                 if (ok) return;
                 Set(rec, ActionState.Unavailable); Report(rec);
             }
         }
 
+        static ActionRecord starting;
         static void Finish(Persona who, string type, ActionState state)
         {
             if (!current.TryGetValue(who, out var rec) || rec == null || rec.action.type != type || rec.state != ActionState.InProgress) return;
+            if (rec == starting && state == ActionState.Interrupted) return;   // late report about the action this one replaced (same type)
             rec.endedAt = Time.time; Set(rec, state); Report(rec);
             if (state == ActionState.Interrupted) queues[who].Clear();
             Next(who);

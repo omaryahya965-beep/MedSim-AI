@@ -31,6 +31,9 @@ export function loadSecrets(env = process.env) {
   return {
     openaiKey: pick('OPENAI_API_KEY'),
     clientToken: pick('MEDSIM_CLIENT_TOKEN'),
+    // Optional: one spending ledger shared by every checkout of the proxy (otherwise each checkout keeps its own data/usage.jsonl,
+    // and a second checkout would start from $0 spent and could exceed the authorised budget).
+    ledgerFile: pick('MEDSIM_LEDGER_FILE'),
     source: env.OPENAI_API_KEY ? 'environment' : (fromFile.OPENAI_API_KEY ? 'secrets-file' : 'none'),
   };
 }

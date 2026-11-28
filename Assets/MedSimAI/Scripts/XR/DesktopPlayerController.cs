@@ -32,6 +32,8 @@ namespace MedSimAI.XR
         XROrigin origin; XRPlayerController player; Transform cam; Camera camera; CharacterController cc;
         float yaw, pitch, vy, ecgGaze, rejectCooldown, helpUntil;
         MedicalInstrumentBase held;
+        /// <summary>The clinical instrument currently held in Desktop Mode (null when none).</summary>
+        public MedicalInstrumentBase Held => held;
         TextMeshProUGUI prompt, status, help, toast; Image crosshair; float toastUntil;
         bool initialised;
 
@@ -82,14 +84,17 @@ namespace MedSimAI.XR
             }
         }
 
+        /// <summary>Hospital scene: true while the operating room owns H (help), M (microphone) and Esc (its own pause menu).</summary>
+        public static bool SurgeryKeysActive;
+
         void Update()
         {
             if (!initialised) return;
             var kb = Keyboard.current; var mouse = Mouse.current;
             bool ui = UiMode;
             Cursor.lockState = ui ? CursorLockMode.None : CursorLockMode.Locked; Cursor.visible = ui;
-            if (kb != null && kb.mKey.wasPressedThisFrame && VoiceInteractionManager.Instance) { var m = VoiceInteractionManager.Instance.CycleMicMode(); Toast("Microphone: " + (m == MicMode.HandsFree ? "hands-free — just speak" : m == MicMode.Muted ? "muted" : "push-to-talk — hold T")); }
-            if (kb != null && (kb.f1Key.wasPressedThisFrame || kb.hKey.wasPressedThisFrame)) helpUntil = helpUntil > Time.unscaledTime ? 0 : Time.unscaledTime + 30f;
+            if (kb != null && kb.mKey.wasPressedThisFrame && VoiceInteractionManager.Instance && VoiceInteractionManager.Instance.isActiveAndEnabled) { var m = VoiceInteractionManager.Instance.CycleMicMode(); Toast("Microphone: " + (m == MicMode.HandsFree ? "hands-free — just speak" : m == MicMode.Muted ? "muted" : "push-to-talk — hold T")); }
+            if (kb != null && (kb.f1Key.wasPressedThisFrame || (kb.hKey.wasPressedThisFrame && !SurgeryKeysActive))) helpUntil = helpUntil > Time.unscaledTime ? 0 : Time.unscaledTime + 30f;
             UpdateStatus();
             if (ui || Time.timeScale == 0f) { SetPrompt(""); crosshair.enabled = false; return; }
             crosshair.enabled = true;
@@ -178,6 +183,16 @@ namespace MedSimAI.XR
             {
                 SetPrompt(door.IsOpen ? "E — close the door" : "E — open the door"); crosshair.color = new Color(0.2f, 0.9f, 0.8f);
                 if (e || lmb) door.OpenBy(door.Angle > 20f ? 0f : 88f);
+                return;
+            }
+            // NIBP monitor: START the blood-pressure measurement once the cuff is on the arm
+            var nibp = tr.GetComponentInParent<NibpStartButton>();
+            if (nibp && nibp.cuff)
+            {
+                var c = nibp.cuff;
+                SetPrompt(c.Measuring ? "Blood pressure: measuring…" : c.Ready ? "E — START the blood-pressure measurement" : "NIBP monitor — apply the cuff to the upper arm first");
+                crosshair.color = c.Ready ? new Color(0.2f, 0.9f, 0.8f) : Color.white;
+                if (e || lmb) c.StartMeasurement();
                 return;
             }
             // ECG cart: record, then review (looking at the tracing for a moment also counts as reviewing)

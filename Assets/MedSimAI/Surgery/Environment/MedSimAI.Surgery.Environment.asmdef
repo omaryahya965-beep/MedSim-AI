@@ -1,0 +1,6 @@
+{
+  "name": "MedSimAI.Surgery.Environment",
+  "rootNamespace": "MedSimAI.Surgery.Environment",
+  "references": ["MedSimAI.Surgery.Shared","MedSimAI.Surgery.Shared.Unity","Unity.RenderPipelines.Universal.Runtime","Unity.RenderPipelines.Core.Runtime","Unity.AI.Navigation","Unity.XR.Interaction.Toolkit","Unity.InputSystem"],
+  "autoReferenced": true
+}

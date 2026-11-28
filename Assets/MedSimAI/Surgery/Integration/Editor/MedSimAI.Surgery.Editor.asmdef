@@ -1,0 +1,6 @@
+{
+  "name": "MedSimAI.Surgery.Editor",
+  "rootNamespace": "MedSimAI.Surgery.EditorTools",
+  "references": ["MedSimAI.Surgery.Shared","MedSimAI.Surgery.Shared.Unity","MedSimAI.Surgery.AI.Core","MedSimAI.Surgery.AI","MedSimAI.Surgery.Characters","MedSimAI.Surgery.UI","MedSimAI.Surgery.Integration","MedSimAI","Unity.AI.Navigation","Unity.XR.Interaction.Toolkit","Unity.XR.CoreUtils","Unity.RenderPipelines.Universal.Runtime","Unity.RenderPipelines.Core.Runtime"],
+  "includePlatforms": ["Editor"]
+}

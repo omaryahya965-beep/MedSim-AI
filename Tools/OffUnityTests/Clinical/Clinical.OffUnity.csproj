@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Regression: the EXISTING clinical (chest-pain) engine tests, run outside Unity. Run: dotnet run -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <NoWarn>CS0649;CS0414;CS0169;CS0067;CS8632;CS0162</NoWarn>
+    <M>../../../Assets/MedSimAI</M>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../NUnitShim/*.cs;../UnityStub/*.cs;ResourcesHook.cs" />
+    <Compile Include="$(M)/Scripts/Clinical/*.cs;$(M)/Scripts/Assessment/*.cs" />
+    <Compile Include="$(M)/Scripts/AI/ClinicalSafety.cs;$(M)/Scripts/AI/ConversationLanguage.cs;$(M)/Scripts/AI/ConversationOrchestrator.cs;$(M)/Scripts/AI/GroundedText.cs;$(M)/Scripts/AI/ScriptedLines.cs;$(M)/Scripts/AI/AIContracts.cs;$(M)/Scripts/AI/Providers.cs;$(M)/Scripts/AI/LiveAIClient.cs;$(M)/Scripts/Voice/StreamingVoice.cs" />
+    <Compile Include="$(M)/Tests/EditMode/ClinicalEngineTests.cs;$(M)/Tests/EditMode/LiveAndSupervisorTests.cs" />
+  </ItemGroup>
+</Project>

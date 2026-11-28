@@ -158,7 +158,7 @@ namespace MedSimAI.XR
         void TogglePause()
         {
             var s = SessionManager.Instance; if (!s) return;
-            if (s.State == AppState.Running || s.State == AppState.Tutorial || s.State == AppState.Discussion) s.Pause(true); else if (s.State == AppState.Paused) s.Pause(false);
+            if (s.State == AppState.Running || s.State == AppState.Tutorial || s.State == AppState.Discussion || s.State == AppState.Hospital) s.Pause(true); else if (s.State == AppState.Paused) s.Pause(false);
         }
 
         public void SetSmoothMovement(bool on) { if (smoothMoveProvider) smoothMoveProvider.SetActive(on); }

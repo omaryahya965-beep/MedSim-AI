@@ -17,6 +17,7 @@ import { loadSecrets, redact } from './lib/secrets.mjs';
 import { Ledger } from './lib/ledger.mjs';
 import { OpenAIClient } from './lib/openai.mjs';
 import { LiveEngine } from './lib/live.mjs';
+import { SurgeryEngine, loadSurgicalScenarios } from './lib/surgery.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const SECRETS = loadSecrets();
@@ -25,6 +26,7 @@ const CFG = {
   host: process.env.MEDSIM_HOST || '127.0.0.1',
   clientToken: SECRETS.clientToken,
   scenarioDir: process.env.MEDSIM_SCENARIO_DIR || path.resolve(HERE, '../../Assets/MedSimAI/Resources/Scenarios'),
+  surgeryScenarioDir: process.env.MEDSIM_SURGERY_SCENARIO_DIR || path.resolve(HERE, '../../Assets/MedSimAI/Surgery/Scenarios/Resources/SurgeryScenarios'),
   openaiKey: SECRETS.openaiKey,
   chatModel: process.env.MEDSIM_CHAT_MODEL || 'gpt-6-luna',
   sttModel: process.env.MEDSIM_STT_MODEL || 'gpt-transcribe',
@@ -32,9 +34,10 @@ const CFG = {
   ttsFallbackModel: process.env.MEDSIM_TTS_FALLBACK_MODEL || 'gpt-4o-mini-tts', // /v1/audio/speech shuts down 2027-01-06
   timeoutMs: Number(process.env.MEDSIM_UPSTREAM_TIMEOUT_MS || 20000),
   budgetUsd: Number(process.env.MEDSIM_BUDGET_USD || 2),
+  ledgerFile: SECRETS.ledgerFile,
   maxBody: 4 * 1024 * 1024,
 };
-export const ledger = new Ledger({ budgetUsd: CFG.budgetUsd });
+export const ledger = new Ledger({ budgetUsd: CFG.budgetUsd, ...(CFG.ledgerFile ? { file: path.resolve(CFG.ledgerFile) } : {}) });
 export const ai = new OpenAIClient({ apiKey: CFG.openaiKey, ledger, timeoutMs: CFG.timeoutMs, models: { chat: CFG.chatModel, stt: CFG.sttModel, tts: CFG.ttsModel, ttsFallback: CFG.ttsFallbackModel } });
 
 // ------------------------------------------------------------------ scenario loading (authoritative)
@@ -204,6 +207,48 @@ export async function converse(body) {
 
 // ------------------------------------------------------------------ Live AI (v0.2)
 export const live = new LiveEngine({ ai, scenarios });
+// Surgical module: same backend (key, budget ledger, Realtime, grounding), separate scenarios and sessions.
+export const surgeryScenarios = new Map();
+export const surgery = new SurgeryEngine({ ai, scenarios: surgeryScenarios });
+export function loadSurgery(dir = CFG.surgeryScenarioDir) { surgeryScenarios.clear(); for (const [k, v] of loadSurgicalScenarios(dir)) surgeryScenarios.set(k, v); return surgeryScenarios; }
+
+async function handleSurgery(req, res, route, url, body) {
+  const r = route.slice('/v1/surgery'.length);
+  if (req.method === 'POST' && (r === '/voice' || r === '/say-stream')) {
+    const isVoice = r === '/voice'; let opts = {};
+    if (isVoice) { try { opts = JSON.parse(Buffer.from(url.searchParams.get('ctx') || 'e30', 'base64url').toString('utf8')); } catch { return send(res, 400, { error: 'bad_ctx' }); } }
+    else opts = body.length ? JSON.parse(body.toString('utf8')) : {};
+    const sess = surgery.get(isVoice ? url.searchParams.get('sessionId') : opts.sessionId);
+    if (!sess) return send(res, 404, { error: 'unknown_session' });
+    const lim = surgery.admit(sess) || live.admit(null); if (lim) return send(res, 429, { error: lim });
+    if (isVoice && (body.length < 4800 || body.length > 48000 * 30)) return send(res, 413, { error: body.length < 4800 ? 'audio_too_short' : 'audio_too_long' });
+    const ac = new AbortController(); res.on('close', () => { if (!res.writableEnded) ac.abort(); });
+    let headerSent = false;
+    const onMeta = m => { if (headerSent) return; headerSent = true; res.writeHead(200, { 'Content-Type': 'application/octet-stream', 'Cache-Control': 'no-store', 'X-Accel-Buffering': 'no' }); res.write(JSON.stringify(m) + '\n'); };
+    const onAudio = chunk => { if (!res.writableEnded && !ac.signal.aborted) res.write(chunk); };
+    try {
+      const out = isVoice
+        ? await surgery.voiceTurn(sess, url.searchParams.get('character') === 'assistant' ? 'assistant' : 'surgeon', body, { language: url.searchParams.get('lang') || undefined, langLock: url.searchParams.get('langLock') || '', context: opts }, { onMeta, onAudio, signal: ac.signal })
+        : await surgery.sayStream(sess, opts, { onMeta, onAudio, signal: ac.signal });
+      if (out) console.log(`  ${route} firstAudio=${out.firstAudioMs}ms total=${out.totalMs}ms ${out.characterId || ''} source=${out.source || '-'}${out.cancelled ? ' (interrupted)' : ''}`);
+    } catch (e) { if (!headerSent) throw e; console.error(`[${route}] stream error ${redact(e.message)}`); }
+    if (!res.writableEnded) res.end();
+    return;
+  }
+  const json = body.length ? JSON.parse(body.toString('utf8')) : {};
+  if (req.method === 'POST' && r === '/session/start') { const x = surgery.start(json); if (x.status === 200) surgery.prewarm(surgery.get(x.json.sessionId)); return send(res, x.status, x.json); }
+  if (req.method === 'POST' && r === '/session/end') { const x = surgery.end(json.sessionId); return send(res, x.status, x.json); }
+  const sess = surgery.get(json.sessionId);
+  if (!sess) return send(res, 404, { error: 'unknown_session' });
+  if (req.method === 'POST' && r === '/event') { const x = surgery.event(sess, json); return send(res, x.status, x.json); }
+  if (req.method === 'POST' && r === '/action-result') { const x = surgery.actionResult(sess, json); return send(res, x.status, x.json); }
+  if (req.method === 'POST' && (r === '/turn' || r === '/say')) {
+    const lim = surgery.admit(sess); if (lim) return send(res, 429, { error: lim });
+    const x = r === '/say' ? await surgery.say(sess, json) : await surgery.turn(sess, json);
+    return send(res, x.status, x.json);
+  }
+  return send(res, 404, { error: 'not_found' });
+}
 
 function wavSeconds(buf) {
   try { if (buf.toString('ascii', 0, 4) !== 'RIFF') return buf.length / 32000; const rate = buf.readUInt32LE(24), ch = buf.readUInt16LE(22), bits = buf.readUInt16LE(34); return (buf.length - 44) / (rate * ch * bits / 8); } catch { return 0; }
@@ -222,11 +267,21 @@ function readBody(req) {
 function send(res, status, obj, type = 'application/json') { res.writeHead(status, { 'Content-Type': type, 'Cache-Control': 'no-store' }); res.end(type === 'application/json' ? JSON.stringify(obj) : obj); }
 function errStatus(e) { if (e.code === 'budget_exceeded') return [402, 'budget_exceeded']; if (e.status === 401 || e.status === 403) return [502, 'provider_auth_failed']; if (e.status === 429) return [429, 'provider_rate_limited']; if (e.name === 'TimeoutError' || /timeout/i.test(e.message)) return [504, 'upstream_timeout']; if (e instanceof SyntaxError) return [400, 'bad_json']; return [502, 'upstream_failure']; }
 
+// LAN mode (standalone headset): only loopback and private-network clients are served; MEDSIM_ALLOW_PREFIX (e.g. "192.168.1.")
+// narrows it to the laptop's own subnet. The client token check below still applies to every API route.
+export function trustedClient(addr, prefix = process.env.MEDSIM_ALLOW_PREFIX || '') {
+  const a = String(addr || '').replace(/^::ffff:/, '');
+  if (a === '127.0.0.1' || a === '::1') return true;
+  if (prefix) return a.startsWith(prefix);
+  return /^10\./.test(a) || /^192\.168\./.test(a) || /^172\.(1[6-9]|2\d|3[01])\./.test(a);
+}
+
 export function createServer() {
   return http.createServer(async (req, res) => {
     const started = Date.now(); const route = req.url.split('?')[0];
+    if (!trustedClient(req.socket.remoteAddress)) { res.writeHead(403); return res.end(); }
     try {
-      if (route === '/health') return send(res, 200, { ok: true, scenarios: [...scenarios.keys()], providerConfigured: !!CFG.openaiKey, chatModel: CFG.chatModel, sttModel: CFG.sttModel, ttsModel: CFG.ttsModel, budgetRemainingUsd: Number(ledger.remaining().toFixed(4)) });
+      if (route === '/health') return send(res, 200, { ok: true, scenarios: [...scenarios.keys()], surgicalScenarios: [...surgeryScenarios.keys()], providerConfigured: !!CFG.openaiKey, chatModel: CFG.chatModel, sttModel: CFG.sttModel, ttsModel: CFG.ttsModel, budgetRemainingUsd: Number(ledger.remaining().toFixed(4)) });
       if (!CFG.clientToken || req.headers['x-medsim-client'] !== CFG.clientToken) return send(res, 401, { error: 'unauthorized' });
       const url = new URL(req.url, 'http://x');
       if (req.method === 'GET' && route.startsWith('/v1/audio/')) {
@@ -238,6 +293,7 @@ export function createServer() {
       }
       if (req.method === 'GET' && route === '/v1/usage') return send(res, 200, ledger.summary());
       const body = await readBody(req);
+      if (route.startsWith('/v1/surgery/')) return await handleSurgery(req, res, route, url, body);
       if (req.method === 'POST' && route === '/v1/action-result') {
         const b = body.length ? JSON.parse(body.toString('utf8')) : {}; const sess = live.get(b.sessionId);
         if (!sess) return send(res, 404, { error: 'unknown_session' });
@@ -299,7 +355,7 @@ export function createServer() {
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  loadScenarios();
+  loadScenarios(); loadSurgery();
   if (!CFG.clientToken) console.warn('MEDSIM_CLIENT_TOKEN is not set: every API route will refuse requests (401).');
-  createServer().listen(CFG.port, CFG.host, () => console.log(`MedSim proxy http://${CFG.host}:${CFG.port} scenarios=[${[...scenarios.keys()]}] provider=${CFG.openaiKey ? 'configured (' + SECRETS.source + ')' : 'NOT configured'} chat=${CFG.chatModel} stt=${CFG.sttModel} tts=${CFG.ttsModel} budget=$${CFG.budgetUsd} spent=$${ledger.spent.toFixed(4)}`));
+  createServer().listen(CFG.port, CFG.host, () => console.log(`MedSim proxy http://${CFG.host}:${CFG.port} scenarios=[${[...scenarios.keys()]}] surgery=[${[...surgeryScenarios.keys()]}] provider=${CFG.openaiKey ? 'configured (' + SECRETS.source + ')' : 'NOT configured'} chat=${CFG.chatModel} stt=${CFG.sttModel} tts=${CFG.ttsModel} budget=$${CFG.budgetUsd} spent=$${ledger.spent.toFixed(4)} ledger=${ledger.file}`));
 }

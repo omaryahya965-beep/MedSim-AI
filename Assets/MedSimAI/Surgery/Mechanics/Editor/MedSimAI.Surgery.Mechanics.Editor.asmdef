@@ -1,0 +1,5 @@
+{
+  "name": "MedSimAI.Surgery.Mechanics.Editor",
+  "references": ["MedSimAI.Surgery.Mechanics","MedSimAI.Surgery.Shared","MedSimAI.Surgery.Shared.Unity","MedSimAI.Surgery.Anatomy","MedSimAI.Surgery.Instruments"],
+  "includePlatforms": ["Editor"]
+}

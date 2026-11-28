@@ -8,7 +8,7 @@ export const PATIENT_ACTIONS = ['none', 'sit_up', 'recline', 'raise_arm', 'exten
 export const DOCTOR_ACTIONS = ['none', 'come_to_student', 'stand_beside_student', 'step_back', 'approach_patient', 'go_other_side', 'observe_from_distance', 'wait',
   'return_to_observation', 'look_at_patient', 'look_at_student', 'demonstrate_instrument', 'other_physical'];
 export const SIDES = ['left', 'right', 'both', 'unspecified', 'none', 'nearest'];
-export const INSTRUMENTS = ['none', 'bp_cuff', 'pulse_oximeter', 'stethoscope', 'ecg'];
+export const INSTRUMENTS = ['none', 'bp_cuff', 'pulse_oximeter', 'stethoscope', 'ecg', 'interview'];
 const NEEDS_SIDE = new Set(['raise_arm', 'extend_arm', 'turn_to_side']);
 
 /** Up to 3 actions in the order the student asked ("sit up and raise your left arm"). */
@@ -23,7 +23,7 @@ export function actionSchema(persona) {
 export function actionPromptRule(persona) {
   return persona === 'Patient'
     ? `- PHYSICAL REQUESTS: if the student asks you to do something with your body (sit up / sit forward, lie back, raise, move, extend or relax an arm, bring your hand closer, turn onto a side, move on the bed, take a deep breath, breathe normally, open your mouth, look at them, show where it hurts, keep still, rest), set action.type (+ side for arms/turning, using YOUR left/right; "unspecified" if they did not say which arm). Different wording, dialect or language means the same action ("ارفع إيدك الشمال" = raise_arm left, "قرّب إيدك علي" / "مد إيدك" without a side = extend_arm with side "nearest", "ريّح إيدك" = lower_arm, "ارجع تمدد" = recline, "سكّر ثمك" = close_mouth, "تحرك شوي على السرير" / "ممكن تتحرك شوي عشان أفحصك" = shift_on_bed, "تنفس عادي" = breathe_normally). If they ask for several things at once, list them in order. Reply with a SHORT natural acknowledgement in character ("حاضر", "طيب، هيك؟", "Sure.") — never say it is already done and never describe extra movements. Showing where it hurts («فرجيني وين الوجع», "show me where it hurts") = point_to_pain (you point to the middle of your chest). Use other_physical ONLY for a clearly physical request that matches nothing above. If they ask you to stand up, walk or get off the bed, set stand_up / walk (the simulation decides). A question about a symptom is NOT a physical request.`
-    : `- PHYSICAL REQUESTS: if the student asks YOU to move or show something (come here, stand beside me, move back / give me space, wait, go back, show me how to use a device), set action.type. "Come round to the other side" («تعالي من الجهة الثانية») = go_other_side. "Leave me to examine him on my own" («ممكن تتركيني أفحص المريض لحالي؟») = observe_from_distance (you watch from the doorway). "Come and see/check the patient" («تعالي شوفي المريض») = approach_patient (walk to the bedside); look_at_patient is only turning to look without walking (and action.instrument for demonstrations: bp_cuff, pulse_oximeter, stethoscope or ecg). Reply with a SHORT natural acknowledgement ("أكيد، جاية", "Sure."), never claim it is done. A demonstration is only showing where the device goes and how to hold it — never reveal findings, results or the diagnosis.`;
+    : `- PHYSICAL REQUESTS: if the student asks YOU to move or show something (come here, stand beside me, move back / give me space, wait, go back, show me how to use a device), set action.type. "Come round to the other side" («تعالي من الجهة الثانية») = go_other_side. "Leave me to examine him on my own" («ممكن تتركيني أفحص المريض لحالي؟») = observe_from_distance (you watch from the doorway). "Come and see/check the patient" («تعالي شوفي المريض») = approach_patient (walk to the bedside); look_at_patient is only turning to look without walking. DEMONSTRATIONS: when the student wants to SEE you do it — "show me (how)", "demonstrate", "do it in front of me", "I don't have enough information / I don't know how", "walk me through it practically", «ورجيني/فرجيني كيف…», «خليني أشوف كيف بتعملي الفحص», «طبقي عملياً وأنا بتعلم منك», «اعمليها قدامي» — set demonstrate_instrument with action.instrument = bp_cuff, pulse_oximeter, stethoscope, ecg, or interview (how to talk to and question the patient); "none" = whatever comes next in the examination. You then really perform it at the bedside, step by step, and the student tries after you. Reply with a SHORT natural acknowledgement ("أكيد، تابعيني/تابعني", "Sure, watch me."), never claim it is done, and never reveal findings, results or the diagnosis in the acknowledgement.`;
 }
 
 const LINES = {
@@ -69,7 +69,7 @@ export function validateAction(persona, a, { scenario, stateId, utterance = '' }
     return { type, side, instrument, status: 'clarify', reason: 'side_needed', lineKey: 'clarify_side' };
   }
   if (type === 'lower_arm' && !['left', 'right', 'both'].includes(side)) side = 'both';
-  if (type === 'demonstrate_instrument' && instrument === 'none') return { type, side, instrument, status: 'clarify', reason: 'instrument_needed', lineKey: 'clarify_other' };
+  // demonstrate_instrument with "none": Unity demonstrates the next appropriate part of the examination (no clarification needed)
   return corrected ? { type, side, instrument, status: 'accepted', corrected: true } : { type, side, instrument, status: 'accepted' };
 }
 

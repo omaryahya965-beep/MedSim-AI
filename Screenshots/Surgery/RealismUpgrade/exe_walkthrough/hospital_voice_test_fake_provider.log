@@ -1,0 +1,91 @@
+    0.6s [info] voice walkthrough · provider=FAKE (no key, no spending) · 0.1.0 · display=Desktop · AI=LIVE AI · live configured=True · LiveOn=True · ForceOffline=False
+    0.6s [mic] devices: [Microphone Array (Realtek(R) Audio), Microphone (VIVE Virtual Audio Device), CABLE Output (VB-Audio Virtual Cable), Microphone (Realtek(R) Audio)] · picked: system default · mode PushToTalk
+    4.2s [guide] welcome
+    4.3s [subtitle] Dr. Hassan (supervisor): أهلاً وسهلاً دكتور. اليوم عنا حالتين للتدريب. بالغرفة الأولى في مريض بحاجة لفحص سريري، وبالغرفة الثانية عنا تدريب على محاكاة استبدال مفصل الركبة. وين بتحب نبلش؟
+   12.1s [audio] reception welcome: Dr. Hassan (supervisor) spoke 7.7 s · AudioSource playing a clip=True · listener RMS max 0.103 avg 0.024 (AUDIBLE) · max blend-shape weight 100 (lip sync moving) · AudioListener.volume 1.00 pause=False
+   12.1s [shot] v01_reception_welcome
+   13.8s [heard] clinical voice: Hello doctor, nice to meet you.
+   13.8s [subtitle] Dr. Hassan (supervisor): Okay. What would you like to do next?
+   14.1s [talk] held T 1.6 s · 'Hello doctor, nice to meet you.' (english) · target Instructor · player room Corridor · microphone captured 1.42 s, RMS 0.0010
+   16.6s [audio] reception reply (English): Dr. Hassan (supervisor) spoke 2.5 s · AudioSource playing a clip=True · listener RMS max 0.059 avg 0.020 (AUDIBLE) · max blend-shape weight 98 (lip sync moving) · AudioListener.volume 1.00 pause=False
+   18.7s [walk] reception → corridor (9.40, -3.90): arrived in 2.2 s
+   19.3s [shot] v02_corridor_both_entrances
+   19.3s [target] in the corridor looking towards Room 01: voice target = Instructor (patient addressable: False)
+   20.9s [heard] clinical voice: Take me to room one, please.
+   20.9s [action] Instructor:guide_to_room(none,room_01) InProgress
+   20.9s [guide] follow_room01
+   20.9s [subtitle] Dr. Hassan (supervisor): Sure, follow me to Room 01.
+   21.3s [talk] held T 1.6 s · 'Take me to room one, please.' (english) · target Instructor · player room Corridor · microphone captured 1.44 s, RMS 0.0015
+   23.1s [audio] guide line 'follow me': Dr. Hassan (supervisor) spoke 1.9 s · AudioSource playing a clip=True · listener RMS max 0.108 avg 0.030 (AUDIBLE) · max blend-shape weight 70 (lip sync moving) · AudioListener.volume 1.00 pause=False
+   23.2s [hospital] guiding to Room01
+   27.3s [walk] corridor → Room 01 door (3.40, -3.90): arrived in 4.1 s
+   28.3s [walk] in front of the Room 01 door (1.85, -3.45): arrived in 1.1 s
+   28.8s [shot] v03_room01_door
+   29.1s [door] E pressed while looking at the Room 01 door → open=True angle=35°
+   30.0s [walk] through the Room 01 doorway (1.85, -1.90): arrived in 0.9 s
+   30.1s [room] Corridor → Room01
+   30.1s [action] Instructor:guide_to_room(none,room_01) Interrupted
+   30.6s [subtitle] Dr. Hassan (supervisor): Welcome. I am Dr. Sara Hassan, and I will be supervising you today. Mr. Reyes, fifty-eight, has come in with chest pain. Assess him as you would a real patient, and tell me what you think.
+   30.9s [walk] into Room 01 (1.30, -0.60): arrived in 0.9 s
+   30.9s [clinical] Room 01 session: Room01 · state Running
+   32.1s [shot] v04_room01_patient
+   38.3s [target] in Room 01 looking at the patient: voice target = Patient
+   40.4s [heard] clinical voice: مرحبا سيد رييس، وين بيوجعك بالزبط؟
+   40.4s [subtitle] Mr. Reyes (patient): والله مش متأكد منها هاي، آسف.
+   40.7s [talk] held T 2.0 s · 'مرحبا سيد رييس، وين بيوجعك بالزبط؟' (arabic) · target Patient · player room Room01 · microphone captured 1.86 s, RMS 0.0011
+   42.7s [audio] patient reply (Arabic): Mr. Reyes (patient) spoke 2.0 s · AudioSource playing a clip=True · listener RMS max 0.039 avg 0.021 (AUDIBLE) · max blend-shape weight 100 (lip sync moving) · AudioListener.volume 1.00 pause=False
+   42.7s [language] conversation language now ar
+   44.4s [heard] clinical voice: خديني على غرفة العمليات
+   44.4s [action] Instructor:guide_to_room(none,room_02) InProgress
+   44.4s [guide] follow_room02
+   44.4s [subtitle] Dr. Hassan (supervisor): تمام، تعال معي على غرفة العمليات.
+   44.7s [talk] held T 1.6 s · 'خديني على غرفة العمليات' (arabic) · target Instructor · player room Room01 · microphone captured 1.88 s, RMS 0.0012
+   46.9s [audio] guide line to Room 02 (Arabic): Dr. Hassan (supervisor) spoke 2.2 s · AudioSource playing a clip=True · listener RMS max 0.092 avg 0.032 (AUDIBLE) · max blend-shape weight 100 (lip sync moving) · AudioListener.volume 1.00 pause=False
+   47.5s [walk] back to the Room 01 doorway (1.85, -1.90): arrived in 0.5 s
+   48.4s [room] Room01 → Corridor
+   48.6s [walk] out to the corridor (1.85, -3.60): arrived in 1.1 s
+   49.6s [clinical] left Room 01 → session room None; records: Room01 left unfinished
+   51.8s [walk] corridor → Room 02 entrance (5.33, -3.70): arrived in 2.1 s
+   52.9s [guide] arrived_room02
+   52.9s [subtitle] Dr. Hassan (supervisor): وصلنا. الباب بيفتح لحاله، تفضّل.
+   53.0s [walk] into the Room 02 vestibule (5.33, -1.60): arrived in 1.2 s
+   53.5s [room] Corridor → Room02
+   53.7s [subtitle] Dr. Hassan (supervisor): أهلاً فيك بغرفة العمليات. خلينا نبلّش بتأكيد مكان العملية.
+   53.9s [walk] through the sliding doors (5.33, -0.20): arrived in 0.9 s
+   55.7s [walk] to the student's operating position (6.09, 2.36): arrived in 1.8 s
+   55.8s [surgery] Room 02 session active=True · live online=True · last error='' · clinical voice manager enabled=False · surgical voice input=PushToTalk
+   57.7s [audio] surgical welcome (doctor as supervising surgeon): Dr. Hassan (supervisor) spoke 1.9 s · AudioSource playing a clip=True · listener RMS max 0.026 avg 0.012 (AUDIBLE) · max blend-shape weight 59 (lip sync moving) · AudioListener.volume 1.00 pause=False
+   57.7s [shot] v05_operating_room
+   59.4s [heard] clinical voice: شو الخطوة الجاي؟
+   59.4s [subtitle] Dr. Hassan (supervisor): تأكيد مكان العملية. قبل أي شق، الفريق بيتأكد من المريض ونوع العملية والجهة. هون بتأكد على الركبة اليمنى المعلّمة باستخدام قلم التعليم.
+   59.7s [talk] held T 1.6 s · 'شو الخطوة الجاي؟' (arabic) · target Instructor · player room Room02 · microphone captured 1.62 s (surgical voice input)
+   67.2s [audio] surgeon reply (Arabic): Dr. Hassan (supervisor) spoke 7.4 s · AudioSource playing a clip=True · listener RMS max 0.029 avg 0.011 (AUDIBLE) · max blend-shape weight 100 (lip sync moving) · AudioListener.volume 1.00 pause=False
+   69.1s [heard] clinical voice: Sami, pass me the skin marker please.
+   69.1s [subtitle] Sami (surgical assistant): تفضّل، هاي الأداة: قلم تعليم الجلد.
+   69.4s [talk] held T 1.8 s · 'Sami, pass me the skin marker please.' (english) · target Instructor · player room Room02 · microphone captured 1.85 s (surgical voice input)
+   71.8s [audio] assistant reply (hand-over): Sami (surgical assistant) spoke 2.4 s · AudioSource playing a clip=True · listener RMS max 0.049 avg 0.018 (AUDIBLE) · max blend-shape weight 0 (no mouth movement) · AudioListener.volume 1.00 pause=False
+   86.4s [handoff] assistant holding out: inst.skin_marker
+   86.5s [shot] v06_assistant_handover
+   88.2s [heard] clinical voice: Take me back to the corridor.
+   88.2s [action] Instructor:guide_to_room(none,corridor) InProgress
+   88.2s [guide] follow_corridor
+   88.2s [guide] waiting
+   88.2s [subtitle] Dr. Hassan (supervisor): تمام، خلينا نطلع عالممر.
+   88.5s [talk] held T 1.6 s · 'Take me back to the corridor.' (english) · target Instructor · player room Room02 · microphone captured 1.63 s (surgical voice input)
+   90.2s [audio] guide line back to the corridor: Dr. Hassan (supervisor) spoke 1.7 s · AudioSource playing a clip=True · listener RMS max 0.020 avg 0.010 (AUDIBLE) · max blend-shape weight 100 (lip sync moving) · AudioListener.volume 1.00 pause=False
+   90.3s [subtitle] Dr. Hassan (supervisor): أنا مستنيتك هون، خذ وقتك.
+   91.7s [walk] back to the sliding doors (5.33, -0.20): arrived in 1.4 s
+   92.5s [guide] resume
+   92.6s [subtitle] Dr. Hassan (supervisor): يلا نكمل.
+   92.6s [walk] vestibule (5.33, -1.60): arrived in 0.9 s
+   93.2s [room] Room02 → Corridor
+   94.5s [walk] corridor (5.60, -3.90): arrived in 1.9 s
+   94.5s [surgery] left Room 02 → session room None; clinical voice manager enabled again=True
+   94.5s [language] conversation language in the corridor: ar (Auto)
+   96.2s [guide] where_to_go
+   96.2s [action] Instructor:guide_to_room(none,corridor) Completed
+   96.2s [subtitle] Dr. Hassan (supervisor): فيك تختار. احكيلي الغرفة الأولى أو غرفة العمليات، أو اختار من اللوحة، وأنا بمشي معك.
+   96.5s [mic] hands-free: microphone open=True device=system default level=0.0011
+   96.5s [shot] v07_back_in_corridor
+   96.5s [hospital] log tail: 29.6s guide_to_room room_01 → released ; 29.6s clinical session started (entered) clinical-0c57cd54 ; 43.8s heard 'خديني على غرفة العمليات' → GoToRoom(Room02) ← 'غرفه العمليات' ; 43.8s request Room02 via voice ; 43.8s say:follow_room02 ; 47.9s student Room01 → Corridor ; 49.1s Room01 session ended (left the room, unfinished) ; 52.3s guide_to_room room_02 → arrived ; 52.3s say:arrived_room02 ; 53.0s student Corridor → Room02 ; 53.0s surgical session started surgical-f844735a ; 87.6s heard 'Take me back to the corridor.' → GoToRoom(Corridor) ← 'corridor' ; 87.6s request Corridor via voice ; 87.6s say:follow_corridor ; 87.6s say:waiting ; 92.0s say:resume ; 92.6s student Room02 → Corridor ; 93.8s Room02 session ended (left the room, unfinished) ; 95.7s guide_to_room corridor → arrived ; 95.7s say:where_to_go
+   96.5s [done] voice walkthrough finished · 347 walkthrough frames

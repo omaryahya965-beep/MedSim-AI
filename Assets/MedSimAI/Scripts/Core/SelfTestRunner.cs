@@ -31,6 +31,7 @@ namespace MedSimAI.Core
             var args = Environment.GetCommandLineArgs();
             int i = Array.FindIndex(args, a => string.Equals(a, "-medsimSelfTest", StringComparison.OrdinalIgnoreCase));
             if (i < 0) return;
+            if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "MedSim_Hospital") return;   // the hospital has its own journey (-hospitalSelfTest)
             var go = new GameObject("[MedSim Self-Test]"); DontDestroyOnLoad(go);
             var r = go.AddComponent<SelfTestRunner>(); r.wavDir = i + 1 < args.Length ? args[i + 1] : "";
         }

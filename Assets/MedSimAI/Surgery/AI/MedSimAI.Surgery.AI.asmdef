@@ -1,0 +1,6 @@
+{
+  "name": "MedSimAI.Surgery.AI",
+  "rootNamespace": "MedSimAI.Surgery.AI",
+  "references": ["MedSimAI.Surgery.Shared","MedSimAI.Surgery.Shared.Unity","MedSimAI.Surgery.AI.Core","MedSimAI","Unity.InputSystem"],
+  "autoReferenced": true
+}

@@ -1,0 +1,29 @@
+{
+  "name": "MedSimAI.Hospital.Editor",
+  "rootNamespace": "MedSimAI.Hospital.EditorTools",
+  "references": [
+    "MedSimAI",
+    "MedSimAI.Hospital",
+    "MedSimAI.Surgery.Shared",
+    "MedSimAI.Surgery.Shared.Unity",
+    "MedSimAI.Surgery.AI.Core",
+    "MedSimAI.Surgery.AI",
+    "MedSimAI.Surgery.Characters",
+    "MedSimAI.Surgery.UI",
+    "MedSimAI.Surgery.Integration",
+    "MedSimAI.Surgery.Mechanics",
+    "MedSimAI.Surgery.Anatomy",
+    "MedSimAI.Surgery.Instruments",
+    "MedSimAI.Surgery.Environment",
+    "Unity.InputSystem",
+    "Unity.XR.Interaction.Toolkit",
+    "Unity.TextMeshPro",
+    "UnityEngine.UI",
+    "Unity.AI.Navigation",
+    "Unity.XR.CoreUtils",
+    "Unity.XR.Management",
+    "Unity.XR.Management.Editor",
+    "Unity.RenderPipelines.Universal.Runtime"
+  ],
+  "includePlatforms": ["Editor"]
+}

@@ -1,0 +1,237 @@
+{
+  "scenarioId": "OR_TKA_TRAINING_001",
+  "version": "0.1.0",
+  "contractVersion": "1.1.0",
+  "kind": "surgical",
+  "title": { "en": "Total Knee Replacement — Guided Training (Right Knee)", "ar": "تبديل مفصل الركبة الكامل — تدريب موجّه (الركبة اليمنى)" },
+  "summary": {
+    "en": "A simplified, simulation-level walkthrough of the main stages of a total knee replacement on a virtual patient's right knee: site confirmation, incision, exposure, bone preparation, trial fitting, implant placement and closure.",
+    "ar": "تدريب مبسّط على مستوى المحاكاة لمراحل عملية تبديل مفصل الركبة الكامل على الركبة اليمنى لمريض افتراضي: تأكيد مكان العملية، الشق، الكشف، تحضير العظم، تجربة القطع، تركيب المفصل، والإغلاق."
+  },
+  "operativeSide": "right",
+  "review": {
+    "status": "DRAFT",
+    "reviewer": "",
+    "reviewedOn": "",
+    "notes": "Educational sequence written for a student competition prototype. Steps are deliberately simplified to the four basic stages described in public patient-education material (bone preparation, implant positioning, optional patellar resurfacing, spacer insertion) plus site confirmation and closure. Tolerances are SIMULATION values, not clinical values. A qualified orthopaedic surgeon must review every line before any real training use."
+  },
+  "limitations": [
+    { "en": "DRAFT — NOT CLINICALLY VALIDATED. Educational simulation only.", "ar": "مسودة — غير معتمدة سريرياً. محاكاة تعليمية فقط." },
+    { "en": "Not a substitute for clinical supervision or accredited surgical training, and not a competency certification.", "ar": "لا تغني عن الإشراف السريري أو التدريب الجراحي المعتمد، وليست شهادة كفاءة." },
+    { "en": "The procedure is simplified: anaesthesia, positioning, tourniquet, ligament balancing, patellar resurfacing, cementing technique and implant sizing are not simulated.", "ar": "العملية مبسّطة: لا تتم محاكاة التخدير، وضعية المريض، الرباط الضاغط، موازنة الأربطة، تبديل سطح الرضفة، تقنية الإسمنت، أو اختيار حجم المفصل." },
+    { "en": "Placement tolerances are simulation values chosen for gameplay, not clinical accuracy targets.", "ar": "حدود دقة التركيب قيم خاصة بالمحاكاة وليست أهداف دقة سريرية." }
+  ],
+  "references": [
+    "American Academy of Orthopaedic Surgeons, OrthoInfo — Total Knee Replacement. https://orthoinfo.aaos.org/en/treatment/total-knee-replacement/ (patient-education overview of the procedure's basic steps)",
+    "World Health Organization — Surgical Safety Checklist (2009) and implementation manual. https://www.who.int/publications/i/item/9789241598590 (site, side and procedure confirmation before incision)",
+    "Reviewer to add an authoritative operative-technique reference before approval."
+  ],
+  "personas": [
+    {
+      "id": "surgeon",
+      "displayName": { "en": "Dr. Sara Hassan", "ar": "د. سارة حسن" },
+      "voice": "marin",
+      "summary": "Fictional supervising physician and clinical educator, the same Dr. Sara Hassan who guides the student through the training hospital, here supervising the simulated operating-room training (she is the educator, not the operating surgeon). She observes, stays quiet while the student works correctly, explains the purpose of each stage at simulation level, and gives approved hints only when the scenario rules call for it.",
+      "speechStyle": "calm, precise, warm teaching surgeon; short sentences; speaks Palestinian Arabic or English to match the student",
+      "boundaries": "Never invents surgical steps, measurements, findings or instructions beyond the approved scenario text. Never says a step is done unless the simulation reports it. Never gives real-patient advice. Reminds that this is a draft educational simulation when asked about real surgery."
+    },
+    {
+      "id": "assistant",
+      "displayName": { "en": "Sami (surgical assistant)", "ar": "سامي (مساعد العمليات)" },
+      "voice": "cedar",
+      "summary": "Fictional scrub assistant who manages the instrument table. Can come beside the student, go to the instrument table, point out where an instrument is, hold out an instrument for the student to take, wait, and return to position.",
+      "speechStyle": "friendly, brief, practical; one-line acknowledgements; Palestinian Arabic or English to match the student",
+      "boundaries": "Only performs catalogue actions after validation. Never claims an instrument was handed over until the student actually takes it. Does not teach surgical technique; refers questions about the procedure to the surgeon."
+    }
+  ],
+  "welcome": {
+    "en": "Welcome to the operating room. I'll supervise you here too. Today you'll go through a guided, simplified total knee replacement on the right knee. Work through each step; I'll stay quiet while you're on track, and you can ask me or Sami for help at any time.",
+    "ar": "أهلاً فيك بغرفة العمليات. أنا رح أشرف عليك هون كمان. اليوم رح تمشي بخطوات مبسّطة وموجّهة لعملية تبديل مفصل الركبة اليمنى. اشتغل خطوة خطوة، أنا رح أضل ساكتة طول ما إنت ماشي صح، وبتقدر تطلب مساعدة مني أو من سامي بأي وقت."
+  },
+  "objectives": [
+    {
+      "id": "obj.site_confirmation", "order": 1,
+      "title": { "en": "Confirm the operative site", "ar": "تأكيد مكان العملية" },
+      "explanation": { "en": "Before any incision the team confirms the patient, the procedure and the side. Here you confirm the marked RIGHT knee with the skin marker.", "ar": "قبل أي شق، الفريق بيتأكد من المريض ونوع العملية والجهة. هون بتأكد على الركبة اليمنى المعلّمة باستخدام قلم التعليم." },
+      "prerequisites": [], "requiredTools": ["inst.skin_marker"], "targets": ["knee_r.site_marking"],
+      "completionEvent": "objective.completed", "completionState": "marked", "safetyCritical": true,
+      "hints": [
+        { "en": "Start by confirming which knee we are operating on.", "ar": "ابدأ بتأكيد أي ركبة رح نعملها." },
+        { "en": "Use the skin marker on the marked site of the right knee.", "ar": "استخدم قلم التعليم على المكان المعلّم بالركبة اليمنى." }
+      ]
+    },
+    {
+      "id": "obj.incision", "order": 2,
+      "title": { "en": "Skin incision", "ar": "شق الجلد" },
+      "explanation": { "en": "A straight incision over the front of the knee gives access to the joint. In the simulation, follow the highlighted incision line with the scalpel.", "ar": "شق مستقيم على مقدمة الركبة بيعطي وصول للمفصل. بالمحاكاة، امشِ بالمشرط على خط الشق المحدد." },
+      "prerequisites": ["obj.site_confirmation"], "requiredTools": ["inst.scalpel"], "targets": ["knee_r.incision_line"],
+      "completionEvent": "objective.completed", "completionState": "incised", "safetyCritical": true,
+      "hints": [
+        { "en": "The next step opens the skin over the knee.", "ar": "الخطوة الجاية بتفتح الجلد فوق الركبة." },
+        { "en": "Take the scalpel and follow the highlighted line on the front of the knee.", "ar": "خذ المشرط وامشِ على الخط المحدد على مقدمة الركبة." }
+      ]
+    },
+    {
+      "id": "obj.exposure", "order": 3,
+      "title": { "en": "Expose the joint", "ar": "كشف مفصل الركبة" },
+      "explanation": { "en": "The tissues are held apart so the joint surfaces can be seen. Place the retractor on the joint capsule.", "ar": "الأنسجة بتنمسك لبرّا عشان تبيّن أسطح المفصل. حط المبعد على محفظة المفصل." },
+      "prerequisites": ["obj.incision"], "requiredTools": ["inst.retractor"], "targets": ["knee_r.joint_capsule"],
+      "completionEvent": "objective.completed", "completionState": "exposed", "safetyCritical": false,
+      "hints": [
+        { "en": "We need a clear view of the joint before preparing the bone.", "ar": "لازم نشوف المفصل منيح قبل ما نحضّر العظم." },
+        { "en": "Use the retractor on the joint capsule.", "ar": "استخدم المبعد على محفظة المفصل." }
+      ]
+    },
+    {
+      "id": "obj.femoral_resection", "order": 4,
+      "title": { "en": "Prepare the end of the femur", "ar": "تحضير النهاية السفلية لعظم الفخذ" },
+      "explanation": { "en": "The damaged surface at the end of the thigh bone is removed so the implant can sit on it. Position the femoral cutting guide first, then use the saw through the guide.", "ar": "السطح التالف بنهاية عظم الفخذ بينشال عشان يركب عليه المفصل. ركّب دليل القطع الخاص بالفخذ أول، وبعدين استخدم المنشار من خلال الدليل." },
+      "prerequisites": ["obj.exposure"], "requiredTools": ["inst.cutting_guide_femoral", "inst.oscillating_saw"], "targets": ["knee_r.distal_femur"],
+      "completionEvent": "objective.completed", "completionState": "resected", "toleranceMm": 3, "toleranceDeg": 3, "safetyCritical": true,
+      "hints": [
+        { "en": "The femur needs to be shaped to fit the implant.", "ar": "عظم الفخذ لازم يتشكّل عشان يناسب المفصل." },
+        { "en": "Place the femoral cutting guide on the end of the femur before using the saw.", "ar": "ركّب دليل القطع على نهاية عظم الفخذ قبل ما تستخدم المنشار." },
+        { "en": "Once the guide is in place, use the oscillating saw through the guide slot.", "ar": "لما يركب الدليل، استخدم المنشار من خلال فتحة الدليل." }
+      ]
+    },
+    {
+      "id": "obj.tibial_resection", "order": 5,
+      "title": { "en": "Prepare the top of the tibia", "ar": "تحضير النهاية العلوية لعظم الظنبوب" },
+      "explanation": { "en": "The damaged top surface of the shin bone is removed to make a flat base. Position the tibial cutting guide, then use the saw.", "ar": "السطح العلوي التالف لعظم الظنبوب بينشال عشان تصير قاعدة مستوية. ركّب دليل القطع الخاص بالساق، وبعدين استخدم المنشار." },
+      "prerequisites": ["obj.femoral_resection"], "requiredTools": ["inst.cutting_guide_tibial", "inst.oscillating_saw"], "targets": ["knee_r.proximal_tibia"],
+      "completionEvent": "objective.completed", "completionState": "resected", "toleranceMm": 3, "toleranceDeg": 3, "safetyCritical": true,
+      "hints": [
+        { "en": "Now the top of the tibia needs a flat surface.", "ar": "هلأ رأس عظم الظنبوب بدّه سطح مستوي." },
+        { "en": "Place the tibial cutting guide first, then use the saw.", "ar": "ركّب دليل قطع عظم الظنبوب أول، وبعدين المنشار." }
+      ]
+    },
+    {
+      "id": "obj.trial_reduction", "order": 6,
+      "title": { "en": "Trial components", "ar": "تركيب المكوّنات التجريبية" },
+      "explanation": { "en": "Temporary trial components are fitted first to check fit and movement before the final implants. Place the femoral and tibial trials.", "ar": "بنركّب قطع تجريبية مؤقتة أول عشان نتأكد من الملاءمة والحركة قبل المفصل النهائي. ركّب القطعة التجريبية للفخذ وللساق." },
+      "prerequisites": ["obj.tibial_resection"], "requiredTools": [], "targets": ["knee_r.distal_femur", "knee_r.proximal_tibia"],
+      "completionEvent": "objective.completed", "completionState": "trial_fitted", "implantId": "implant.femoral_trial", "toleranceMm": 4, "toleranceDeg": 4, "safetyCritical": false,
+      "hints": [
+        { "en": "Before the final implants, we check the fit with trial pieces.", "ar": "قبل المفصل النهائي، بنجرب الملاءمة بقطع تجريبية." },
+        { "en": "Place the femoral trial on the femur and the tibial trial on the tibia.", "ar": "حط القطعة التجريبية للفخذ على الفخذ، وقطعة الساق على الساق." }
+      ]
+    },
+    {
+      "id": "obj.implant_femoral", "order": 7,
+      "title": { "en": "Place the femoral component", "ar": "تركيب مكوّن الفخذ" },
+      "explanation": { "en": "The metal femoral component resurfaces the end of the femur. Align it with the prepared bone and seat it with the impactor and mallet.", "ar": "مكوّن الفخذ المعدني بيغطي نهاية عظم الفخذ. صفّه مع العظم المحضّر وثبّته بالدافع والمطرقة." },
+      "prerequisites": ["obj.trial_reduction"], "requiredTools": ["inst.impactor", "inst.mallet"], "targets": ["knee_r.distal_femur"],
+      "completionEvent": "objective.completed", "completionState": "implanted", "implantId": "implant.femoral_component", "toleranceMm": 2, "toleranceDeg": 3, "safetyCritical": false,
+      "hints": [
+        { "en": "Time for the final femoral component.", "ar": "إجا وقت مكوّن الفخذ النهائي." },
+        { "en": "Align the femoral component with the prepared femur, then seat it with the impactor and mallet.", "ar": "صفّ مكوّن الفخذ مع العظم المحضّر، وبعدين ثبّته بالدافع والمطرقة." }
+      ]
+    },
+    {
+      "id": "obj.implant_tibial", "order": 8,
+      "title": { "en": "Place the tibial tray and insert", "ar": "تركيب صينية الظنبوب والبطانة البلاستيكية" },
+      "explanation": { "en": "A metal tray resurfaces the tibia and a plastic insert sits on it, so metal glides on plastic. Place the tray first, then the insert.", "ar": "صينية معدنية بتغطي عظم الظنبوب وفوقها فاصل بلاستيكي، عشان المعدن يتزحلق على البلاستيك. ركّب الصينية أول، وبعدين الفاصل." },
+      "prerequisites": ["obj.trial_reduction"], "requiredTools": ["inst.impactor", "inst.mallet"], "targets": ["knee_r.proximal_tibia"],
+      "completionEvent": "objective.completed", "completionState": "implanted", "implantId": "implant.tibial_tray", "toleranceMm": 2, "toleranceDeg": 3, "safetyCritical": false,
+      "hints": [
+        { "en": "Now the tibial side of the implant.", "ar": "هلأ الجهة الخاصة بالساق من المفصل." },
+        { "en": "Place the tibial tray first, then the plastic insert on top.", "ar": "ركّب صينية الظنبوب أول، وبعدين الفاصل البلاستيكي فوقها." }
+      ]
+    },
+    {
+      "id": "obj.closure", "order": 9,
+      "title": { "en": "Close the wound", "ar": "إغلاق الجرح" },
+      "explanation": { "en": "After the implants are in place, the wound is closed. Use the needle driver or the skin stapler along the wound.", "ar": "بعد ما يركب المفصل، بنسكّر الجرح. استخدم ماسك الإبرة أو دبّاسة الجلد على طول الجرح." },
+      "prerequisites": ["obj.implant_femoral", "obj.implant_tibial"], "requiredTools": ["inst.needle_driver", "inst.skin_stapler"], "targets": ["knee_r.wound"],
+      "completionEvent": "objective.completed", "completionState": "closed", "safetyCritical": false,
+      "hints": [
+        { "en": "The last step is closing the wound.", "ar": "آخر خطوة إغلاق الجرح." },
+        { "en": "Use the needle driver or the skin stapler along the wound.", "ar": "استخدم ماسك الإبر أو الدبّاسة الجراحية على طول الجرح." }
+      ]
+    }
+  ],
+  "instruments": [
+    { "id": "inst.skin_marker", "name": { "en": "skin marker", "ar": "قلم التعليم الجراحي" }, "purpose": { "en": "confirming and marking the operative site", "ar": "تأكيد وتعليم مكان العملية" }, "aliases": ["marker", "pen", "قلم", "ماركر"] },
+    { "id": "inst.scalpel", "name": { "en": "scalpel", "ar": "المِشرط" }, "purpose": { "en": "skin incision", "ar": "شق الجلد" }, "aliases": ["knife", "blade", "مشرط", "شفرة"] },
+    { "id": "inst.retractor", "name": { "en": "retractor", "ar": "المُبعِد" }, "purpose": { "en": "holding tissues apart", "ar": "إبعاد الأنسجة" }, "aliases": ["retractor", "مبعد", "مباعد"] },
+    { "id": "inst.cutting_guide_femoral", "name": { "en": "femoral cutting guide", "ar": "دليل قطع عظم الفخذ" }, "purpose": { "en": "guiding the femoral bone cut", "ar": "توجيه قطع عظم الفخذ" }, "aliases": ["femoral guide", "femur guide", "دليل الفخذ", "جيج الفخذ"] },
+    { "id": "inst.cutting_guide_tibial", "name": { "en": "tibial cutting guide", "ar": "دليل قطع الساق" }, "purpose": { "en": "guiding the tibial bone cut", "ar": "توجيه قطع عظم الظنبوب" }, "aliases": ["tibial guide", "tibia guide", "دليل الساق", "جيج الساق"] },
+    { "id": "inst.oscillating_saw", "name": { "en": "oscillating saw", "ar": "المنشار المتذبذب" }, "purpose": { "en": "bone cuts through a guide", "ar": "قطع العظم من خلال الدليل" }, "aliases": ["saw", "منشار"] },
+    { "id": "inst.drill", "name": { "en": "surgical drill", "ar": "مثقب جراحي" }, "purpose": { "en": "drilling (not needed in this simplified scenario)", "ar": "الثقب (مش مطلوب بهالسيناريو المبسّط)" }, "aliases": ["drill", "دريل", "مثقب"] },
+    { "id": "inst.mallet", "name": { "en": "mallet", "ar": "المطرقة الجراحية" }, "purpose": { "en": "seating components with the impactor", "ar": "تثبيت القطع مع الدافع" }, "aliases": ["hammer", "مطرقة", "شاكوش"] },
+    { "id": "inst.impactor", "name": { "en": "impactor", "ar": "أداة الدفع والتثبيت" }, "purpose": { "en": "seating implant components", "ar": "تثبيت مكونات المفصل" }, "aliases": ["impactor", "pusher", "دافع"] },
+    { "id": "inst.needle_driver", "name": { "en": "needle driver", "ar": "ماسك الإبرة" }, "purpose": { "en": "suturing the wound", "ar": "تقطيب الجرح" }, "aliases": ["needle holder", "suture", "ماسك الابرة", "خياطة", "قطب"] },
+    { "id": "inst.skin_stapler", "name": { "en": "skin stapler", "ar": "دبّاسة الجلد" }, "purpose": { "en": "closing the skin", "ar": "إغلاق الجلد" }, "aliases": ["stapler", "staples", "دباسة", "كبّاس"] }
+  ],
+  "targets": [
+    { "id": "knee_r.site_marking", "name": { "en": "marked site on the right knee", "ar": "مكان التعليم على الركبة اليمنى" }, "states": ["intact", "marked"] },
+    { "id": "knee_r.incision_line", "name": { "en": "incision line", "ar": "خط الشق الجراحي" }, "states": ["intact", "incised"] },
+    { "id": "knee_r.joint_capsule", "name": { "en": "joint capsule", "ar": "محفظة المفصل" }, "states": ["intact", "exposed"] },
+    { "id": "knee_r.distal_femur", "name": { "en": "end of the femur", "ar": "النهاية السفلية لعظم الفخذ" }, "states": ["intact", "guide_placed", "resected", "trial_fitted", "implanted"] },
+    { "id": "knee_r.proximal_tibia", "name": { "en": "top of the tibia", "ar": "النهاية العلوية لعظم الظنبوب" }, "states": ["intact", "guide_placed", "resected", "trial_fitted", "implanted"] },
+    { "id": "knee_r.wound", "name": { "en": "wound", "ar": "الجرح" }, "states": ["intact", "closed"] }
+  ],
+  "implants": [
+    { "id": "implant.femoral_trial", "name": { "en": "femoral trial", "ar": "المكوّن التجريبي لعظم الفخذ" }, "targetId": "knee_r.distal_femur" },
+    { "id": "implant.tibial_trial", "name": { "en": "tibial trial", "ar": "المكوّن التجريبي لعظم الظنبوب" }, "targetId": "knee_r.proximal_tibia" },
+    { "id": "implant.femoral_component", "name": { "en": "femoral component", "ar": "مكوّن عظم الفخذ" }, "targetId": "knee_r.distal_femur" },
+    { "id": "implant.tibial_tray", "name": { "en": "tibial tray", "ar": "صينية الساق" }, "targetId": "knee_r.proximal_tibia" },
+    { "id": "implant.poly_insert", "name": { "en": "plastic insert", "ar": "البطانة البلاستيكية (بولي إيثيلين)" }, "targetId": "knee_r.proximal_tibia" }
+  ],
+  "supervisorPolicy": { "globalCooldownSeconds": 12, "silentOnCorrectActions": true, "maxHintsPerObjective": 3 },
+  "supervisorRules": [
+    { "id": "rule.welcome", "kind": "welcome", "trigger": { "type": "session_started" }, "priority": 9, "graceSeconds": 0, "cooldownSeconds": 0, "maxTimes": 1, "givesHint": false,
+      "line": { "en": "Welcome to the operating room. Let's begin by confirming the operative site.", "ar": "أهلاً فيك بغرفة العمليات. خلينا نبلّش بتأكيد مكان العملية." } },
+    { "id": "rule.wrong_side", "kind": "safety", "trigger": { "type": "rejected", "reason": "wrong_side" }, "priority": 10, "graceSeconds": 0, "cooldownSeconds": 5, "maxTimes": 3, "givesHint": false,
+      "line": { "en": "Stop for a moment. We are operating on the RIGHT knee. Always check the side before you act.", "ar": "لحظة، وقّف. إحنا بنعمل الركبة اليمنى. دايماً تأكد من الجهة قبل ما تعمل أي إشي." } },
+    { "id": "rule.not_sterile", "kind": "safety", "trigger": { "type": "rejected", "reason": "not_sterile" }, "priority": 9, "graceSeconds": 0, "cooldownSeconds": 10, "maxTimes": 2, "givesHint": false,
+      "line": { "en": "That instrument is no longer sterile. Ask Sami for a fresh one.", "ar": "هاي الأداة ما عادت معقمة. اطلب من سامي وحدة جديدة." } },
+    { "id": "rule.prerequisite", "kind": "intervention", "trigger": { "type": "rejected", "reason": "prerequisite_missing" }, "priority": 7, "graceSeconds": 1.5, "cooldownSeconds": 12, "maxTimes": 3, "givesHint": false,
+      "line": { "en": "Not yet. There is an earlier step to finish first.", "ar": "مش هلأ. في خطوة قبلها لازم تخلص أول." } },
+    { "id": "rule.wrong_tool", "kind": "hint", "trigger": { "type": "rejected", "reason": "wrong_tool" }, "priority": 5, "graceSeconds": 4, "cooldownSeconds": 15, "maxTimes": 3, "givesHint": true,
+      "line": { "en": "That instrument isn't the right one for this step. Think about what this step needs.", "ar": "هاي مش الأداة المناسبة لهالخطوة. فكّر شو بتحتاج هالخطوة." } },
+    { "id": "rule.wrong_target", "kind": "hint", "trigger": { "type": "rejected", "reason": "wrong_target" }, "priority": 5, "graceSeconds": 3, "cooldownSeconds": 15, "maxTimes": 3, "givesHint": true,
+      "line": { "en": "Right instrument, but check where you're applying it.", "ar": "الأداة صح، بس انتبه وين عم تستخدمها." } },
+    { "id": "rule.tolerance", "kind": "hint", "trigger": { "type": "rejected", "reason": "out_of_tolerance" }, "priority": 6, "graceSeconds": 2, "cooldownSeconds": 12, "maxTimes": 3, "givesHint": true,
+      "line": { "en": "The alignment is off. Adjust the position and try again.", "ar": "الاصطفاف مش مزبوط. عدّل الوضعية وجرّب كمان مرة." } },
+    { "id": "rule.repeated", "kind": "intervention", "trigger": { "type": "repeated_rejection", "count": 3 }, "priority": 8, "graceSeconds": 0, "cooldownSeconds": 20, "maxTimes": 2, "givesHint": true,
+      "line": { "en": "Let's pause. Take a breath and look at the current step on the panel; I'll guide you.", "ar": "خلينا نوقف شوي. خذ نفس وشوف الخطوة الحالية على الشاشة، وأنا بوجّهك." } },
+    { "id": "rule.idle", "kind": "hint", "trigger": { "type": "idle", "seconds": 45 }, "priority": 3, "graceSeconds": 0, "cooldownSeconds": 40, "maxTimes": 3, "givesHint": true,
+      "line": { "en": "Take your time. If you're unsure, ask me or Sami.", "ar": "خذ وقتك. إذا مش متأكد، اسألني أو اسأل سامي." } },
+    { "id": "rule.help", "kind": "hint", "trigger": { "type": "help_requested" }, "priority": 6, "graceSeconds": 0, "cooldownSeconds": 0, "maxTimes": 20, "givesHint": true,
+      "line": { "en": "Of course.", "ar": "أكيد." } },
+    { "id": "rule.complete", "kind": "praise", "trigger": { "type": "session_completed" }, "priority": 9, "graceSeconds": 0.5, "cooldownSeconds": 0, "maxTimes": 1, "givesHint": false,
+      "line": { "en": "Well done, the simulated procedure is complete. Let's go over how it went.", "ar": "يعطيك العافية، خلصت العملية الافتراضية. خلينا نراجع كيف كان أداءك." } }
+  ],
+  "assessment": [
+    { "id": "crit.site_confirmed", "kind": "objective_completed", "objectiveId": "obj.site_confirmation", "weight": 2, "label": { "en": "Confirmed the operative site", "ar": "تأكّد من مكان العملية" } },
+    { "id": "crit.site_clean", "kind": "objective_clean", "objectiveId": "obj.site_confirmation", "weight": 2, "label": { "en": "No wrong-side or invalid actions during site confirmation", "ar": "ما في أخطاء جهة أو حركات غلط أثناء تأكيد المكان" } },
+    { "id": "crit.incision", "kind": "objective_completed", "objectiveId": "obj.incision", "weight": 1, "label": { "en": "Completed the skin incision", "ar": "أكمل شق الجلد" } },
+    { "id": "crit.exposure", "kind": "objective_completed", "objectiveId": "obj.exposure", "weight": 1, "label": { "en": "Exposed the joint", "ar": "كشف المفصل" } },
+    { "id": "crit.femur", "kind": "objective_completed", "objectiveId": "obj.femoral_resection", "weight": 1, "label": { "en": "Prepared the femur", "ar": "حضّر عظم الفخذ" } },
+    { "id": "crit.femur_clean", "kind": "objective_clean", "objectiveId": "obj.femoral_resection", "weight": 1, "label": { "en": "Used the guide before the saw on the femur", "ar": "استخدم الدليل قبل المنشار على الفخذ" } },
+    { "id": "crit.tibia", "kind": "objective_completed", "objectiveId": "obj.tibial_resection", "weight": 1, "label": { "en": "Prepared the tibia", "ar": "حضّر عظم الظنبوب" } },
+    { "id": "crit.trial", "kind": "objective_completed", "objectiveId": "obj.trial_reduction", "weight": 1, "label": { "en": "Fitted the trial components", "ar": "ركّب القطع التجريبية" } },
+    { "id": "crit.femoral_component", "kind": "objective_completed", "objectiveId": "obj.implant_femoral", "weight": 1, "label": { "en": "Placed the femoral component", "ar": "ركّب مكوّن الفخذ" } },
+    { "id": "crit.femoral_accuracy", "kind": "placement_within_tolerance", "objectiveId": "obj.implant_femoral", "implantId": "implant.femoral_component", "weight": 2, "label": { "en": "Femoral component placed within the simulation tolerance", "ar": "تركيب مكوّن الفخذ ضمن حدود دقة المحاكاة" } },
+    { "id": "crit.tibial_component", "kind": "objective_completed", "objectiveId": "obj.implant_tibial", "weight": 1, "label": { "en": "Placed the tibial tray and insert", "ar": "ركّب صينية الساق والفاصل" } },
+    { "id": "crit.tibial_accuracy", "kind": "placement_within_tolerance", "objectiveId": "obj.implant_tibial", "implantId": "implant.tibial_tray", "weight": 2, "label": { "en": "Tibial tray placed within the simulation tolerance", "ar": "تركيب صينية الساق ضمن حدود دقة المحاكاة" } },
+    { "id": "crit.closure", "kind": "objective_completed", "objectiveId": "obj.closure", "weight": 1, "label": { "en": "Closed the wound", "ar": "سكّر الجرح" } },
+    { "id": "crit.order", "kind": "prerequisites_respected", "weight": 2, "label": { "en": "Followed the step order (no out-of-order attempts)", "ar": "التزم بترتيب الخطوات (بدون محاولات قبل وقتها)" } },
+    { "id": "crit.hints", "kind": "hints_at_most", "threshold": 4, "weight": 1, "label": { "en": "Needed four hints or fewer", "ar": "احتاج أربع تلميحات أو أقل" } },
+    { "id": "crit.interventions", "kind": "interventions_at_most", "threshold": 2, "weight": 1, "label": { "en": "Two supervisor interventions or fewer", "ar": "تدخلين من المشرفة أو أقل" } },
+    { "id": "crit.completed", "kind": "session_completed", "weight": 2, "label": { "en": "Completed the simulated procedure", "ar": "أكمل العملية الافتراضية" } },
+    { "id": "crit.duration", "kind": "duration_at_most", "threshold": 1200, "weight": 1, "label": { "en": "Finished within 20 minutes", "ar": "خلّص خلال 20 دقيقة" } }
+  ],
+  "assistantPolicy": {
+    "handoverTools": ["inst.skin_marker", "inst.scalpel", "inst.retractor", "inst.cutting_guide_femoral", "inst.cutting_guide_tibial", "inst.oscillating_saw", "inst.drill", "inst.mallet", "inst.impactor", "inst.needle_driver", "inst.skin_stapler"],
+    "deniedActions": ["operate", "touch_patient"],
+    "handoverOnlyForCurrentObjective": false
+  },
+  "safetyObservations": [
+    { "reason": "wrong_side", "text": { "en": "Attempted an action on the wrong side.", "ar": "محاولة إجراء على الجهة الخطأ." } },
+    { "reason": "not_sterile", "text": { "en": "Attempted to use a non-sterile instrument.", "ar": "محاولة استخدام أداة غير معقمة." } },
+    { "reason": "prerequisite_missing", "text": { "en": "Attempted a step before its prerequisite was complete.", "ar": "محاولة خطوة قبل إكمال الخطوة اللي قبلها." } },
+    { "reason": "out_of_tolerance", "text": { "en": "A placement attempt was outside the simulation tolerance.", "ar": "محاولة تركيب كانت خارج حدود دقة المحاكاة." } }
+  ]
+}

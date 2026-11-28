@@ -30,6 +30,18 @@ namespace MedSimAI.Voice
         public int maxRecordSeconds = 15;
         public Persona Target { get; private set; } = Persona.Instructor;
         public bool autoTargetByGaze = true;
+        /// <summary>
+        /// Optional host hook (integration): called with every understood student utterance (typed, dictated or heard by the
+        /// native voice session). Return true to consume it (e.g. hospital navigation handled by the guide). Null in the
+        /// standalone clinical scene, so nothing changes there.
+        /// </summary>
+        public static Func<Persona, string, bool> UtteranceInterceptor;
+        /// <summary>
+        /// Optional host hook (integration): which characters can be addressed right now. In the hospital the patient is only
+        /// addressable inside Room 01; elsewhere the student always talks to the doctor (gaze alone must not pick a patient
+        /// behind a wall). Null in the standalone clinical scene: both characters, chosen by gaze, as before.
+        /// </summary>
+        public static Func<Persona, bool> TargetAvailable;
         public VoiceState State { get; private set; }
         public event Action<VoiceState> StateChanged;
         public event Action<Persona> TargetChanged;
@@ -65,17 +77,24 @@ namespace MedSimAI.Voice
 
         void Update()
         {
+            if (State == VoiceState.Idle && TargetAvailable != null && !TargetAvailable(Target))
+            {
+                var other = Target == Persona.Patient ? Persona.Instructor : Persona.Patient;
+                if (TargetAvailable(other)) SetTarget(other);
+            }
             if (autoTargetByGaze && playerHead && State == VoiceState.Idle && patientSpeech && instructorSpeech)
             {
                 float Dot(Transform t) => Vector3.Dot(playerHead.forward, (t.position - playerHead.position).normalized);
                 var t2 = Dot(patientSpeech.transform) > Dot(instructorSpeech.transform) ? Persona.Patient : Persona.Instructor;
-                if (t2 != Target) SetTarget(t2);
+                if (t2 != Target && (TargetAvailable == null || TargetAvailable(t2))) SetTarget(t2);
             }
             if (State == VoiceState.Listening && Time.time - listenStart > maxRecordSeconds) StopListening();
             NativeUpdate();
         }
 
         public void SetTarget(Persona p) { Target = p; TargetChanged?.Invoke(p); }
+        /// <summary>Shows a transcript heard by another voice path (e.g. the operating room's) in the same conversation panel.</summary>
+        public void ReportTranscript(string text) { if (!string.IsNullOrWhiteSpace(text)) TranscriptReady?.Invoke(text); }
         void SetState(VoiceState s) { State = s; StateChanged?.Invoke(s); }
         void OnPttDown(InputAction.CallbackContext _) => StartListening();
         void OnPttUp(InputAction.CallbackContext _) => StopListening();
@@ -157,6 +176,7 @@ namespace MedSimAI.Voice
                 return;
             }
             AI.NoteStudentLanguage(LanguageCommands.DetectLanguage(text));
+            if (UtteranceInterceptor != null && UtteranceInterceptor(target, text)) { if (State == VoiceState.Thinking || State == VoiceState.Transcribing) SetState(VoiceState.Idle); return; }
             if (State == VoiceState.Speaking || State == VoiceState.Thinking) Interrupt();
             SetState(VoiceState.Thinking);
             cts?.Dispose(); cts = new CancellationTokenSource();

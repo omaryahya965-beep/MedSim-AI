@@ -42,7 +42,15 @@ namespace MedSimAI.XR
         {
             if (Instance) return;
             var go = new GameObject("[MedSim Display Mode]"); DontDestroyOnLoad(go); go.AddComponent<DisplayModeManager>();
+#if UNITY_ANDROID && !UNITY_EDITOR
+            // Standalone headset (VIVE Focus 3): voice needs the runtime microphone permission.
+            if (!UnityEngine.Android.Permission.HasUserAuthorizedPermission(UnityEngine.Android.Permission.Microphone))
+                UnityEngine.Android.Permission.RequestUserPermission(UnityEngine.Android.Permission.Microphone);
+#endif
         }
+
+        /// <summary>Standalone Android headset build: always VR (there is no desktop to fall back to, and no process relaunch).</summary>
+        static bool IsStandaloneHeadset => Application.platform == RuntimePlatform.Android;
 
         public static DisplayModePreference SavedPreference
         {
@@ -79,6 +87,14 @@ namespace MedSimAI.XR
             var mgr = XRGeneralSettings.Instance ? XRGeneralSettings.Instance.Manager : null;
             // If XR was already started (e.g. "Initialize on Startup" re-enabled), respect it.
             if (mgr != null && mgr.isInitializationComplete && XRSettings.isDeviceActive) { Set(DisplayMode.VR, "XR already running"); yield break; }
+            if (IsStandaloneHeadset && mgr != null)
+            {
+                if (mgr.activeLoader == null) { yield return mgr.InitializeLoader(); startedXr = mgr.activeLoader != null; }
+                if (mgr.activeLoader != null && !XRSettings.isDeviceActive) mgr.StartSubsystems();
+                float wait = Time.realtimeSinceStartup + 20f;
+                while (Time.realtimeSinceStartup < wait && !DisplayRunning()) yield return null;
+                Set(DisplayMode.VR, DisplayRunning() ? "standalone headset" : "standalone headset (display not reported running)"); yield break;
+            }
             if (req == DisplayModePreference.Desktop || mgr == null) { PlayerPrefs.SetInt(XrPendingKey, 0); Set(DisplayMode.Desktop, mgr == null ? "no XR settings" : "desktop requested"); yield break; }
             // Recovery: the previous launch never finished OpenXR start-up (runtime blocked, e.g. SteamVR without a headset,
             // or the app was killed). Start in Desktop this time; an explicit -vr launch or the VR preference retries.
@@ -114,7 +130,7 @@ namespace MedSimAI.XR
         static Watchdog StartWatchdog()
         {
             var w = new Watchdog();
-            if (Application.isEditor) return w;
+            if (Application.isEditor || IsStandaloneHeadset) return w;
             string exe = null; try { exe = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName; } catch { }
             var log = Application.persistentDataPath + "/xr_watchdog.log";
             var th = new System.Threading.Thread(() =>

@@ -32,6 +32,7 @@ namespace MedSimAI.Characters
         public float MouthOpen { get; private set; }
         public string CurrentViseme { get; private set; } = "sil_00";
         public static event Action<CharacterSpeechController, string> SubtitleStarted;
+        [Tooltip("Arabic display name for the conversation panel (empty = the persona default).")] public string displayNameAr = "";
         public static event Action<CharacterSpeechController> SubtitleEnded;
         public event Action SpeechFinished;
 

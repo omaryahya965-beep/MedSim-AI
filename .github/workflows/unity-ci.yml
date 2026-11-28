@@ -1,0 +1,116 @@
+# Unity in the cloud (GameCI): compiles the project, runs the Unity Test Runner (EditMode + PlayMode),
+# generates the surgery scenes and builds a Windows desktop exe — no local Unity install needed.
+# One-time setup (repo Settings → Secrets and variables → Actions):
+#   UNITY_LICENSE  = full contents of your Unity_lic.ulf (Windows: C:\ProgramData\Unity\Unity_lic.ulf,
+#                    created after signing in to Unity Hub once with a Personal licence)
+#   UNITY_EMAIL    = Unity account email      UNITY_PASSWORD = Unity account password
+name: Unity CI
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/surgery-complete, feature/surgery-ai-integration]
+    paths-ignore: ['Docs/**', '**/*.md', 'Screenshots/**']
+  pull_request:
+    branches: [feature/surgery-complete]
+permissions:
+  contents: read
+  checks: write
+env:
+  UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+  UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+  UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+jobs:
+  off-unity:
+    name: Off-Unity tests (C# + proxy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: '8.0.x' }
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - run: bash Tools/OffUnityTests/run-all.sh
+
+  unity-tests:
+    name: Unity compile + Test Runner
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.event_name == 'push' }}
+    steps:
+      - uses: jlumbroso/free-disk-space@v1.3.1
+        with: { tool-cache: false, android: true, dotnet: false, haskell: true, large-packages: false, docker-images: false, swap-storage: true }
+      - uses: actions/checkout@v4
+        with: { lfs: true }
+      - uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-tests-${{ hashFiles('Packages/packages-lock.json', 'Packages/manifest.json', 'ProjectSettings/ProjectVersion.txt') }}
+          restore-keys: Library-tests-
+      - name: Pick Unity image (exact 6000.3.29f1 if published, else newest 6000.3.x)
+        id: img
+        run: |
+          MOD="$MODULE"; t=""
+          # Exact project version first, then the nearest older 6000.3 patch that GameCI has published.
+          for n in $(seq 29 -1 0) $(seq 30 60); do
+            for suf in 3 3.2.2 3.2 3.1.0 3.1; do
+              cand="ubuntu-6000.3.${n}f1-${MOD}-${suf}"
+              if docker manifest inspect "unityci/editor:$cand" > /dev/null 2>&1; then t="$cand"; break; fi
+            done
+            [ -n "$t" ] && break
+          done
+          [ -n "$t" ] || { echo "::error::No unityci/editor 6000.3.x ${MOD} image found"; exit 1; }
+          echo "Using unityci/editor:$t (project is 6000.3.29f1)"; echo "image=unityci/editor:$t" >> "$GITHUB_OUTPUT"
+          echo "version=$(echo $t | sed -E 's/ubuntu-([^-]+)-.*/\1/')" >> "$GITHUB_OUTPUT"
+        env:
+          MODULE: linux-il2cpp
+      - uses: game-ci/unity-test-runner@v4
+        id: tests
+        with:
+          unityVersion: ${{ steps.img.outputs.version }}
+          customImage: ${{ steps.img.outputs.image }}
+          testMode: all
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: Unity test results
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() && steps.tests.outputs.artifactsPath != '' }}
+        with:
+          name: unity-test-results
+          path: ${{ steps.tests.outputs.artifactsPath }}
+
+  desktop-build:
+    name: Surgery scenes + Windows desktop build
+    # Windows runner + the project's exact editor (6000.3.29f1) from Unity, activated with the Personal account.
+    runs-on: windows-latest
+    needs: unity-tests
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with: { lfs: true }
+      - uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-winrunner-${{ hashFiles('Packages/manifest.json', 'ProjectSettings/ProjectVersion.txt') }}
+          restore-keys: Library-winrunner-
+      - uses: buildalon/unity-setup@v2
+        with:
+          version-file: ProjectSettings/ProjectVersion.txt
+          build-targets: StandaloneWindows64
+      - uses: buildalon/activate-unity-license@v2
+        with:
+          license: Personal
+          username: ${{ secrets.UNITY_EMAIL }}
+          password: ${{ secrets.UNITY_PASSWORD }}
+      - name: Build surgery scenes + Windows player
+        shell: bash
+        run: |
+          "$UNITY_EDITOR_PATH" -batchmode -nographics -quit -projectPath "${UNITY_PROJECT_PATH:-$GITHUB_WORKSPACE}" -buildTarget StandaloneWindows64 \
+            -executeMethod MedSimAI.Surgery.EditorTools.MedSimSurgeryCI.BuildDesktop -logFile unity-build.log || status=$?
+          grep -E "\[Surgery|error CS|Build (Succeeded|Failed)|Exception" unity-build.log | head -80 || true
+          exit ${status:-0}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: MedSimAI_Surgery_Desktop
+          path: |
+            build/StandaloneWindows64
+            Docs/Surgery/Integration/LAST_SCENE_BUILD.txt
+            unity-build.log

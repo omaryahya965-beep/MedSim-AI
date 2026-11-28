@@ -1,0 +1,13 @@
+{
+  "name": "MedSimAI.Surgery.Anatomy.Editor",
+  "references": [
+    "MedSimAI.Surgery.Anatomy",
+    "MedSimAI.Surgery.Shared",
+    "MedSimAI.Surgery.Shared.Unity",
+    "MedSimAI.Surgery.Instruments",
+    "MedSimAI.Surgery.Assets.Inspector",
+    "Unity.XR.Interaction.Toolkit",
+    "Unity.RenderPipelines.Universal.Runtime"
+  ],
+  "includePlatforms": ["Editor"]
+}

@@ -11,7 +11,7 @@ namespace MedSimAI.AI
 {
     public enum LiveStatus { NotConfigured, Connecting, Online, Offline }
 
-    [Serializable] public class LiveContext { public string stage, stateId, discussionId; public string[] events; public string[] missing; }
+    [Serializable] public class LiveContext { public string stage, stateId, discussionId, location; public string[] events; public string[] missing; }
 
     /// <summary>A physical action proposed by the AI and validated by the proxy (fixed catalogue; status accepted | denied | clarify | none).</summary>
     [Serializable] public class LiveAction { public string type = "none", side = "none", instrument = "none", status = "none", reason; }
@@ -116,12 +116,17 @@ namespace MedSimAI.AI
         public async Task EndSession()
         {
             if (string.IsNullOrEmpty(SessionId)) return;
-            try { await PostJson("/v1/session/end", new EndReq { sessionId = SessionId }, CancellationToken.None); } catch { }
-            SessionId = null;
+            // Cleared BEFORE the request: a line spoken right after (e.g. the hospital guide when the student leaves Room 01)
+            // must open a new session, not use the one being ended (that request was rejected and the line fell back to text only).
+            var id = SessionId; SessionId = null;
+            try { await PostJson("/v1/session/end", new EndReq { sessionId = id }, CancellationToken.None); } catch { }
         }
 
+        /// <summary>Host hook (integrated hospital): where the student is now (reception | corridor | room01 | room02). Null = standalone ER.</summary>
+        public static Func<string> LocationProvider;
         public static LiveContext ContextOf(ClinicalSession s, string discussionId = null) => new LiveContext
         {
+            location = LocationProvider?.Invoke() ?? "",
             stage = s.Stages.Current.ToString(), stateId = s.Patient.ConditionId ?? "", discussionId = discussionId ?? "",
             events = s.Tracker.Log.Select(e => e.eventId).Distinct().ToArray(), missing = new string[0]
         };

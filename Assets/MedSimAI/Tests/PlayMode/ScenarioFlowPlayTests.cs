@@ -63,6 +63,7 @@ namespace MedSimAI.PlayTests
             cuff.transform.position = armZone.transform.position; Physics.SyncTransforms();
             Assert.AreEqual(armZone, cuff.FindZone(), "cuff probe detects the upper-arm zone");
             cuff.PlaceInZone(armZone);
+            Assert.IsTrue(cuff.StartMeasurement(), "START on the NIBP monitor");
             yield return new WaitForSeconds(7.5f);
             Assert.IsTrue(session.Tracker.Has("EXAM:EX_BP"));
 

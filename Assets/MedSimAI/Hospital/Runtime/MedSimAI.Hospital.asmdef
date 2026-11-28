@@ -1,0 +1,25 @@
+{
+  "name": "MedSimAI.Hospital",
+  "rootNamespace": "MedSimAI.Hospital",
+  "references": [
+    "MedSimAI",
+    "MedSimAI.Surgery.Shared",
+    "MedSimAI.Surgery.Shared.Unity",
+    "MedSimAI.Surgery.AI.Core",
+    "MedSimAI.Surgery.AI",
+    "MedSimAI.Surgery.Characters",
+    "MedSimAI.Surgery.UI",
+    "MedSimAI.Surgery.Integration",
+    "MedSimAI.Surgery.Mechanics",
+    "MedSimAI.Surgery.Anatomy",
+    "MedSimAI.Surgery.Instruments",
+    "MedSimAI.Surgery.Environment",
+    "Unity.InputSystem",
+    "Unity.XR.Interaction.Toolkit",
+    "Unity.TextMeshPro",
+    "UnityEngine.UI",
+    "Unity.AI.Navigation",
+    "Unity.RenderPipelines.Universal.Runtime"
+  ],
+  "autoReferenced": true
+}

@@ -1,0 +1,7 @@
+{
+  "name": "MedSimAI.Hospital.PlayTests",
+  "references": ["MedSimAI","MedSimAI.Hospital","MedSimAI.Surgery.Shared","MedSimAI.Surgery.Shared.Unity","MedSimAI.Surgery.AI.Core","MedSimAI.Surgery.AI","MedSimAI.Surgery.Characters","MedSimAI.Surgery.UI","MedSimAI.Surgery.Integration","MedSimAI.Surgery.Mechanics","MedSimAI.Surgery.Anatomy","MedSimAI.Surgery.Instruments","UnityEngine.TestRunner","UnityEditor.TestRunner","Unity.XR.Interaction.Toolkit","Unity.InputSystem","Unity.XR.CoreUtils","Unity.TextMeshPro","Unity.RenderPipelines.Universal.Runtime"],
+  "overrideReferences": true,
+  "precompiledReferences": ["nunit.framework.dll"],
+  "defineConstraints": ["UNITY_INCLUDE_TESTS"]
+}

@@ -1,0 +1,7 @@
+{
+  "name": "MedSimAI.Surgery.Shared",
+  "rootNamespace": "MedSimAI.Surgery.Shared",
+  "references": [],
+  "noEngineReferences": true,
+  "autoReferenced": true
+}

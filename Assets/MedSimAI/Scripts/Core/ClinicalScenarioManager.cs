@@ -53,6 +53,8 @@ namespace MedSimAI.Core
             Tick();
         }
 
-        void Tick() { Session.Tick(); Director.Tick(); }
+        void Tick() { Session.Tick(); if (!PauseCoaching) Director.Tick(); }
+        /// <summary>Set while the doctor is demonstrating: she is already teaching, so the supervisor's coaching rules wait.</summary>
+        public static bool PauseCoaching;
     }
 }
