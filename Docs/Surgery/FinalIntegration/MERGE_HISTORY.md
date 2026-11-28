@@ -62,7 +62,7 @@ These are listed so each owner can review them:
 | Item | State |
 |---|---|
 | `integration/surgery-final` | Pushed to `origin` (normal push, no force) |
-| Final PR `integration/surgery-final` → `master` | Opened for owner review. **Not merged.** |
+| Final PR `integration/surgery-final` → `master` | **PR #6**, opened for owner review. **Not merged.** |
 | PR #2, #4, #5 → `feature/surgery-complete` | **Not merged.** None has an approving review. |
 | PR #3 → `feature/surgery-complete` | **Not merged.** Still a **draft**, with no review. |
 | Contributor branches | Not modified, not deleted |

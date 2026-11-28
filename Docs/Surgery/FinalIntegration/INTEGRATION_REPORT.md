@@ -86,5 +86,5 @@ If the font changes are still needed, they must be redone. For example, regenera
 ## GitHub
 See [MERGE_HISTORY.md](MERGE_HISTORY.md#github-delivery):
 - The integration branch is pushed.
-- A pull request into `master` is open for the owner's review and **not merged**.
+- Pull request **#6** into `master` is open for the owner's review and **not merged**.
 - The contributor PRs (#2, #3 draft, #4, #5) were **not merged remotely**: none has an approving review, and #3 is still a draft.
