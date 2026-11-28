@@ -51,6 +51,7 @@ namespace TMPro
 }
 namespace UnityEngine.InputSystem
 {
+    public static class CommonUsages { }   // exists in the real InputSystem: catches ambiguity with UnityEngine.XR.CommonUsages
     public class KeyControl { public bool isPressed, wasPressedThisFrame; }
     public class Keyboard { public static Keyboard current; public KeyControl tKey = new KeyControl(), mKey = new KeyControl(), f10Key = new KeyControl(), escapeKey = new KeyControl(), hKey = new KeyControl(), jKey = new KeyControl(), nKey = new KeyControl(), wKey = new KeyControl(), sKey = new KeyControl(), pKey = new KeyControl(), oKey = new KeyControl(), gKey = new KeyControl(); }
 }
