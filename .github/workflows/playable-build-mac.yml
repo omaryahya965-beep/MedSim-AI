@@ -9,7 +9,7 @@ permissions:
   contents: read
 jobs:
   build-mac:
-    runs-on: macos-latest
+    runs-on: windows-latest   # cross-builds the Mac app (macOS runners failed to install Unity Hub)
     timeout-minutes: 150
     steps:
       - uses: actions/checkout@v4
@@ -17,8 +17,10 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: Library
-          key: Library-mac-${{ hashFiles('Packages/manifest.json', 'ProjectSettings/ProjectVersion.txt') }}
-          restore-keys: Library-mac-
+          key: Library-maccross-${{ hashFiles('Packages/manifest.json', 'ProjectSettings/ProjectVersion.txt') }}
+          restore-keys: |
+            Library-maccross-
+            Library-playable-
       - uses: buildalon/unity-setup@v2
         with:
           version-file: ProjectSettings/ProjectVersion.txt
@@ -35,13 +37,18 @@ jobs:
             -executeMethod MedSimAI.Hospital.EditorTools.HospitalBuildCI.BuildMac -logFile unity-build-mac.log || status=$?
           grep -E "HospitalBuildCI|error CS" unity-build-mac.log | grep -v "grep -E" | head -40 || true
           exit ${status:-0}
-      - name: Package (tar keeps the app's executable permissions; ad-hoc sign so macOS can open it)
-        shell: bash
+      - name: Package (tar with executable bits set, since NTFS has none)
+        shell: python
         run: |
-          cd build/MedSimAI_Mac
-          codesign --force --deep --sign - MedSimAI.app || true
-          tar -czf MedSimAI_Mac.tar.gz MedSimAI.app
-          printf "MedSim AI - TEST build (DRAFT, not clinically validated)\n1) Double-click MedSimAI_Mac.tar.gz\n2) Right-click MedSimAI.app > Open > Open (first time only)\n   If macOS still refuses: System Settings > Privacy & Security > Open Anyway\n3) Allow the microphone when asked (voice needs the MedSim AI proxy; without it: text only)\n" > HOW_TO_OPEN.txt
+          import os, tarfile
+          root = "build/MedSimAI_Mac"; app = os.path.join(root, "MedSimAI.app")
+          def fix(ti):
+              if ti.isdir() or "/Contents/MacOS/" in ti.name or ti.name.endswith((".dylib", ".bundle")) or "/MacOS/" in ti.name: ti.mode = 0o755
+              else: ti.mode = 0o644
+              return ti
+          with tarfile.open(os.path.join(root, "MedSimAI_Mac.tar.gz"), "w:gz") as t: t.add(app, arcname="MedSimAI.app", filter=fix)
+          open(os.path.join(root, "HOW_TO_OPEN.txt"), "w").write("MedSim AI - TEST build (DRAFT, not clinically validated)\n1) Double-click MedSimAI_Mac.tar.gz\n2) Right-click MedSimAI.app > Open > Open (first time only)\n   If macOS refuses: System Settings > Privacy & Security > Open Anyway\n   Or in Terminal: xattr -dr com.apple.quarantine ~/Downloads/MedSimAI.app\n3) Allow the microphone when asked (voice needs the MedSim AI proxy; without it: text only)\n")
+          print("packed", os.path.getsize(os.path.join(root, "MedSimAI_Mac.tar.gz")) // 1048576, "MB")
       - uses: actions/upload-artifact@v4
         if: always()
         with:

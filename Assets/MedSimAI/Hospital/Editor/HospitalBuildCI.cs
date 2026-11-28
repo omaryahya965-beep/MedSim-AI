@@ -35,6 +35,9 @@ namespace MedSimAI.Hospital.EditorTools
             try
             {
                 System.IO.Directory.CreateDirectory("build/MedSimAI_Mac");
+                // Intel (x64) slice: built from a Windows runner it cannot be code-signed, and macOS runs unsigned x64
+                // apps (via Rosetta on Apple Silicon) but refuses unsigned arm64 ones.
+                EditorUserBuildSettings.SetPlatformSettings("Standalone", "OSXUniversal", "Architecture", "x64");
                 var r = BuildPipeline.BuildPlayer(new BuildPlayerOptions
                 {
                     scenes = new[] { HospitalBuilder.HospitalScene, HospitalBuilder.ErScene },
