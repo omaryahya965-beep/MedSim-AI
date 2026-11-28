@@ -9,6 +9,7 @@ on:
   workflow_dispatch:
   push:
     branches: [feature/surgery-complete, feature/surgery-ai-integration]
+    paths-ignore: ['Docs/**', '**/*.md', 'Screenshots/**']
   pull_request:
     branches: [feature/surgery-complete]
 permissions:
