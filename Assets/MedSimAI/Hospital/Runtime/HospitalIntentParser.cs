@@ -46,12 +46,22 @@ namespace MedSimAI.Hospital
             "الغرفه رقم 1", "غرفه 1", "غرفه واحد", "غرفه ١",
             "examination", "exam room", "clinical", "patient", "chest", "emergency", "room 1", "room one", "first room", "room 01"
         };
+        // Inside a room only unambiguous room names count (case talk mentions 'operation', 'chest', 'patient'...).
+        static readonly string[] Room02Strong = { "غرفه العمليات", "غرفه عمليات", "الغرفه الثانيه", "الغرفه التانيه", "غرفه 2", "غرفه اتنين", "غرفه اثنين", "غرفه ٢", "الغرفه رقم 2", "operating room", "operating theatre", "operating theater", "room 2", "room two", "second room", "room 02" };
+        static readonly string[] Room01Strong = { "الغرفه الاولي", "اول غرفه", "غرفه الفحص", "غرفه 1", "غرفه واحد", "غرفه ١", "الغرفه رقم 1", "exam room", "examination room", "room 1", "room one", "first room", "room 01" };
         static readonly string[] Corridor = { "الممر", "الكوريدور", "الاستقبال", "برا", "لبرا", "corridor", "hallway", "reception", "lobby", "outside", "the hall" };
         static readonly string[] Wait = { "استني", "استنا", "استنى", "لحظه", "ثانيه", "دقيقه", "wait", "hold on", "one moment", "just a moment", "stop here", "stay here" };
         static readonly string[] WalkWithMe = { "امشي معي", "امشي معاي", "تعال معي", "تعالي معي", "خليك معي", "خليكي معي", "تعالي معاي", "come with me", "walk with me", "stay with me", "follow me" };
         static readonly string[] Restart = { "من جديد", "من الاول", "من الأول", "اعيد", "نعيد", "restart", "start over", "start again", "reset", "begin again" };
         static readonly string[] WhereToGo = { "وين لازم اروح", "وين اروح", "وين بدي اروح", "لوين اروح", "شو لازم اعمل", "شو بعمل", "وين نروح", "where should i go", "where do i go", "where now", "what should i do", "what now", "which room" };
         static readonly string[] Explain = { "شو في", "شو عنا", "شو عندكم", "شو الغرف", "شو الحالات", "احكيلي عن", "what rooms", "what is there", "what can i do", "what can i train", "tell me about", "explain the rooms", "what are the rooms" };
+        // Words that make a room mention a request to GO there (needed inside a room, where 'surgery' or 'chest' are just case talk).
+        static readonly string[] Move =
+        {
+            "روح", "نروح", "اروح", "تروح", "خذني", "خدني", "وديني", "ودينا", "رجعني", "رجعنا", "ارجع", "نرجع", "وين", "فرجيني", "وريني", "خلينا", "يلا",
+            "اطلع", "نطلع", "امشي", "تعال", "نطلع ع", "اتعلم",
+            "go ", "go to", "take me", "bring me", "show me", "back to", "return", "where is", "where's", "let's", "lets", "head to", "lead me", "walk me", "move to", "leave", "learn"
+        };
         static readonly string[] Skip = { "تخطى", "تخطي", "يلا نبلش", "خلص يلا", "skip", "let's start", "lets start" };
 
         /// <summary>Lower-case, Arabic letter variants unified (أإآ→ا, ة→ه, ى→ي), diacritics, tatweel and punctuation removed.</summary>
@@ -103,7 +113,10 @@ namespace MedSimAI.Hospital
             var room = RoomOf(n, currentRoom, out var roomCue);
             if (room == HospitalRoomId.None && roomCue == "both") return new HospitalIntent { kind = HospitalIntentKind.Clarify, cue = "both rooms" };
             if ((cue = Any(n, Wait)) != null && room == HospitalRoomId.None) return new HospitalIntent { kind = HospitalIntentKind.Wait, cue = cue };
-            if (room != HospitalRoomId.None) return new HospitalIntent { kind = HospitalIntentKind.GoToRoom, room = room, cue = roomCue };
+            // Inside a room only an explicit request moves us ("have you had surgery?" is a clinical question, not navigation).
+            bool asksToGo = currentRoom == HospitalRoomId.Corridor || Any(n, Move) != null || n.Trim().Split(' ').Length <= 3;
+            if (room != HospitalRoomId.None && asksToGo) return new HospitalIntent { kind = HospitalIntentKind.GoToRoom, room = room, cue = roomCue };
+            if (room != HospitalRoomId.None) return default;
             if ((cue = Any(n, WhereToGo)) != null) return new HospitalIntent { kind = HospitalIntentKind.WhereToGo, cue = cue };
             if ((cue = Any(n, Explain)) != null) return new HospitalIntent { kind = HospitalIntentKind.ExplainRooms, cue = cue };
             if ((cue = Any(n, Skip)) != null) return new HospitalIntent { kind = HospitalIntentKind.Skip, cue = cue };
@@ -115,9 +128,9 @@ namespace MedSimAI.Hospital
 
         static HospitalRoomId RoomOf(string n, HospitalRoomId currentRoom, out string cue)
         {
-            var c2 = Any(n, Room02);
-            var room01Cues = currentRoom == HospitalRoomId.Room02 ? Room01.Where(c => c != "المريض" && c != "مريض" && c != "patient").ToArray() : Room01;
-            var c1 = Any(n, room01Cues);
+            bool strict = currentRoom != HospitalRoomId.Corridor;
+            var c2 = Any(n, strict ? Room02Strong : Room02);
+            var c1 = Any(n, strict ? Room01Strong : Room01);
             var cc = Any(n, Corridor);
             // "operation"/"knee" words in a sentence that also names Room 01 explicitly: prefer the explicit room number
             if (c1 != null && c2 != null)

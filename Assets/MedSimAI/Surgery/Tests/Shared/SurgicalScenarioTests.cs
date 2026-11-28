@@ -20,7 +20,11 @@ namespace MedSimAI.Surgery.Tests
         {
             Assert.AreNotEqual(SurgeryContract.CLINICAL_SCENARIO_ID, s.scenarioId);
             var json = System.IO.File.ReadAllText(TestScenarioLoader.RepoFile(TestScenarioLoader.TkaPath)).ToLowerInvariant();
-            foreach (var leak in new[] { "chest pain", "troponin", "adam reyes", "sara hassan", "ecg", "ألم صدر" }) StringAssert.DoesNotContain(leak, json);
+            // No clinical-case content may leak into the surgical scenario (case facts, the chest-pain patient, findings).
+            foreach (var leak in new[] { "chest pain", "troponin", "adam reyes", "ecg", "ألم صدر" }) StringAssert.DoesNotContain(leak, json);
+            // Integration (2026-11-28): the doctor is deliberately the SAME person in both rooms (one persistent hospital guide,
+            // Dr. Sara Hassan); only her identity is shared, never the clinical case. So her name is expected here.
+            StringAssert.Contains("sara hassan", json);
         }
         [Test] public void Tka_ObjectivesOrdered_PrerequisitesPointBackwards()
         {

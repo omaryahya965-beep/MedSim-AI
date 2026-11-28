@@ -65,8 +65,11 @@ namespace MedSimAI.Surgery.Integration
         {
             if (!enabled) yield break;
             // Mechanics (Person 3) or the mock.
-            var runtime = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None).OfType<ISurgicalScenarioRuntime>().FirstOrDefault();
-            var registry = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None).OfType<IInstrumentRegistry>().FirstOrDefault();
+            // Prefer the mechanics root (it resets anatomy, instruments, implants and objectives together); a bare engine or
+            // instrument controller also implements the interfaces, and scene order must not decide which one we get.
+            var behaviours = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
+            var runtime = behaviours.OfType<ISurgicalScenarioRuntime>().OrderBy(r => r is MedSimAI.Surgery.Mechanics.SurgeryMechanicsRoot ? 0 : 1).FirstOrDefault();
+            var registry = behaviours.OfType<IInstrumentRegistry>().OrderBy(r => r is MedSimAI.Surgery.Mechanics.SurgeryMechanicsRoot ? 0 : 1).FirstOrDefault();
             if (runtime == null && allowMockMechanics)
             {
                 UsingMockMechanics = true;

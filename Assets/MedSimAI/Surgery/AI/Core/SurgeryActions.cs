@@ -189,7 +189,7 @@ namespace MedSimAI.Surgery.AI
             public override string ToString() => $"to={addressed} action={action.action}({action.instrumentId}) help={helpRequest} explain={explainRequest} lang={languageCommand}";
         }
 
-        static readonly Regex AddrSurgeon = new Regex(@"(دكتور|دكتوره|الدكتوره|دكتورة|doctor|\bdr\b|لينا|lina|haddad|حداد)", RegexOptions.IgnoreCase);
+        static readonly Regex AddrSurgeon = new Regex(@"(دكتور|دكتوره|الدكتوره|دكتورة|doctor|\bdr\b|سارة|ساره|sara|hassan|حسن)", RegexOptions.IgnoreCase);   // the persistent hospital doctor
         static readonly Regex AddrAssistant = new Regex(@"(سامي|sami|assistant|مساعد)", RegexOptions.IgnoreCase);
         static readonly Regex LangAr = new Regex(@"(احكي|احكيلي|تحكي|حكي|خلينا نحكي)\s*(عربي|بالعربي)|speak arabic|in arabic", RegexOptions.IgnoreCase);
         static readonly Regex LangEn = new Regex(@"(احكي|تحكي|حكي)\s*(انجليزي|انكليزي|بالانجليزي)|speak english|in english", RegexOptions.IgnoreCase);
@@ -257,7 +257,7 @@ namespace MedSimAI.Surgery.AI
             ["already_holding"] = ("You're already holding it.", "هي معك أصلاً."),
             ["in_use"] = ("That one is in use right now.", "هاي مستعملة هلأ."),
             ["not_needed_now"] = ("You won't need that one for this step.", "مش رح تحتاجها بهالخطوة."),
-            ["ask_surgeon"] = ("Dr. Haddad, could you guide us on this step?", "دكتورة لينا، بتقدري توجهينا بهالخطوة؟"),
+            ["ask_surgeon"] = ("Dr. Hassan, could you guide us on this step?", "دكتورة سارة، بتقدري توجهينا بهالخطوة؟"),
             ["handoff_not_taken"] = ("I'll put it back on the table for now.", "رح أرجعها عالطاولة هلأ."),
             ["action_unavailable"] = ("Sorry, I can't get there right now.", "معلش، ما بقدر أوصل هلأ."),
         };

@@ -134,7 +134,7 @@ namespace MedSimAI.Surgery.EditorTools
             var spawn = SurgeryAnchorFind(AnchorIds.PlayerSpawn);
             BuildXR(spawn ? spawn.position : new Vector3(-1.6f, 0, -2.2f), spawn ? spawn.rotation : Quaternion.Euler(0, 30, 0), true, new Color(0.05f, 0.08f, 0.12f));
             var chars = new GameObject("Surgical Characters").transform;
-            var surgeon = Character(chars, "Surgeon - Dr Lina Haddad", DoctorFbx, SurgeryCharacterIds.Surgeon, AnchorIds.SurgeonObserve, Persona.Instructor, new Color(0.20f, 0.45f, 0.52f));
+            var surgeon = Character(chars, "Surgeon - Dr Sara Hassan", DoctorFbx, SurgeryCharacterIds.Surgeon, AnchorIds.SurgeonObserve, Persona.Instructor, new Color(0.20f, 0.45f, 0.52f));
             var assistant = Character(chars, "Assistant - Sami", AssistantFbx, SurgeryCharacterIds.Assistant, AnchorIds.AssistantHome, Persona.Instructor, new Color(0.18f, 0.36f, 0.55f));
             var sys = new GameObject("Surgery Systems");
             sys.AddComponent<SurgeryEventBusHost>();
@@ -159,7 +159,7 @@ namespace MedSimAI.Surgery.EditorTools
             if (anim && ctrl) anim.runtimeAnimatorController = ctrl;
             if (anim) anim.applyRootMotion = false;
             var speech = go.GetComponent<CharacterSpeechController>(); if (!speech) speech = go.AddComponent<CharacterSpeechController>();   // no '??' on Unity objects (fake null)
-            speech.persona = persona; speech.displayName = id == SurgeryCharacterIds.Surgeon ? "Dr. Lina Haddad" : "Sami";
+            speech.persona = persona; speech.displayName = id == SurgeryCharacterIds.Surgeon ? "Dr. Sara Hassan" : "Sami";
             var src = go.GetComponent<AudioSource>(); if (!src) src = go.AddComponent<AudioSource>(); src.spatialBlend = 1; src.minDistance = 1; src.maxDistance = 12;
             var agent = go.AddComponent<NavMeshAgent>(); agent.radius = 0.25f; agent.height = 1.75f; agent.speed = 1.1f; agent.angularSpeed = 360; agent.stoppingDistance = 0.3f;
             var attire = go.AddComponent<SurgicalAttire>(); attire.scrubs = scrubs;

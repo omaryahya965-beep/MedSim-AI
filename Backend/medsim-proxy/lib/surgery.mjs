@@ -21,7 +21,7 @@ export const SURGERY_VOICES = {
   assistant: process.env.MEDSIM_VOICE_ASSISTANT || 'cedar',
 };
 const STYLE = {
-  surgeon: 'a calm, precise orthopaedic surgeon in her forties teaching a student in the operating room: clear, warm, unhurried, quietly confident; slightly muffled as if speaking through a surgical mask',
+  surgeon: 'a calm, warm physician and clinical educator in her forties supervising a student in the operating room: clear, unhurried, quietly confident; slightly muffled as if speaking through a surgical mask',
   surgeonSafety: 'a calm orthopaedic surgeon who needs the student to stop right now: firm, focused, supportive, slightly quicker',
   surgeonDebrief: 'a warm, encouraging surgical teacher giving personal feedback after a training session: measured and specific',
   assistant: 'a friendly, practical scrub assistant in his thirties: brief, helpful, relaxed; speaking through a surgical mask',
@@ -118,7 +118,7 @@ const LANG_ACK = { surgeon: { ar: 'تمام، بنكمّل بالعربي.', en:
 
 function langRule(characterId, { lock, known }) {
   const ar = characterId === 'surgeon'
-    ? 'clear, warm spoken Palestinian Arabic as a female orthopaedic surgeon talks to a student (simple Levantine colloquial, short sentences; instrument names may stay in English). Use feminine forms for yourself.'
+    ? 'clear, warm spoken Palestinian Arabic as a female doctor and clinical educator talks to a student (simple Levantine colloquial, short sentences; instrument names may stay in English). Use feminine forms for yourself.'
     : 'friendly, brief spoken Palestinian Arabic as a male scrub assistant talks to a student. Use masculine forms for yourself.';
   if (lock === 'ar') return `Reply in ${ar} The student chose Arabic: ALWAYS reply in Arabic.`;
   if (lock === 'en') return 'Reply in natural spoken English. The student chose English: always reply in English.';
@@ -174,7 +174,8 @@ export class SurgeryEngine {
     const S = sess.entry.data; const P = (S.personas || []).find(p => p.id === characterId) || {};
     const cur = (S.objectives || []).find(o => o.id === ctx.objectiveId);
     const done = (S.objectives || []).filter(o => ctx.completed.includes(o.id)).map(o => o.title.en);
-    const other = characterId === 'surgeon' ? 'the scrub assistant Sami (instrument table)' : 'the supervising surgeon Dr. Lina Haddad';
+    const sup = (S.personas || []).find(p => p.id === 'surgeon') || {};
+    const other = characterId === 'surgeon' ? 'the scrub assistant Sami (instrument table)' : 'the supervising doctor ' + L(sup.displayName, 'en');
     const acts = (sess.actionLog || []).slice(-4).map(a => `- ${a.characterId}: ${a.action}${a.instrumentId ? ' (' + a.instrumentId + ')' : ''} — ${a.status}`).join('\n');
     return `You are ${L(P.displayName, 'en')} in a SIMULATED operating room for medical-student training (draft educational simulation, not clinically validated). Stay in character.
 Who you are: ${P.summary}
