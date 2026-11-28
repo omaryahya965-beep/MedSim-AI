@@ -524,9 +524,35 @@ namespace MedSimAI.Surgery.AssetsEditor
             {
                 if (!nodes.TryGetValue(d.n, out var n)) { log.AppendLine("  ! drape: missing " + d.n); continue; }
                 var go = MeshObj(fbx, n, root.transform); Tag(go, d.id, AnatomyCategory.Drape, d.en, d.ar, SRC_ORIG + " (baked cloth / height-field drape)");
-                if (d.n == "Drape_Upper" || d.n == "Drape_Lower") go.AddComponent<MeshCollider>();
+                if (d.n == "Drape_Upper" || d.n == "Drape_Lower") { FitDrape(go, root.transform, d.n); go.AddComponent<MeshCollider>(); }
             }
             SavePrefab(root, DrapePrefab);
+        }
+        /// <summary>
+        /// Integration fit (2026-11-28): 1 cm of clearance over the gown and body along the drape normals (the gown showed
+        /// through in places), and a soft tent over the left foot's toes, which stood up through the foot-end drape.
+        /// Writes a fitted copy of the mesh next to the FBX; the FBX itself is unchanged.
+        /// </summary>
+        static void FitDrape(GameObject go, Transform root, string name)
+        {
+            var mf = go.GetComponent<MeshFilter>(); var m = UnityEngine.Object.Instantiate(mf.sharedMesh); m.name = name + "_Fitted";
+            var toRoot = root.worldToLocalMatrix * go.transform.localToWorldMatrix; var back = toRoot.inverse;
+            var v = m.vertices; var nrm = m.normals;
+            for (int i = 0; i < v.Length; i++)
+            {
+                var p = toRoot.MultiplyPoint3x4(v[i]); var nn = toRoot.MultiplyVector(nrm[i]).normalized;
+                p += nn * 0.010f;
+                if (name == "Drape_Lower")
+                {   // left toes at about (+0.165, 0.28, −0.90) in the patient frame
+                    float dx = (p.x - 0.165f) / 0.11f, dz = (p.z + 0.90f) / 0.15f, r2 = dx * dx + dz * dz;
+                    if (r2 < 1f) { float f = 1f - r2; p.y += 0.075f * f * f * (3f - 2f * f); }
+                }
+                v[i] = back.MultiplyPoint3x4(p);
+            }
+            m.vertices = v; m.RecalculateBounds();
+            var path = A + "Models/Drapes/" + name + "_Fitted.asset";
+            AssetDatabase.DeleteAsset(path); AssetDatabase.CreateAsset(m, path);
+            mf.sharedMesh = m;
         }
         static void BuildPatient()
         {
