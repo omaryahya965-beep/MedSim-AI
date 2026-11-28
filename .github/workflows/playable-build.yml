@@ -4,8 +4,6 @@
 name: Playable Windows build
 on:
   workflow_dispatch:
-  push:
-    branches: [test/playable-build]
 permissions:
   contents: read
 jobs:

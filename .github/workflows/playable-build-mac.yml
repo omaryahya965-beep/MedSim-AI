@@ -1,0 +1,55 @@
+# macOS version of the playable test build (desktop mode, keyboard + mouse). Never pushes or merges anything.
+# Download: Actions → this run → Artifacts → MedSimAI_Mac → unzip → double-click MedSimAI_Mac.tar.gz → right-click MedSimAI.app → Open
+name: Playable macOS build
+on:
+  workflow_dispatch:
+  push:
+    branches: [test/playable-build]
+permissions:
+  contents: read
+jobs:
+  build-mac:
+    runs-on: macos-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+        with: { lfs: true }
+      - uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-mac-${{ hashFiles('Packages/manifest.json', 'ProjectSettings/ProjectVersion.txt') }}
+          restore-keys: Library-mac-
+      - uses: buildalon/unity-setup@v2
+        with:
+          version-file: ProjectSettings/ProjectVersion.txt
+          build-targets: StandaloneOSX
+      - uses: buildalon/activate-unity-license@v2
+        with:
+          license: Personal
+          username: ${{ secrets.UNITY_EMAIL }}
+          password: ${{ secrets.UNITY_PASSWORD }}
+      - name: Build macOS app (hospital + clinical + surgical rooms)
+        shell: bash
+        run: |
+          "$UNITY_EDITOR_PATH" -batchmode -nographics -quit -projectPath "${UNITY_PROJECT_PATH:-$GITHUB_WORKSPACE}" -buildTarget StandaloneOSX \
+            -executeMethod MedSimAI.Hospital.EditorTools.HospitalBuildCI.BuildMac -logFile unity-build-mac.log || status=$?
+          grep -E "HospitalBuildCI|error CS" unity-build-mac.log | grep -v "grep -E" | head -40 || true
+          exit ${status:-0}
+      - name: Package (tar keeps the app's executable permissions; ad-hoc sign so macOS can open it)
+        shell: bash
+        run: |
+          cd build/MedSimAI_Mac
+          codesign --force --deep --sign - MedSimAI.app || true
+          tar -czf MedSimAI_Mac.tar.gz MedSimAI.app
+          printf "MedSim AI - TEST build (DRAFT, not clinically validated)\n1) Double-click MedSimAI_Mac.tar.gz\n2) Right-click MedSimAI.app > Open > Open (first time only)\n   If macOS still refuses: System Settings > Privacy & Security > Open Anyway\n3) Allow the microphone when asked (voice needs the MedSim AI proxy; without it: text only)\n" > HOW_TO_OPEN.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: MedSimAI_Mac
+          path: |
+            build/MedSimAI_Mac/MedSimAI_Mac.tar.gz
+            build/MedSimAI_Mac/HOW_TO_OPEN.txt
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: unity-build-log-mac, path: unity-build-mac.log }
