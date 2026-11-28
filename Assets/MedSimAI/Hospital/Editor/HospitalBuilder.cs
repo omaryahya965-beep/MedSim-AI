@@ -61,8 +61,9 @@ namespace MedSimAI.Hospital.EditorTools
         {
             report.Clear(); meshCache.Clear();
             Directory.CreateDirectory(Path.GetDirectoryName(HospitalScene)); Directory.CreateDirectory(Gen + "/Meshes");
-            if (File.Exists(HospitalScene)) AssetDatabase.DeleteAsset(HospitalScene);
-            if (!AssetDatabase.CopyAsset(ErScene, HospitalScene)) return "Could not copy " + ErScene;
+            // Start from the clinical scene. Overwrite the file contents (keep the .meta) so the hospital scene GUID stays stable.
+            if (File.Exists(HospitalScene)) { File.Copy(ErScene, HospitalScene, true); AssetDatabase.ImportAsset(HospitalScene, ImportAssetOptions.ForceUpdate); }
+            else if (!AssetDatabase.CopyAsset(ErScene, HospitalScene)) return "Could not copy " + ErScene;
             var scene = EditorSceneManager.OpenScene(HospitalScene, OpenSceneMode.Single);
 
             ExtendCorridor();

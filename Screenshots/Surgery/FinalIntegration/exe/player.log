@@ -1,0 +1,294 @@
+Mono path[0] = 'D:/VRBuilds/MedSimAI_Integrated_Desktop/MedSimAI_Data/Managed'
+Mono config path = 'D:/VRBuilds/MedSimAI_Integrated_Desktop/MonoBleedingEdge/etc'
+Input System module state changed to: Initialized.
+[Physics::Module] Initialized fallback backend.
+[Physics::Module] Id: 0xdecafbad
+Initialize engine version: 6000.3.29f1 (96d2fe17529c)
+[Subsystems] Discovering subsystems at path D:/VRBuilds/MedSimAI_Integrated_Desktop/MedSimAI_Data/UnitySubsystems
+[Subsystems] No descriptors matched for  examples in UnitySubsystems/UnityOpenXR/UnitySubsystemsManifest.json.
+[Subsystems] 1 'inputs' descriptors matched in UnitySubsystems/UnityOpenXR/UnitySubsystemsManifest.json
+[Subsystems] 1 'displays' descriptors matched in UnitySubsystems/UnityOpenXR/UnitySubsystemsManifest.json
+[Subsystems] No descriptors matched for  meshings in UnitySubsystems/UnityOpenXR/UnitySubsystemsManifest.json.
+GfxDevice: creating device client; kGfxThreadingModeClientWorkerJobs
+Direct3D:
+    Version:  Direct3D 11.0 [level 11.1]
+    Renderer: NVIDIA GeForce RTX 3050 Laptop GPU (ID=0x25a2)
+    Vendor:   NVIDIA
+    VRAM:     3964 MB
+    Driver:   32.0.15.6607
+Begin MonoManager ReloadAssembly
+- Loaded All Assemblies, in  0.111 seconds
+- Finished resetting the current domain, in  0.003 seconds
+[Physics::Module] Selected backend.
+[Physics::Module] Name: PhysX
+[Physics::Module] Id: 0xf2b8ea05
+[Physics::Module] SDK Version: 4.1.2
+[Physics::Module] Integration Version: 1.0.0
+[Physics::Module] Threading Mode: Multi-Threaded
+<RI> Initializing input.
+Using Windows.Gaming.Input
+UnloadTime: 4.015100 ms
+Failed to create agent because there is no valid NavMesh
+Failed to create agent because there is no valid NavMesh
+[MedSim] DRAFT — NOT CLINICALLY VALIDATED · Technical demonstration only · Fictional patient
+[MedSim] Display mode: Desktop (no XR settings)
+[Surgery] #1 0.0s objective.started [mechanics] obj=obj.site_confirmation tool= target= implant= state= reason= ok=True
+Your project uses a scriptable render pipeline. You can use Camera.stereoTargetEye only with the built-in renderer.
+The character used for Ellipsis is not available in font asset [LiberationSans SDF] or any potential fallbacks. Switching Text Overflow mode to Truncate.
+[Hospital] welcome
+[Hospital] say:welcome
+[HospitalSelfTest]     4.2s [info] hospital exe self-test · 0.1.0 · NVIDIA GeForce RTX 3050 Laptop GPU (3964 MB) · 1920x1080 · display=Desktop · AI=TEST MODE — text only
+[HospitalSelfTest]    11.7s [perf] reception lobby: 1196 frames, avg 4.18 ms (239 fps), p50 4.16 ms, p95 4.18 ms, p99 4.23 ms, max 8.3 ms; GPU p50 1.50 ms, p95 1.94 ms (1196 samples); vSync=1
+[HospitalSelfTest]    11.7s [shot] 01_hospital_entrance
+[HospitalSelfTest]    12.1s [shot] 02_doctor_welcome
+[HospitalSelfTest]    12.2s [shot] 03_corridor_both_room_entrances
+[HospitalSelfTest]    16.2s [perf] corridor: 958 frames, avg 4.29 ms (233 fps), p50 4.16 ms, p95 4.19 ms, p99 4.28 ms, max 108.4 ms; GPU p50 1.68 ms, p95 2.35 ms (958 samples); vSync=1
+[MedSim] Conversation language → ar (Auto)
+[Hospital] heard 'وين غرفة العمليات؟' → GoToRoom(Room02) ← 'غرفه العمليات'
+[Hospital] request Room02 via voice
+[HospitalSelfTest]    16.3s [action] Instructor:guide_to_room(none,room_02) InProgress
+[HospitalSelfTest]    16.3s [guide] follow_room02
+[Hospital] say:follow_room02
+[HospitalSelfTest]    16.3s [subtitle] Dr. Hassan (supervisor): تمام، تعال معي على غرفة العمليات.
+[MedSim] Action Instructor:guide_to_room(none,room_02) InProgress 
+[HospitalSelfTest]    16.3s [hospital] request consumed → guiding to Room02
+[HospitalSelfTest]    17.5s [shot] 04_doctor_walking_to_room
+[Hospital] guide_to_room room_02 → arrived
+[HospitalSelfTest]    20.6s [guide] arrived_room02
+[Hospital] say:arrived_room02
+[HospitalSelfTest]    20.6s [subtitle] Dr. Hassan (supervisor): هاي غرفة العمليات. الباب بيفتح لحاله لما نقرّب. تفضّل.
+[HospitalSelfTest]    20.6s [action] Instructor:guide_to_room(none,room_02) Completed
+[HospitalSelfTest]    20.6s [hospital] doctor at OR door: 0.10 m from the mark
+[Hospital] student Corridor → Room02
+[HospitalSelfTest]    20.9s [room] Corridor → Room02
+[Hospital] surgical session started surgical-640bda76
+[Surgery] #1 0.0s session.started [integration] obj= tool= target= implant= state= reason= ok=True
+[Surgery] #2 0.0s objective.started [mechanics] obj=obj.site_confirmation tool= target= implant= state= reason= ok=True
+[HospitalSelfTest]    21.1s [surgery] session active, mock=False, runtime=SurgeryMechanicsRoot, objective=obj.site_confirmation
+[HospitalSelfTest]    21.1s [subtitle] Dr. Hassan (supervisor): أهلاً فيك بغرفة العمليات. خلينا نبلّش بتأكيد مكان العملية.
+[HospitalSelfTest]    28.9s [perf] operating room, surgeon view: 1199 frames, avg 4.17 ms (240 fps), p50 4.16 ms, p95 4.18 ms, p99 4.22 ms, max 8.0 ms; GPU p50 3.62 ms, p95 4.00 ms (1199 samples); vSync=1
+[HospitalSelfTest]    29.0s [shot] 07_integrated_operating_room
+[HospitalSelfTest]    29.0s [shot] 08_surgical_patient_on_table
+[HospitalSelfTest]    29.1s [shot] 10_instrument_tray
+[Surgery] #3 8.2s tool.grabbed [mechanics] obj=obj.site_confirmation tool=inst.skin_marker target= implant= state= reason= ok=True
+[HospitalSelfTest]    29.7s [shot] 11_student_holding_instrument
+[Surgery] #4 8.8s tool.released [mechanics] obj= tool=inst.skin_marker target= implant= state= reason= ok=True
+[Surgery] #5 8.8s tool.grabbed [mechanics] obj=obj.site_confirmation tool=inst.scalpel target= implant= state= reason= ok=True
+[Surgery] #6 8.8s interaction.rejected [mechanics] obj=obj.site_confirmation tool=inst.scalpel target=knee_r.site_marking implant= state= reason=wrong_tool ok=False
+[Surgery] #7 8.8s tool.released [mechanics] obj= tool=inst.scalpel target= implant= state= reason= ok=True
+[HospitalSelfTest]    29.7s [use] inst.scalpel → knee_r.site_marking: rejected
+[Surgery] #8 11.3s tool.grabbed [mechanics] obj=obj.site_confirmation tool=inst.skin_marker target= implant= state= reason= ok=True
+[Surgery] #9 11.3s anatomy.interacted [mechanics] obj=obj.site_confirmation tool=inst.skin_marker target=knee_r.site_marking implant= state= reason= ok=True
+[Surgery] #10 11.3s anatomy.state_changed [mechanics] obj=obj.site_confirmation tool= target=knee_r.site_marking implant= state=marked reason= ok=True
+[Surgery] #11 11.3s objective.completed [mechanics] obj=obj.site_confirmation tool= target= implant= state= reason= ok=True
+[Surgery] #12 11.3s objective.started [mechanics] obj=obj.incision tool= target= implant= state= reason= ok=True
+[Surgery] #13 11.3s tool.released [mechanics] obj= tool=inst.skin_marker target= implant= state= reason= ok=True
+[HospitalSelfTest]    32.2s [use] inst.skin_marker → knee_r.site_marking: valid
+[Surgery] #14 11.3s tool.grabbed [mechanics] obj=obj.incision tool=inst.scalpel target= implant= state= reason= ok=True
+[Surgery] #15 11.3s anatomy.interacted [mechanics] obj=obj.incision tool=inst.scalpel target=knee_r.incision_line implant= state= reason= ok=True
+[Surgery] #16 11.3s anatomy.state_changed [mechanics] obj=obj.incision tool= target=knee_r.incision_line implant= state=incised reason= ok=True
+[Surgery] #17 11.3s objective.completed [mechanics] obj=obj.incision tool= target= implant= state= reason= ok=True
+[Surgery] #18 11.3s objective.started [mechanics] obj=obj.exposure tool= target= implant= state= reason= ok=True
+[Surgery] #19 11.3s tool.released [mechanics] obj= tool=inst.scalpel target= implant= state= reason= ok=True
+[HospitalSelfTest]    32.2s [use] inst.scalpel → knee_r.incision_line: valid
+[Surgery] #20 11.3s tool.grabbed [mechanics] obj=obj.exposure tool=inst.retractor target= implant= state= reason= ok=True
+[Surgery] #21 11.3s anatomy.interacted [mechanics] obj=obj.exposure tool=inst.retractor target=knee_r.joint_capsule implant= state= reason= ok=True
+[Surgery] #22 11.3s anatomy.state_changed [mechanics] obj=obj.exposure tool= target=knee_r.joint_capsule implant= state=exposed reason= ok=True
+[Surgery] #23 11.3s objective.completed [mechanics] obj=obj.exposure tool= target= implant= state= reason= ok=True
+[Surgery] #24 11.3s objective.started [mechanics] obj=obj.femoral_resection tool= target= implant= state= reason= ok=True
+[Surgery] #25 11.3s tool.activated [mechanics] obj= tool=robot.arm target= implant= state= reason= ok=True
+[Surgery] #26 11.3s tool.released [mechanics] obj= tool=inst.retractor target= implant= state= reason= ok=True
+[HospitalSelfTest]    32.2s [use] inst.retractor → knee_r.joint_capsule: valid
+[HospitalSelfTest]    33.9s [shot] 09_knee_anatomy_closeup
+[Surgery] #27 12.9s help.requested [ai] obj=obj.femoral_resection tool= target= implant= state= reason= ok=True
+[Surgery] #28 13.1s hint.given [ai] obj=obj.femoral_resection tool= target= implant= state= reason=rule.help ok=True
+[HospitalSelfTest]    34.1s [subtitle] Dr. Hassan (supervisor): أكيد. عظمة الفخذ لازم تتشكّل عشان تناسب المفصل.
+[HospitalSelfTest]    35.4s [shot] 14_doctor_providing_assistance
+[Surgery] #29 14.4s assistant.action_requested [assistant] obj= tool=inst.cutting_guide_femoral target= implant= state= reason=hand_instrument:Accepted ok=True
+[HospitalSelfTest]    37.1s [subtitle] Sami (surgical assistant): تفضّل، هاي الأداة: دليل قطع الفخذ.
+[Surgery] #30 16.7s assistant.handoff_offered [assistant] obj= tool=inst.cutting_guide_femoral target= implant= state= reason= ok=True
+[HospitalSelfTest]    38.1s [shot] 14b_assistant_offers_instrument
+[HospitalSelfTest]    38.1s [handoff] offered=inst.cutting_guide_femoral completed-before-grab=False
+[Surgery] #31 17.2s tool.grabbed [mechanics] obj=obj.femoral_resection tool=inst.cutting_guide_femoral target= implant= state= reason= ok=True
+[Surgery] #32 17.2s assistant.handoff_completed [assistant] obj= tool=inst.cutting_guide_femoral target= implant= state= reason= ok=True
+[HospitalSelfTest]    38.1s [handoff] completed after the student's grab = True
+[Surgery] #33 17.2s tool.released [mechanics] obj= tool=inst.cutting_guide_femoral target= implant= state= reason= ok=True
+[HospitalSelfTest]    40.9s [clip] gif_femoral_resection (8 frames)
+[Surgery] #34 20.0s tool.grabbed [mechanics] obj=obj.femoral_resection tool=inst.cutting_guide_femoral target= implant= state= reason= ok=True
+[Surgery] #35 20.0s anatomy.interacted [mechanics] obj=obj.femoral_resection tool=inst.cutting_guide_femoral target=knee_r.distal_femur implant= state= reason= ok=True
+[Surgery] #36 20.0s anatomy.state_changed [mechanics] obj=obj.femoral_resection tool= target=knee_r.distal_femur implant= state=guide_placed reason= ok=True
+[Surgery] #37 20.0s tool.released [mechanics] obj= tool=inst.cutting_guide_femoral target= implant= state= reason= ok=True
+[HospitalSelfTest]    40.9s [use] inst.cutting_guide_femoral → knee_r.distal_femur: valid
+[HospitalSelfTest]    43.5s [shot] 12a_guide_placed_robot_guidance
+[Surgery] #38 22.6s tool.grabbed [mechanics] obj=obj.femoral_resection tool=inst.oscillating_saw target= implant= state= reason= ok=True
+[Surgery] #39 22.6s tool.activated [mechanics] obj= tool=inst.oscillating_saw target= implant= state= reason= ok=True
+[Surgery] #40 22.6s anatomy.interacted [mechanics] obj=obj.femoral_resection tool=inst.oscillating_saw target=knee_r.distal_femur implant= state= reason= ok=True
+[Surgery] #41 22.6s anatomy.state_changed [mechanics] obj=obj.femoral_resection tool= target=knee_r.distal_femur implant= state=resected reason= ok=True
+[Surgery] #42 22.6s objective.completed [mechanics] obj=obj.femoral_resection tool= target= implant= state= reason= ok=True
+[Surgery] #43 22.6s objective.started [mechanics] obj=obj.tibial_resection tool= target= implant= state= reason= ok=True
+[Surgery] #44 22.6s tool.activated [mechanics] obj= tool=robot.arm target= implant= state= reason= ok=True
+[Surgery] #45 22.6s tool.released [mechanics] obj= tool=inst.oscillating_saw target= implant= state= reason= ok=True
+[HospitalSelfTest]    43.5s [use] inst.oscillating_saw → knee_r.distal_femur: valid
+[HospitalSelfTest]    44.2s [shot] 12_anatomy_state_change_resected
+[Surgery] #46 23.2s tool.grabbed [mechanics] obj=obj.tibial_resection tool=inst.cutting_guide_tibial target= implant= state= reason= ok=True
+[Surgery] #47 23.2s anatomy.interacted [mechanics] obj=obj.tibial_resection tool=inst.cutting_guide_tibial target=knee_r.proximal_tibia implant= state= reason= ok=True
+[Surgery] #48 23.2s anatomy.state_changed [mechanics] obj=obj.tibial_resection tool= target=knee_r.proximal_tibia implant= state=guide_placed reason= ok=True
+[Surgery] #49 23.2s tool.released [mechanics] obj= tool=inst.cutting_guide_tibial target= implant= state= reason= ok=True
+[HospitalSelfTest]    44.2s [use] inst.cutting_guide_tibial → knee_r.proximal_tibia: valid
+[Surgery] #50 23.2s tool.grabbed [mechanics] obj=obj.tibial_resection tool=inst.oscillating_saw target= implant= state= reason= ok=True
+[Surgery] #51 23.2s tool.activated [mechanics] obj= tool=inst.oscillating_saw target= implant= state= reason= ok=True
+[Surgery] #52 23.2s anatomy.interacted [mechanics] obj=obj.tibial_resection tool=inst.oscillating_saw target=knee_r.proximal_tibia implant= state= reason= ok=True
+[Surgery] #53 23.2s anatomy.state_changed [mechanics] obj=obj.tibial_resection tool= target=knee_r.proximal_tibia implant= state=resected reason= ok=True
+[Surgery] #54 23.2s objective.completed [mechanics] obj=obj.tibial_resection tool= target= implant= state= reason= ok=True
+[Surgery] #55 23.2s objective.started [mechanics] obj=obj.trial_reduction tool= target= implant= state= reason= ok=True
+[Surgery] #56 23.2s tool.released [mechanics] obj= tool=inst.oscillating_saw target= implant= state= reason= ok=True
+[HospitalSelfTest]    44.2s [use] inst.oscillating_saw → knee_r.proximal_tibia: valid
+[Surgery] #57 23.2s implant.placement_attempted [mechanics] obj=obj.trial_reduction tool= target=knee_r.distal_femur implant=implant.femoral_trial state= reason= ok=True
+[Surgery] #58 23.2s implant.placement_completed [mechanics] obj=obj.trial_reduction tool= target=knee_r.distal_femur implant=implant.femoral_trial state= reason= ok=True
+[Surgery] #59 23.2s anatomy.state_changed [mechanics] obj=obj.trial_reduction tool= target=knee_r.distal_femur implant= state=trial_fitted reason= ok=True
+[HospitalSelfTest]    44.2s [seat] implant.femoral_trial: seated
+[Surgery] #60 23.2s implant.placement_attempted [mechanics] obj=obj.trial_reduction tool= target=knee_r.proximal_tibia implant=implant.tibial_trial state= reason= ok=True
+[Surgery] #61 23.2s implant.placement_completed [mechanics] obj=obj.trial_reduction tool= target=knee_r.proximal_tibia implant=implant.tibial_trial state= reason= ok=True
+[Surgery] #62 23.2s anatomy.state_changed [mechanics] obj=obj.trial_reduction tool= target=knee_r.proximal_tibia implant= state=trial_fitted reason= ok=True
+[Surgery] #63 23.2s objective.completed [mechanics] obj=obj.trial_reduction tool= target= implant= state= reason= ok=True
+[Surgery] #64 23.2s objective.started [mechanics] obj=obj.implant_femoral tool= target= implant= state= reason= ok=True
+[HospitalSelfTest]    44.2s [seat] implant.tibial_trial: seated
+[Surgery] #65 23.2s implant.placement_attempted [mechanics] obj=obj.implant_femoral tool= target=knee_r.distal_femur implant=implant.femoral_component state= reason= ok=True
+[Surgery] #66 23.2s implant.placement_completed [mechanics] obj=obj.implant_femoral tool= target=knee_r.distal_femur implant=implant.femoral_component state= reason= ok=True
+[HospitalSelfTest]    44.2s [seat] implant.femoral_component: seated
+[Surgery] #67 23.2s tool.grabbed [mechanics] obj=obj.implant_femoral tool=inst.impactor target= implant= state= reason= ok=True
+[Surgery] #68 23.2s anatomy.interacted [mechanics] obj=obj.implant_femoral tool=inst.impactor target=knee_r.distal_femur implant= state= reason= ok=True
+[Surgery] #69 23.2s anatomy.state_changed [mechanics] obj=obj.implant_femoral tool= target=knee_r.distal_femur implant= state=implanted reason= ok=True
+[Surgery] #70 23.2s objective.completed [mechanics] obj=obj.implant_femoral tool= target= implant= state= reason= ok=True
+[Surgery] #71 23.2s objective.started [mechanics] obj=obj.implant_tibial tool= target= implant= state= reason= ok=True
+[Surgery] #72 23.2s tool.released [mechanics] obj= tool=inst.impactor target= implant= state= reason= ok=True
+[HospitalSelfTest]    44.2s [use] inst.impactor → knee_r.distal_femur: valid
+[HospitalSelfTest]    44.8s [shot] 13_virtual_implant_interaction
+[Surgery] #73 23.8s implant.placement_attempted [mechanics] obj=obj.implant_tibial tool= target=knee_r.proximal_tibia implant=implant.tibial_tray state= reason= ok=True
+[Surgery] #74 23.8s implant.placement_completed [mechanics] obj=obj.implant_tibial tool= target=knee_r.proximal_tibia implant=implant.tibial_tray state= reason= ok=True
+[HospitalSelfTest]    44.8s [seat] implant.tibial_tray: seated
+[Surgery] #75 23.8s implant.placement_attempted [mechanics] obj=obj.implant_tibial tool= target=knee_r.proximal_tibia implant=implant.poly_insert state= reason= ok=True
+[Surgery] #76 23.8s implant.placement_completed [mechanics] obj=obj.implant_tibial tool= target=knee_r.proximal_tibia implant=implant.poly_insert state= reason= ok=True
+[HospitalSelfTest]    44.8s [seat] implant.poly_insert: seated
+[Surgery] #77 23.8s tool.grabbed [mechanics] obj=obj.implant_tibial tool=inst.mallet target= implant= state= reason= ok=True
+[Surgery] #78 23.8s anatomy.interacted [mechanics] obj=obj.implant_tibial tool=inst.mallet target=knee_r.proximal_tibia implant= state= reason= ok=True
+[Surgery] #79 23.8s anatomy.state_changed [mechanics] obj=obj.implant_tibial tool= target=knee_r.proximal_tibia implant= state=implanted reason= ok=True
+[Surgery] #80 23.8s objective.completed [mechanics] obj=obj.implant_tibial tool= target= implant= state= reason= ok=True
+[Surgery] #81 23.8s objective.started [mechanics] obj=obj.closure tool= target= implant= state= reason= ok=True
+[Surgery] #82 23.8s tool.released [mechanics] obj= tool=inst.mallet target= implant= state= reason= ok=True
+[HospitalSelfTest]    44.8s [use] inst.mallet → knee_r.proximal_tibia: valid
+[Surgery] #83 23.8s tool.grabbed [mechanics] obj=obj.closure tool=inst.skin_stapler target= implant= state= reason= ok=True
+[Surgery] #84 23.8s anatomy.interacted [mechanics] obj=obj.closure tool=inst.skin_stapler target=knee_r.wound implant= state= reason= ok=True
+[Surgery] #85 23.8s anatomy.state_changed [mechanics] obj=obj.closure tool= target=knee_r.wound implant= state=closed reason= ok=True
+[Surgery] #86 23.8s objective.completed [mechanics] obj=obj.closure tool= target= implant= state= reason= ok=True
+[Surgery] #87 23.8s session.completed [integration] obj= tool= target= implant= state= reason= ok=True
+[Hospital] surgical session completed 88989ef8dd06475980a9475a43cb5af2
+[Surgery] Debrief
+Surgical training debrief
+DRAFT — NOT CLINICALLY VALIDATED
+Score: 22/24 (92%) · Time: 0:24 · Hints: 1 · Interventions: 0
+Valid interactions: 15 · Invalid interactions: 1
+
+Completed objectives
+  ✓ Confirm the operative site
+  ✓ Skin incision
+  ✓ Expose the joint
+  ✓ Prepare the end of the femur
+  ✓ Prepare the top of the tibia
+  ✓ Trial components
+  ✓ Place the femoral component
+  ✓ Place the tibial tray and insert
+  ✓ Close the wound
+Missed objectives
+  —
+
+Criteria
+  ✓ Confirmed the operative site
+  ✗ No wrong-side or invalid actions during site confirmation (1 invalid attempt(s))
+  ✓ Completed the skin incision
+  ✓ Exposed the joint
+  ✓ Prepared the femur
+  ✓ Used the guide before the saw on the femur
+  ✓ Prepared the tibia
+  ✓ Fitted the trial components
+  ✓ Placed the femoral component
+  ✓ Femoral component placed within the simulation tolerance (1 mm / 0°)
+  ✓ Placed the tibial tray and insert
+  ✓ Tibial tray placed within the simulation tolerance (1 mm / 0°)
+  ✓ Closed the wound
+  ✓ Followed the step order (no out-of-order attempts)
+  ✓ Needed four hints or fewer (1 hint(s))
+  ✓ Two supervisor interventions or fewer (0 intervention(s))
+  ✓ Completed the simulated procedure
+  ✓ Finished within 20 minutes (0:24)
+
+Safety observations (scenario-defined)
+  • 1 invalid attempt(s) during a safety-critical step: Confirm the operative site.
+
+Strengths
+  • Completed 8 steps without any invalid attempt.
+  • Completed the whole simulated procedure.
+  • Placed implant components within the simulation tolerance.
+Areas for improvement
+
+Scores reflect observable simulation actions only. This is not a surgical competency certification and does not replace clinical supervision.
+[Surgery] #88 23.8s tool.released [mechanics] obj= tool=inst.skin_stapler target= implant= state= reason= ok=True
+[HospitalSelfTest]    44.8s [use] inst.skin_stapler → knee_r.wound: valid
+[HospitalSelfTest]    44.8s [subtitle] Dr. Hassan (supervisor): خلصنا. أكملت 9 من 9 خطوات، وأخذت 1 تلميحات. أكملت 8 خطوات بدون ولا محاولة غلط.  تذكّر إنه هاي محاكاة تعليمية غير معتمدة سريرياً.
+[HospitalSelfTest]    47.4s [shot] 15_surgical_assessment
+[HospitalSelfTest]    47.4s [assessment] score 22/24, completed=True, valid=15, invalid=1, hints=1
+[HospitalSelfTest]    47.4s [events] bus: session.started×1, objective.started×9, tool.grabbed×13, tool.released×13, interaction.rejected×1, anatomy.interacted×10, anatomy.state_changed×12, objective.completed×9, tool.activated×4, help.requested×1, hint.given×1, assistant.action_requested×1, assistant.handoff_offered×1, assistant.handoff_completed×1, implant.placement_attempted×5, implant.placement_completed×5, session.completed×1
+[Hospital] student Room02 → Corridor
+[HospitalSelfTest]    47.7s [room] Room02 → Corridor
+[Surgery] #89 27.9s objective.started [mechanics] obj=obj.site_confirmation tool= target= implant= state= reason= ok=True
+[Hospital] Room02 session ended (left the room, completed)
+[HospitalSelfTest]    48.9s [guide] where_next_after_surgical
+[Hospital] say:where_next_after_surgical
+[HospitalSelfTest]    48.9s [subtitle] Dr. Hassan (supervisor): خلصنا تدريب العملية. إذا حابب، فينا نروح على الغرفة الأولى لفحص المريض.
+[HospitalSelfTest]    52.9s [shot] 16_return_to_corridor
+[Hospital] heard 'رجعني عالغرفة الأولى' → GoToRoom(Room01) ← 'الغرفه الاولي'
+[Hospital] request Room01 via voice
+[HospitalSelfTest]    52.9s [action] Instructor:guide_to_room(none,room_01) InProgress
+[HospitalSelfTest]    52.9s [guide] follow_room01
+[Hospital] say:follow_room01
+[HospitalSelfTest]    52.9s [subtitle] Dr. Hassan (supervisor): تمام، تعال معي على الغرفة الأولى.
+[MedSim] Action Instructor:guide_to_room(none,room_01) InProgress 
+[Hospital] guide_to_room room_01 → arrived
+Setting linear velocity of a kinematic body is not supported.
+Setting angular velocity of a kinematic body is not supported.
+Setting linear velocity of a kinematic body is not supported.
+Setting angular velocity of a kinematic body is not supported.
+Setting linear velocity of a kinematic body is not supported.
+Setting angular velocity of a kinematic body is not supported.
+[Hospital] clinical session started (arrived_at_door) clinical-89e95c80
+[HospitalSelfTest]    58.4s [clinical] at Room 01 door; session state Tutorial
+[HospitalSelfTest]    58.8s [subtitle] Dr. Hassan (supervisor): أهلاً بك في قسم الطوارئ. أنا الدكتورة سارة حسن، المشرفة عليك اليوم. السيد رييس جاء يشكو من ألم في الصدر. قيّم حالته كما تفعل مع مريض حقيقي: عرّف بنفسك، خذ قصة مرضية مركّزة، افحصه، وأخبرني بما تريد فعله.
+[Hospital] student Corridor → Room01
+[HospitalSelfTest]    63.2s [room] Corridor → Room01
+[HospitalSelfTest]    70.9s [perf] Room 01 (clinical): 1197 frames, avg 4.18 ms (239 fps), p50 4.16 ms, p95 4.19 ms, p99 4.26 ms, max 8.4 ms; GPU p50 2.00 ms, p95 2.29 ms (1197 samples); vSync=1
+[HospitalSelfTest]    70.9s [shot] 05_clinical_examination_room
+[HospitalSelfTest]    70.9s [action] Patient:raise_arm(left) InProgress
+[MedSim] Action Patient:raise_arm(left) InProgress 
+[HospitalSelfTest]    72.0s [action] Patient:raise_arm(left) Completed
+[HospitalSelfTest]    73.9s [shot] 06_clinical_patient_interaction
+[HospitalSelfTest]    73.9s [clinical] tracker events: 3, surgical ids present: False
+[Hospital] student Room01 → Corridor
+[HospitalSelfTest]    74.3s [room] Room01 → Corridor
+Setting linear velocity of a kinematic body is not supported.
+Setting angular velocity of a kinematic body is not supported.
+Setting linear velocity of a kinematic body is not supported.
+Setting angular velocity of a kinematic body is not supported.
+Setting linear velocity of a kinematic body is not supported.
+Setting angular velocity of a kinematic body is not supported.
+[Hospital] Room01 session ended (left the room, unfinished)
+[HospitalSelfTest]    75.5s [guide] left_unfinished
+[Hospital] say:left_unfinished
+[HospitalSelfTest]    75.5s [subtitle] Dr. Hassan (supervisor): وقفنا الحالة قبل ما تخلص. فيك ترجع تبلّشها من جديد وقت ما بدك.
+[HospitalSelfTest]    75.5s [hospital] records: Room02 OR_TKA_TRAINING_001 completed 92% 0.4 min | Room01 ER_CHEST_PAIN_001 left unfinished -1% 0.3 min
+[HospitalSelfTest]    75.5s [hospital] log tail: 47.2s student Room02 → Corridor ; 48.4s Room02 session ended (left the room, completed) ; 48.4s say:where_next_after_surgical ; 52.4s heard 'رجعني عالغرفة الأولى' → GoToRoom(Room01) ← 'الغرفه الاولي' ; 52.4s request Room01 via voice ; 52.4s say:follow_room01 ; 57.8s guide_to_room room_01 → arrived ; 57.8s clinical session started (arrived_at_door) clinical-89e95c80 ; 62.7s student Corridor → Room01 ; 73.7s student Room01 → Corridor ; 74.9s Room01 session ended (left the room, unfinished) ; 74.9s say:left_unfinished
+[HospitalSelfTest]    75.5s [done] hospital self-test finished
+[Physics::Module] Cleanup current backend.
+[Physics::Module] Id: 0xf2b8ea05
+Input System module state changed to: ShutdownInProgress.
+Input System polling thread exited.
+Input System module state changed to: Shutdown.

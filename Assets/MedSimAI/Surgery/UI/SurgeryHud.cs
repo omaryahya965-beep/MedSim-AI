@@ -29,6 +29,11 @@ namespace MedSimAI.Surgery.UI
         string objT = "", objB = "", prog = "", stat = "", micText = "", bannerText = SurgeryContract.VALIDATION_BANNER; Color statColor = Color.white;
 
         void Start() { desktop = SurgeryCanvas.IsDesktop; Build(); }
+        // The canvas is a separate root object: it must follow this component (hospital: hidden outside the operating room).
+        void OnEnable() { if (canvas) canvas.gameObject.SetActive(true); }
+        void OnDisable() { if (canvas) canvas.gameObject.SetActive(false); }
+        void OnDestroy() { if (canvas) Destroy(canvas.gameObject); }
+        public bool CanvasVisible => canvas && canvas.gameObject.activeInHierarchy;
 
         string L(string en, string ar) => Language == "ar" ? ar : en;
         TMP_Text Txt(Transform p, string s, float size, Color c, TextAlignmentOptions a = TextAlignmentOptions.TopLeft, FontStyles st = FontStyles.Normal) { var t = UIFactory.Text(p, "", size, c, a, st); Set(t, s); return t; }

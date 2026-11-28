@@ -220,6 +220,7 @@ namespace MedSimAI.Hospital.PlayTests
             float t = 0; while (HC.SessionRoom != HospitalRoomId.None && t < 6f) { t += Time.deltaTime; yield return null; }
             Assert.AreEqual(HospitalRoomId.None, HC.SessionRoom, "leaving ends the surgical session");
             Assert.IsFalse(HC.surgery.Active); Assert.IsFalse(HC.surgery.sessionRoot.activeSelf);
+            Assert.IsFalse(UnityEngine.Object.FindObjectsByType<SurgeryHud>(FindObjectsInactive.Include, FindObjectsSortMode.None).Any(h => h.CanvasVisible), "no surgical HUD outside the operating room");
             Assert.AreEqual(AnatomyStates.Intact, View(AnatomyTargetIds.SiteMarking).CurrentState, "anatomy reset");
             Assert.IsTrue(VoiceInteractionManager.Instance.enabled, "clinical voice pipeline back");
             Assert.IsFalse(HC.surgery.doctorRole.enabled, "surgeon role released");
@@ -264,6 +265,23 @@ namespace MedSimAI.Hospital.PlayTests
             var rec = CharacterActionRouter.History.LastOrDefault(r => r.action.type == "guide_to_room");
             Assert.IsNotNull(rec); Assert.AreNotEqual(ActionState.Completed, rec.state, "no path through the closed door: not reported as done");
             Assert.IsTrue(HC.Log.Any(l => l.Contains("say:no_path")), "she says so truthfully");
+        }
+
+        [UnityTest]
+        public IEnumerator AssessmentMode_SameSimulation_NoUnsolicitedHints_SafetyKept()
+        {
+            HC.SetGuidedMode(false);
+            yield return EnterOperatingRoom();
+            var rules = HC.surgery.controller.Scenario.supervisorRules;
+            Assert.IsFalse(rules.Any(r => r.kind == "hint" && (r.trigger.type == "idle" || r.trigger.type == "rejected")), "no unsolicited hints in assessment");
+            Assert.IsTrue(rules.Any(r => r.kind == "safety"), "safety interventions kept");
+            Assert.IsTrue(rules.Any(r => r.kind == "hint" && r.trigger.type == "help_requested"), "hints on request still available (and counted)");
+            Assert.IsFalse(Use(InstrumentIds.SkinMarker, "knee_l.site_marking"));   // wrong side: same deterministic rejection as in guided mode
+            Assert.AreEqual(RejectReasons.WrongSide, LastReject());
+            Assert.IsTrue(Use(InstrumentIds.SkinMarker, AnatomyTargetIds.SiteMarking));
+            Assert.AreEqual("obj.incision", HC.surgery.controller.Core.Runtime.CurrentObjectiveId, "objective completion unchanged by the mode");
+            HC.SetGuidedMode(true);
+            Assert.IsTrue(HC.surgery.controller.Scenario.supervisorRules.Any(r => r.kind == "hint" && r.trigger.type == "idle"), "guided mode restores the coaching rules");
         }
 
         [UnityTest]
