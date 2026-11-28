@@ -24,6 +24,10 @@ namespace MedSimAI.Surgery.Characters
             return SurgeryActionCatalog.For(characterId).Contains(action) && action != SurgeryActionCatalog.OtherPhysical && action != SurgeryActionCatalog.None;
         }
 
+        /// <summary>Simulation distances (m): the assistant can pick an instrument / hold it out to the student from here.</summary>
+        public const float ReachToTool = 0.85f, HandOverDistance = 1.15f;
+        static float Flat(Vector3 a, Vector3 b) { a.y = 0; b.y = 0; return Vector3.Distance(a, b); }
+
         public void Execute(CharacterActionRequest r, Action<CharacterActionResult> onDone)
         {
             var c = Get(r.characterId);
@@ -66,11 +70,17 @@ namespace MedSimAI.Surgery.Characters
                 {
                     var tool = FindInstrument(r.instrumentId);
                     if (!tool) { Done(ActionOutcome.Unavailable, "instrument_not_in_scene"); break; }
+                    // Judged by REACH, not by an exact stopping point: avoidance around the surgeon can stop the assistant a little
+                    // short of the anchor, which made the hand-over fail although the instrument was within reach.
                     c.GoToAnchor(AnchorIds.AssistantAtTable, atTable =>
                     {
-                        if (!atTable) { Done(ActionOutcome.Unavailable, "anchor_or_path_missing"); return; }
+                        if (!atTable && Flat(c.transform.position, tool.position) > ReachToTool) { Done(ActionOutcome.Unavailable, "could_not_reach_instrument"); return; }
                         if (!c.Pick(tool)) { Done(ActionOutcome.Failed, "pick_failed"); return; }
-                        c.GoTo(c.BesideStudent(0.55f, 0.45f), near => Done(near ? ActionOutcome.Started : ActionOutcome.Unavailable, near ? "offered" : "no_path"), student);
+                        c.GoTo(c.BesideStudent(0.55f, 0.45f), near =>
+                        {
+                            bool inReach = near || (student && Flat(c.transform.position, student.position) <= HandOverDistance);
+                            Done(inReach ? ActionOutcome.Started : ActionOutcome.Unavailable, inReach ? "offered" : "could_not_reach_student");
+                        }, student);
                     }, tool);
                     break;
                 }

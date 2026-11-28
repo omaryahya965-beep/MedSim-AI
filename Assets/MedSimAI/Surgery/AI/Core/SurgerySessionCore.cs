@@ -187,7 +187,7 @@ namespace MedSimAI.Surgery.AI
                 Handoff.Offer(v.instrumentId);   // assistant now holds it out; completion only on tool.grabbed
             else
                 Bus.Publish(new SurgeryEvent(res.outcome == ActionOutcome.Completed ? SurgeryEventIds.AssistantActionCompleted : SurgeryEventIds.AssistantActionFailed, SurgeryEventSources.Assistant)
-                { characterId = v.characterId, toolId = v.instrumentId, reason = v.action + ":" + res.outcome, success = res.outcome == ActionOutcome.Completed });
+                { characterId = v.characterId, toolId = v.instrumentId, reason = v.action + ":" + res.outcome + (string.IsNullOrEmpty(res.reason) ? "" : ":" + res.reason), success = res.outcome == ActionOutcome.Completed });
             if (res.outcome == ActionOutcome.Unavailable || res.outcome == ActionOutcome.Failed)
                 Say(new CharacterLine { characterId = v.characterId, kind = "action", text = SurgeryActionLines.Get("action_unavailable", lang), lang = lang, approvedOnly = true });
             ActionFinished?.Invoke(v, res);
