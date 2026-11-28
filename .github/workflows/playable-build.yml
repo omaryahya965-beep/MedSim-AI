@@ -1,0 +1,54 @@
+# Builds the integrated game (hospital + clinical room + surgical room) as Windows executables so it can be played
+# WITHOUT installing Unity. Only runs on the test branch or by hand; never pushes or merges anything.
+# Download: Actions → this run → Artifacts → MedSimAI_Desktop / MedSimAI_PCVR (zip) → extract → MedSimAI.exe
+name: Playable Windows build
+on:
+  workflow_dispatch:
+  push:
+    branches: [test/playable-build]
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+        with: { lfs: true }
+      - uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-playable-${{ hashFiles('Packages/manifest.json', 'ProjectSettings/ProjectVersion.txt') }}
+          restore-keys: Library-playable-
+      - uses: buildalon/unity-setup@v2
+        with:
+          version-file: ProjectSettings/ProjectVersion.txt
+          build-targets: StandaloneWindows64
+      - uses: buildalon/activate-unity-license@v2
+        with:
+          license: Personal
+          username: ${{ secrets.UNITY_EMAIL }}
+          password: ${{ secrets.UNITY_PASSWORD }}
+      - name: Build Desktop + PCVR (HospitalBuild, committed scenes)
+        shell: bash
+        run: |
+          "$UNITY_EDITOR_PATH" -batchmode -nographics -quit -projectPath "${UNITY_PROJECT_PATH:-$GITHUB_WORKSPACE}" -buildTarget StandaloneWindows64 \
+            -executeMethod MedSimAI.Hospital.EditorTools.HospitalBuildCI.BuildBoth -logFile unity-build.log || status=$?
+          grep -E "HospitalBuildCI|error CS" unity-build.log | head -40 || true
+          exit ${status:-0}
+      - name: Add a how-to next to the game
+        shell: bash
+        run: |
+          for d in build/MedSimAI_Integrated_Desktop build/MedSimAI_Integrated_PCVR; do
+            [ -d "$d" ] || continue
+            printf "MedSim AI - integrated TEST build from branch test/playable-build (DRAFT, not clinically validated)\r\n\r\nPlay: extract the zip, double-click MedSimAI.exe\r\nWithout the MedSim AI proxy running on this PC the characters use text/approved lines only.\r\nVoice AI: from a checkout of the repo run the proxy as described in AI_SETUP.md (needs Node 22 and the OpenAI key on that PC).\r\nPCVR build: start SteamVR / VIVE streaming first.\r\n" > "$d/README_TEST_BUILD.txt"
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: MedSimAI_Desktop, path: build/MedSimAI_Integrated_Desktop, if-no-files-found: warn }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: MedSimAI_PCVR, path: build/MedSimAI_Integrated_PCVR, if-no-files-found: warn }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: unity-build-log, path: unity-build.log }
