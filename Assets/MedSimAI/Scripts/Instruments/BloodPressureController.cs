@@ -19,14 +19,44 @@ namespace MedSimAI.Instruments
         public PatientMonitorController monitor;
         public Transform cuffVisual; public float inflateScale = 1.12f;
         public AudioClip pumpLoop;
-        Coroutine cycle;
+        [Tooltip("As on a real automatic monitor, the student starts the measurement on the device (START) after applying the cuff. Off: measures as soon as the cuff is placed (v0.6 behaviour).")]
+        public bool requireStart = true;
+        Coroutine cycle; PlacementZone readyZone;
+        /// <summary>The cuff is on a valid zone and the device waits for START.</summary>
+        public bool Ready => readyZone != null && Attached && cycle == null;
+        /// <summary>The device the student presses START on (the NIBP unit on the trolley).</summary>
+        public Transform Device => deviceDisplay ? deviceDisplay.transform.parent : null;
 
-        protected override void Awake() { base.Awake(); if (!pumpLoop) pumpLoop = MedSimAI.Audio.ProceduralClinicalAudio.PumpLoop(); }
+        protected override void Awake()
+        {
+            base.Awake(); if (!pumpLoop) pumpLoop = MedSimAI.Audio.ProceduralClinicalAudio.PumpLoop();
+            var dev = Device;
+            if (dev && !dev.GetComponent<NibpStartButton>())
+            {   // the modelled NIBP unit becomes the START control: desktop E / click, VR poke or ray select
+                var box = dev.gameObject.AddComponent<BoxCollider>(); box.size = new Vector3(0.18f, 0.13f, 0.09f);
+                dev.gameObject.AddComponent<NibpStartButton>().cuff = this;
+                var xi = dev.gameObject.AddComponent<XRSimpleInteractable>(); xi.selectEntered.AddListener(_ => StartMeasurement());
+            }
+        }
 
         protected override void OnPlaced(PlacementZone zone)
         {
-            if (cycle != null) StopCoroutine(cycle);
-            cycle = StartCoroutine(Measure(zone));
+            if (cycle != null) { StopCoroutine(cycle); cycle = null; }
+            if (!requireStart) { cycle = StartCoroutine(Measure(zone)); return; }
+            readyZone = zone;
+            if (deviceDisplay) deviceDisplay.text = "READY\n<size=50%>START</size>";
+            if (monitor) monitor.SetNibpStatus("Cuff on — press START");
+            ClinicalFeedbackBus.Publish("Blood pressure", "Cuff applied to " + zone.displayName + ". Press START on the NIBP monitor.");
+            Play(confirmClip);
+        }
+
+        /// <summary>START on the device: measures only with the cuff really applied to a valid zone.</summary>
+        public bool StartMeasurement()
+        {
+            if (cycle != null) return false;
+            if (!Ready) { ClinicalFeedbackBus.Publish("Blood pressure", "Apply the cuff to the patient's upper arm first, then press START."); return false; }
+            cycle = StartCoroutine(Measure(readyZone));
+            return true;
         }
 
         IEnumerator Measure(PlacementZone zone)
@@ -57,10 +87,11 @@ namespace MedSimAI.Instruments
 
         protected override void OnDetached()
         {
+            readyZone = null;
             if (cycle != null) { StopCoroutine(cycle); cycle = null; RecordEvent(ClinicalEvents.InstrumentRemovedEarly, InstrumentId); if (monitor) monitor.SetNibpStatus(""); }
             if (sfx) sfx.Stop();
         }
         public bool Measuring => cycle != null;
-        public override void ResetInstrument() { base.ResetInstrument(); if (deviceDisplay) deviceDisplay.text = "--/--"; }
+        public override void ResetInstrument() { readyZone = null; base.ResetInstrument(); if (deviceDisplay) deviceDisplay.text = "--/--"; }
     }
 }

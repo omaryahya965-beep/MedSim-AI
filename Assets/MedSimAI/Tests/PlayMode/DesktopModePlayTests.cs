@@ -58,6 +58,9 @@ namespace MedSimAI.Tests
             yield return null; yield return null;
             Assert.AreEqual(arm, cuff.HoverZone, "zone detected exactly as with a VR hand");
             cuff.DesktopRelease(); Assert.IsTrue(cuff.Attached);
+            yield return new WaitForSeconds(1f);
+            Assert.IsFalse(s.Tracker.Has("EXAM:EX_BP"), "no reading before the student presses START");
+            Assert.IsTrue(cuff.Ready); Assert.IsTrue(cuff.StartMeasurement(), "START on the device");
             float w = 0; while (!s.Tracker.Has("EXAM:EX_BP") && w < 12) { w += Time.deltaTime; yield return null; }
             Assert.IsTrue(s.Tracker.Has("EXAM:EX_BP"), "BP measured through the same clinical engine");
         }

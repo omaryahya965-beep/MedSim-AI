@@ -19,6 +19,7 @@ namespace MedSimAI.Instruments
         public PatientMonitorController monitor;
         public float settleSeconds = 3f;
         Coroutine routine;
+        PatientState liveSource;   // while the probe stays on, the reading follows the patient's authored state (live monitoring)
 
         protected override void OnPlaced(PlacementZone zone) { if (routine != null) StopCoroutine(routine); routine = StartCoroutine(Read(zone)); }
 
@@ -37,9 +38,19 @@ namespace MedSimAI.Instruments
             Play(confirmClip);
             ClinicalFeedbackBus.Publish("Pulse oximetry", $"SpO2 {r.vitals.spo2}% on room air, pulse {r.vitals.heartRate}/min.");
             routine = null;
+            StopLive(); liveSource = Session.Patient; if (liveSource != null) liveSource.VitalsChanged += OnVitals;
         }
 
-        protected override void OnDetached() { if (routine != null) { StopCoroutine(routine); routine = null; RecordEvent(ClinicalEvents.InstrumentRemovedEarly, InstrumentId); } if (deviceDisplay) deviceDisplay.text = ""; if (monitor) monitor.HideSpO2(); }
-        public override void ResetInstrument() { base.ResetInstrument(); if (deviceDisplay) deviceDisplay.text = ""; }
+        void OnVitals(Vitals v)
+        {   // authored state change while the probe is on: the device and the monitor show the new values (never invented)
+            if (!Attached || routine != null) return;
+            if (deviceDisplay) deviceDisplay.text = $"<size=60%>SpO2</size> {v.spo2}%\n<size=60%>PR</size> {v.heartRate}";
+            if (monitor) monitor.RevealSpO2(v.spo2);
+        }
+        void StopLive() { if (liveSource != null) liveSource.VitalsChanged -= OnVitals; liveSource = null; }
+        void OnDestroy() => StopLive();
+
+        protected override void OnDetached() { StopLive(); if (routine != null) { StopCoroutine(routine); routine = null; RecordEvent(ClinicalEvents.InstrumentRemovedEarly, InstrumentId); } if (deviceDisplay) deviceDisplay.text = ""; if (monitor) monitor.HideSpO2(); }
+        public override void ResetInstrument() { StopLive(); base.ResetInstrument(); if (deviceDisplay) deviceDisplay.text = ""; }
     }
 }

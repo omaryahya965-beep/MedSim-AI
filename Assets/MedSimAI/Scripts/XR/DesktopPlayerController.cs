@@ -183,6 +183,16 @@ namespace MedSimAI.XR
                 if (e || lmb) door.OpenBy(door.Angle > 20f ? 0f : 88f);
                 return;
             }
+            // NIBP monitor: START the blood-pressure measurement once the cuff is on the arm
+            var nibp = tr.GetComponentInParent<NibpStartButton>();
+            if (nibp && nibp.cuff)
+            {
+                var c = nibp.cuff;
+                SetPrompt(c.Measuring ? "Blood pressure: measuring…" : c.Ready ? "E — START the blood-pressure measurement" : "NIBP monitor — apply the cuff to the upper arm first");
+                crosshair.color = c.Ready ? new Color(0.2f, 0.9f, 0.8f) : Color.white;
+                if (e || lmb) c.StartMeasurement();
+                return;
+            }
             // ECG cart: record, then review (looking at the tracing for a moment also counts as reviewing)
             var ecg = tr.GetComponentInParent<ECGMachineController>();
             if (ecg)
