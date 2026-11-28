@@ -24,12 +24,17 @@ jobs:
       - uses: buildalon/unity-setup@v2
         with:
           version-file: ProjectSettings/ProjectVersion.txt
-          build-targets: StandaloneOSX
+          build-targets: StandaloneWindows64
       - uses: buildalon/activate-unity-license@v2
         with:
           license: Personal
           username: ${{ secrets.UNITY_EMAIL }}
           password: ${{ secrets.UNITY_PASSWORD }}
+      - name: Install Mac Build Support (Mono) for the Windows editor
+        shell: bash
+        run: |
+          "$UNITY_HUB_PATH" -- --headless install-modules --version 6000.3.29f1 -m mac-mono --childModules 2>&1 | tail -20
+          ls "$(dirname "$UNITY_EDITOR_PATH")/Data/PlaybackEngines" || true
       - name: Build macOS app (hospital + clinical + surgical rooms)
         shell: bash
         run: |
