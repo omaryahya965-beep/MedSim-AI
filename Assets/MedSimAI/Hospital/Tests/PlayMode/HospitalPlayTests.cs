@@ -321,6 +321,51 @@ namespace MedSimAI.Hospital.PlayTests
         }
         static string ScenarioWelcomeFromFile() => JsonUtility.FromJson<SurgicalScenarioData>(Resources.Load<TextAsset>("SurgeryScenarios/OR_TKA_TRAINING_001").text).supervisorRules.First(r => r.kind == "welcome").line.en;
 
+        // VR contact path: only a deliberate application with the working tip of a held tool counts; brushes are ignored, not penalised.
+        [UnityTest]
+        public IEnumerator VrContact_OnlyDeliberateTipApplication_Counts_BrushesAreIgnored()
+        {
+            yield return EnterOperatingRoom();
+            var trig = UnityEngine.Object.FindObjectsByType<AnatomyContactTrigger>(FindObjectsInactive.Include, FindObjectsSortMode.None)
+                .First(t => t.GetComponent<SurgeryAnatomyTag>() && t.GetComponent<SurgeryAnatomyTag>().targetId == AnatomyTargetIds.SiteMarking);
+            var target = trig.GetComponent<Collider>();
+            var marker = Tool(InstrumentIds.SkinMarker); var scalpel = Tool(InstrumentIds.Scalpel);
+            int Rejections() => Bus.Log.Count(e => e.id == SurgeryEventIds.InteractionRejected);
+            int Interactions() => Bus.Log.Count(e => e.id == SurgeryEventIds.AnatomyInteracted);
+            void TipOnTarget(SurgeryInstrumentTag t) { var tip = t.tip ? t.tip : t.transform; t.transform.position += target.ClosestPoint(tip.position) - tip.position; Physics.SyncTransforms(); }
+            int r0 = Rejections(), i0 = Interactions();
+            try
+            {
+                // 1. not held (lying on the tray / being carried): nothing, however long
+                AnatomyContactTrigger.HeldOverride = _ => false; TipOnTarget(marker);
+                for (int k = 0; k < 20; k++) trig.Step(marker.GetComponentInChildren<Collider>(), 0.1f);
+                trig.EndContact(marker.GetComponentInChildren<Collider>());
+                // 2. held, but the tip is away from the target (the handle brushes it): nothing
+                AnatomyContactTrigger.HeldOverride = _ => true;
+                marker.transform.position = target.bounds.center + Vector3.up * 0.4f; Physics.SyncTransforms();
+                for (int k = 0; k < 20; k++) trig.Step(marker.GetComponentInChildren<Collider>(), 0.1f);
+                trig.EndContact(marker.GetComponentInChildren<Collider>());
+                // 3. the wrong tool passes over the site briefly (0.2 s): ignored, not a rejected attempt
+                TipOnTarget(scalpel); trig.Step(scalpel.GetComponentInChildren<Collider>(), 0.1f); trig.Step(scalpel.GetComponentInChildren<Collider>(), 0.1f);
+                trig.EndContact(scalpel.GetComponentInChildren<Collider>());
+                Assert.AreEqual(r0, Rejections(), "incidental contact is never penalised");
+                Assert.AreEqual(i0, Interactions(), "and never changes anything");
+                Assert.AreEqual(AnatomyStates.Intact, View(AnatomyTargetIds.SiteMarking).CurrentState);
+                // 4. the held marker's tip rests on the site: counted once, after the dwell
+                TipOnTarget(marker); var c = marker.GetComponentInChildren<Collider>();
+                Assert.IsFalse(trig.Step(c, 0.1f)); Assert.IsFalse(trig.Step(c, 0.1f), "not yet: 0.2 s");
+                Assert.IsTrue(trig.Step(c, 0.15f), "deliberate application after the dwell");
+                for (int k = 0; k < 10; k++) Assert.IsFalse(trig.Step(c, 0.1f), "no duplicate while still in contact");
+                // put the tools away before physics runs again (otherwise real trigger callbacks would see them as held)
+                AnatomyContactTrigger.HeldOverride = null;
+                marker.transform.position += Vector3.up; scalpel.transform.position += Vector3.up; Physics.SyncTransforms();
+                yield return null;
+                Assert.AreEqual(AnatomyStates.Marked, View(AnatomyTargetIds.SiteMarking).CurrentState, "the site is marked");
+                Assert.AreEqual(r0, Rejections());
+            }
+            finally { AnatomyContactTrigger.HeldOverride = null; }
+        }
+
         [UnityTest]
         public IEnumerator Language_PersistsAcrossRooms()
         {
