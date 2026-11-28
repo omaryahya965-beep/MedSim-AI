@@ -72,7 +72,9 @@ namespace MedSimAI.Hospital
             if (System.Environment.GetCommandLineArgs().Any(a => a == "-clinical-only")) { UnityEngine.SceneManagement.SceneManager.LoadScene("MedSim_ER"); return; }
             Instance = this;
             VoiceInteractionManager.UtteranceInterceptor = (p, text) => HandleUtterance(text);
+            VoiceInteractionManager.TargetAvailable = p => p != Persona.Patient || PlayerRoom == HospitalRoomId.Room01;   // Mr. Reyes only in Room 01
             SurgerySessionController.UtteranceInterceptor = text => HandleUtterance(text);
+            SurgerySessionController.StudentHeard = text => { if (VoiceInteractionManager.Instance) VoiceInteractionManager.Instance.ReportTranscript(text); };   // one conversation panel: the student's words from Room 02 too
             DoctorActionController.ExtensionHandler = HandleDoctorAction;
             ScenarioRouter.MenuOverride = () => RequestRoom(HospitalRoomId.Corridor, "shortcut");
             if (clinical) { clinical.hostManaged = true; clinical.autoStart = false; }
@@ -82,7 +84,7 @@ namespace MedSimAI.Hospital
         {
             if (Instance != this) return;
             Instance = null;
-            VoiceInteractionManager.UtteranceInterceptor = null; SurgerySessionController.UtteranceInterceptor = null;
+            VoiceInteractionManager.UtteranceInterceptor = null; VoiceInteractionManager.TargetAvailable = null; SurgerySessionController.UtteranceInterceptor = null; SurgerySessionController.StudentHeard = null;
             DoctorActionController.ExtensionHandler = null; ScenarioRouter.MenuOverride = null;
         }
 
@@ -188,6 +190,7 @@ namespace MedSimAI.Hospital
         }
 
         /// <summary>DoctorActionController extension: the hospital actions. Returns null for anything else.</summary>
+        int guideToken;
         bool? HandleDoctorAction(DoctorActionController ctl, string type, string arg)
         {
             switch (type)
@@ -202,10 +205,13 @@ namespace MedSimAI.Hospital
                     GuidingTo = room;
                     SayLine(room == HospitalRoomId.Room01 ? "follow_room01" : room == HospitalRoomId.Room02 ? "follow_room02" : "follow_corridor");
                     directory?.Refresh();
+                    int token = ++guideToken;
                     guide.GuideTo(dest.position, (ok, reason) =>
                     {
+                        if (token != guideToken) return;   // a newer request replaced this walk: its outcome belongs to the new action
                         GuidingTo = HospitalRoomId.None; directory?.Refresh();
                         Note($"guide_to_room {arg} → {(ok ? "arrived" : reason)}");
+                        if (!ok && reason == "released") { ctl.ReportExternal(type, false, "interrupted"); return; }   // the student got there first, or a new request took over
                         if (!ok) { SayLine("no_path"); ctl.ReportExternal(type, false, reason); return; }
                         OnArrivedAt(room);
                         ctl.ReportExternal(type, true);
@@ -290,7 +296,10 @@ namespace MedSimAI.Hospital
         {
             if (!clinical) return;
             if (guide) guide.Release();
-            clinical.StartClinicalSession(guidedMode);
+            // The student who opened the door and walked in keeps the door as it is (the v0.6 start resets it, which shut the
+            // student inside the room).
+            bool inside = PlayerRoom == HospitalRoomId.Room01 && clinical.examDoor && clinical.examDoor.IsOpen;
+            clinical.StartClinicalSession(guidedMode, inside);
             SessionRoom = HospitalRoomId.Room01;
             current = new HospitalSessionRecord { room = HospitalRoomId.Room01, scenarioId = ClinicalScenarioManager.Instance ? ClinicalScenarioManager.Instance.Scenario.scenarioId : "ER_CHEST_PAIN_001", sessionId = "clinical-" + Guid.NewGuid().ToString("N").Substring(0, 8), startedAt = Time.time, guided = guidedMode };
             Note($"clinical session started ({why}) {current.sessionId}");

@@ -284,6 +284,26 @@ namespace MedSimAI.Hospital.PlayTests
             Assert.IsTrue(HC.surgery.controller.Scenario.supervisorRules.Any(r => r.kind == "hint" && r.trigger.type == "idle"), "guided mode restores the coaching rules");
         }
 
+        // Found by the exe voice walkthrough: the student who opened the door and walked in was shut inside (the v0.6 session start
+        // reset the door), and gaze alone could address the patient from the corridor.
+        [UnityTest]
+        public IEnumerator WalkingIntoRoom01_KeepsTheDoorOpen_PatientAddressableOnlyInside()
+        {
+            var door = UnityEngine.Object.FindAnyObjectByType<MedSimAI.Instruments.HospitalDoor>(); door.ResetDoor();
+            PlaceStudent(new Vector3(1.85f, 0, -3.4f), new Vector3(1.0f, 1.0f, 0.9f));   // corridor, looking through the door towards the patient
+            door.OpenBy(88f);
+            float t = 0; while (!door.IsOpen && t < 4f) { t += Time.deltaTime; yield return null; }
+            yield return new WaitForSeconds(0.5f);
+            Assert.IsFalse(VoiceInteractionManager.TargetAvailable(Persona.Patient), "from the corridor the student talks to the doctor, not to a patient behind a wall");
+            Assert.AreEqual(Persona.Instructor, VoiceInteractionManager.Instance.Target);
+            PlaceStudent(new Vector3(1.2f, 0, -0.6f), new Vector3(0.3f, 1.0f, 1.1f));
+            t = 0; while (HC.SessionRoom != HospitalRoomId.Room01 && t < 5f) { t += Time.deltaTime; yield return null; }
+            Assert.AreEqual(HospitalRoomId.Room01, HC.SessionRoom);
+            yield return new WaitForSeconds(0.6f);
+            Assert.IsTrue(door.IsOpen, "starting the clinical session must not shut the door on the student who walked in");
+            Assert.IsTrue(VoiceInteractionManager.TargetAvailable(Persona.Patient), "inside Room 01 the patient can be addressed");
+        }
+
         [UnityTest]
         public IEnumerator Language_PersistsAcrossRooms()
         {

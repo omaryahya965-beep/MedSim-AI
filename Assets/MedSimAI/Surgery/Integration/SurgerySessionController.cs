@@ -38,6 +38,8 @@ namespace MedSimAI.Surgery.Integration
         public event Action HostReturnRequested;
         /// <summary>Hospital scene: sees every understood utterance first (navigation such as "take me back to room one"). Return true to consume it.</summary>
         public static Func<string, bool> UtteranceInterceptor;
+        /// <summary>Host hook: what the surgical voice path heard the student say (the hospital shows it in its shared conversation panel).</summary>
+        public static Action<string> StudentHeard;
 
         public SurgerySessionCore Core { get; private set; }
         public SurgeryLiveClient Live { get; private set; }
@@ -261,7 +263,7 @@ namespace MedSimAI.Surgery.Integration
             while (meta == null && !req.isDone) yield return null;
             if (meta != null && !meta.noSpeech)
             {
-                if (!string.IsNullOrEmpty(meta.heard)) hud?.AddLine(Core.Language == "ar" ? "إنت" : "You", meta.heard);
+                if (!string.IsNullOrEmpty(meta.heard)) { hud?.AddLine(Core.Language == "ar" ? "إنت" : "You", meta.heard); StudentHeard?.Invoke(meta.heard); }
                 if (!string.IsNullOrEmpty(meta.heard) && UtteranceInterceptor != null && UtteranceInterceptor(meta.heard))
                 {   // consumed by the hospital (navigation): no surgical reply
                     stream.Cancel(); try { req.Abort(); } catch { } req.Dispose(); currentReq = null; currentStream = null; voiceTurnBusy = false; yield break;

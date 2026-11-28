@@ -56,6 +56,20 @@ namespace MedSimAI.Hospital.Tests
             Assert.IsFalse(i.kind == HospitalIntentKind.GoToRoom && i.room != HospitalRoomId.Room01, text + " → " + i);
         }
 
+        // Talking to Dr. Sara Hassan uses FEMININE imperatives (خديني, رجعيني, وصليني). Inside a room a movement verb is required,
+        // so these must be in the verb list (found by the exe voice walkthrough: the brief's own example was ignored in Room 01).
+        [TestCase("خديني على غرفة العمليات", HospitalRoomId.Room01, HospitalRoomId.Room02)]
+        [TestCase("دكتورة خديني على غرفة العمليات لو سمحتي", HospitalRoomId.Room01, HospitalRoomId.Room02)]
+        [TestCase("رجعيني عالممر", HospitalRoomId.Room02, HospitalRoomId.Corridor)]
+        [TestCase("وصليني على الغرفة الأولى", HospitalRoomId.Room02, HospitalRoomId.Room01)]
+        [TestCase("خديني على غرفة الفحص", HospitalRoomId.Room02, HospitalRoomId.Room01)]
+        public void InsideRooms_FeminineImperativesToTheDoctor(string text, HospitalRoomId where, HospitalRoomId to)
+        {
+            var i = P(text, where);
+            Assert.AreEqual(HospitalIntentKind.GoToRoom, i.kind, text + " → " + i);
+            Assert.AreEqual(to, i.room, text + " → " + i);
+        }
+
         [Test]
         public void InsideRooms_ExplicitRequestsStillWork()
         {

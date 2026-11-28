@@ -29,6 +29,7 @@ namespace MedSimAI.Core
         public event Action<AssessmentResult, string> DebriefReady;
         public event Action<string> SpokenDebriefReady;
         public bool trainingMode = true; // Training: all supervisor coaching. Assessment: only safety-critical interventions.
+        bool welcomeInside;
         [Tooltip("Start the clinical session automatically after loading (no menu board).")] public bool autoStart = true;
         [Tooltip("Hospital scene: a host coordinator starts and ends the clinical session (Room 01). No menu board, no auto start.")] public bool hostManaged;
         [Tooltip("Hospital scene: the host suspends the clinical pause menu while another room owns its own pause menu.")] public bool suppressPause;
@@ -73,16 +74,18 @@ namespace MedSimAI.Core
         void SetState(AppState s) { State = s; StateChanged?.Invoke(s); }
 
         // ------------------------------------------------------------------ Step 1: corridor welcome
-        public void StartClinicalSession(bool training)
+        /// <param name="keepDoor">Host (hospital) only: the student opened the door and walked in before the session started, so
+        /// the door is left as it is (not slammed shut behind them) and the welcome does not ask them to open it.</param>
+        public void StartClinicalSession(bool training, bool keepDoor = false)
         {
-            trainingMode = training;
+            trainingMode = training; welcomeInside = keepDoor;
             if (flow != null) StopCoroutine(flow);
             V?.Interrupt();
             M.ResetSession();
             MedSimAI.Characters.CharacterActionRouter.Reset();
             foreach (var i in instruments) if (i) i.ResetInstrument();
             if (ecg) ecg.ResetMachine();
-            if (examDoor) examDoor.ResetDoor();
+            if (examDoor && !keepDoor) examDoor.ResetDoor();
             discussionIndex = -1; discussionAttempts = 0; LiveProvider.DiscussionId = null; LastSpokenDebrief = null; finishing = false;
             M.Director.AllowOrdinary = training;
             M.BeginSession();
@@ -97,8 +100,10 @@ namespace MedSimAI.Core
             if (live.Configured && string.IsNullOrEmpty(live.SessionId)) { var t = live.StartSession(M.Scenario); yield return new WaitUntil(() => t.IsCompleted); }
             yield return new WaitForSeconds(0.4f);
             if (instructor && instructor.life) instructor.life.mood = CharacterMood.Attentive;
-            var say = V.SayLive(Persona.Instructor, "welcome", M.Scenario.instructorLines.welcome);
-            if (instructor && examDoor) instructor.PointAtDoor(examDoor.handle ? examDoor.handle : examDoor.transform);
+            var welcome = M.Scenario.instructorLines.welcome;
+            if (welcomeInside) welcome = System.Text.RegularExpressions.Regex.Replace(welcome, @"\s*[^.!?؟]*\b(door|الباب)\b[^.!?؟]*[.!?؟]", "").Trim();   // already inside: no "open the door"
+            var say = V.SayLive(Persona.Instructor, "welcome", welcome);
+            if (instructor && examDoor && !welcomeInside) instructor.PointAtDoor(examDoor.handle ? examDoor.handle : examDoor.transform);
             yield return new WaitUntil(() => say.IsCompleted);
             if (!examDoor) SetState(AppState.Running); // scenes without a corridor door start the assessment directly
         }

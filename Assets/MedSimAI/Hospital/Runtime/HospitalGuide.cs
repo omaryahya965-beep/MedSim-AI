@@ -31,11 +31,15 @@ namespace MedSimAI.Hospital
         Vector3 Floor(Vector3 p) { p.y = transform.position.y; return p; }
         float StudentDistance => student ? Vector3.Distance(Floor(student.position), Floor(transform.position)) : 0f;
 
+        /// <summary>Stops guiding. A walk still in progress is reported as finished with reason "released" (e.g. the student
+        /// reached the room first), so whoever requested it never keeps waiting for an outcome.</summary>
         public void Release()
         {
             if (run != null) StopCoroutine(run);
             run = null; State = Mode.Idle;
+            var p = pendingDone; pendingDone = null; p?.Invoke(false, "released");
         }
+        Action<bool, string> pendingDone;
 
         /// <summary>Stops and faces the student ("wait").</summary>
         public void Hold()
@@ -64,7 +68,7 @@ namespace MedSimAI.Hospital
         {
             Release();
             if (!CanReach(destination)) { done?.Invoke(false, "no_path"); return; }
-            State = Mode.Guiding; Destination = destination;
+            State = Mode.Guiding; Destination = destination; pendingDone = done;
             run = StartCoroutine(GuideRoutine(destination, via, done));
         }
 
@@ -105,7 +109,7 @@ namespace MedSimAI.Hospital
             if (student) mover.Face(student.position);
             Finish(true, "");
 
-            void Finish(bool ok, string reason) { State = Mode.Idle; run = null; done?.Invoke(ok, reason); }
+            void Finish(bool ok, string reason) { State = Mode.Idle; run = null; pendingDone = null; done?.Invoke(ok, reason); }
         }
 
         bool StudentIsBehind(Vector3 target)

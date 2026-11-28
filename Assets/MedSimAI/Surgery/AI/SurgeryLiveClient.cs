@@ -67,6 +67,7 @@ namespace MedSimAI.Surgery.AI
             if (code == 401) return "AI proxy refused the client token";
             if (code == 402) return "AI budget reached";
             if (code == 429) return "AI rate limit reached";
+            if (code == 404) return "the running AI proxy has no surgical routes (it is an older version): start the integrated proxy (Start_MedSim_Proxy_Integrated.cmd)";
             return "AI service error (" + code + ")";
         }
 

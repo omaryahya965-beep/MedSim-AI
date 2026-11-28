@@ -58,7 +58,9 @@ namespace MedSimAI.Hospital
         // Words that make a room mention a request to GO there (needed inside a room, where 'surgery' or 'chest' are just case talk).
         static readonly string[] Move =
         {
-            "روح", "نروح", "اروح", "تروح", "خذني", "خدني", "وديني", "ودينا", "رجعني", "رجعنا", "ارجع", "نرجع", "وين", "فرجيني", "وريني", "خلينا", "يلا",
+            "روح", "نروح", "اروح", "تروح", "خذني", "خدني", "وديني", "ودينا", "رجعني", "رجعنا",
+            // feminine imperatives (the student is talking to Dr. Sara Hassan): خديني / رجعيني / وصليني …
+            "خديني", "خوديني", "اخديني", "رجعيني", "وصليني", "وصلينا", "دليني", "دلينا", "خدينا", "خذيني", "رجعينا", "ارجع", "نرجع", "وين", "فرجيني", "وريني", "خلينا", "يلا",
             "اطلع", "نطلع", "امشي", "تعال", "نطلع ع", "اتعلم",
             "go ", "go to", "take me", "bring me", "show me", "back to", "return", "where is", "where's", "let's", "lets", "head to", "lead me", "walk me", "move to", "leave", "learn"
         };

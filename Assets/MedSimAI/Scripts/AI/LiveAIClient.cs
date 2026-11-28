@@ -116,8 +116,10 @@ namespace MedSimAI.AI
         public async Task EndSession()
         {
             if (string.IsNullOrEmpty(SessionId)) return;
-            try { await PostJson("/v1/session/end", new EndReq { sessionId = SessionId }, CancellationToken.None); } catch { }
-            SessionId = null;
+            // Cleared BEFORE the request: a line spoken right after (e.g. the hospital guide when the student leaves Room 01)
+            // must open a new session, not use the one being ended (that request was rejected and the line fell back to text only).
+            var id = SessionId; SessionId = null;
+            try { await PostJson("/v1/session/end", new EndReq { sessionId = id }, CancellationToken.None); } catch { }
         }
 
         public static LiveContext ContextOf(ClinicalSession s, string discussionId = null) => new LiveContext
