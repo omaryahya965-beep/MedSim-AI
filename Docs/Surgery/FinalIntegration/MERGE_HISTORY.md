@@ -12,6 +12,7 @@
 | 2 | `b800482` | Merge PR #5 `feature/surgery-anatomy-assets` @ `87c6c85` (Person 2) | none |
 | 3 | `403408a` | Merge PR #4 `feature/surgery-mechanics` @ `c85a89c` (Person 3) | none |
 | 4 | `dfc2664` | Merge PR #2 `feature/surgery-ai-integration` @ `68297ad` (Person 4) | none |
+| 4b | `c8602a2` | Merge PR #2 follow-up @ `b577665` (Person 4 pushed it after step 4: CI results in docs, CI `paths-ignore`; no code) | none |
 
 Each merge was compiled before the next one. The full test suite was run after the fixes below.
 
@@ -29,7 +30,7 @@ Each merge was compiled before the next one. The full test suite was run after t
 | `a7ee5b4` | feat(hospital): unified conversation UI, staff attire, exe self-test and integrated builds |
 | `9ed089c` | fix(hospital): surgical HUD hidden outside Room 02; evidence from the integrated Desktop exe |
 | `1cef175` | feat(hospital): distinct scrub assistant (Rocketbox `Medical_Male_04`, MIT) |
-| *(docs)* | docs: final integration documentation (this folder) and README |
+| `068988c` | docs(integration): final integration documentation, licence texts and README |
 
 ## Changes inside contributors' areas
 These are listed so each owner can review them:

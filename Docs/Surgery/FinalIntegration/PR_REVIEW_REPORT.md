@@ -9,7 +9,7 @@ Reviewed on 2026-11-28 against `feature/surgery-complete` @ `e4fbd9c`. Each PR w
 | #3 | `feature/surgery-environment` @ `c40f7da` | Open, **draft** | none | yes |
 | #5 | `feature/surgery-anatomy-assets` @ `87c6c85` | Open | none | yes |
 | #4 | `feature/surgery-mechanics` @ `c85a89c` | Open | none | yes |
-| #2 | `feature/surgery-ai-integration` @ `68297ad` | Open | none | yes |
+| #2 | `feature/surgery-ai-integration` @ `68297ad` (now `b577665`, see below) | Open | none | yes |
 
 ## PR #1: operating room prototype (merged earlier)
 - **Present in the integration branch:** `OperatingRoom.prefab`, the robot prefab, materials and the NavMesh asset. PR #3 superseded parts of it.
@@ -68,7 +68,7 @@ Reviewed on 2026-11-28 against `feature/surgery-complete` @ `e4fbd9c`. Each PR w
 - **Recommendation:** merge after review together with the integration fixes. Person 3 should review the sequencing rules in `SurgeryInteractionValidator`.
 
 ## PR #2: AI surgeon, assistant, assessment, HUD, proxy routes (Person 4)
-- **Reported:** off-Unity tests passing; Unity scenes not verified.
+- **Reported:** off-Unity tests passing. After the integration merge, Person 4 pushed `b577665` (docs and CI only) with a real GitHub Actions run: Unity 6000.3.28f1 GameCI, EditMode 167/167, PlayMode 29/29, Windows build on 6000.3.29f1 succeeded. That run used placeholders and mock mechanics. `b577665` is merged into the candidate as `c8602a2`.
 - **Verified on 6000.3.29f1:**
   - compiles;
   - the Unity EditMode tests (`SurgeryAITests`, contract, scenario) pass;
@@ -84,4 +84,4 @@ Reviewed on 2026-11-28 against `feature/surgery-complete` @ `e4fbd9c`. Each PR w
   - The assistant reused the patient's body.
   - The surgical-independence test forbade the shared doctor's name; that one assertion was updated with a reason. Clinical-case leakage is still forbidden.
 - **Mock mechanics:** `MockMechanicsDriver` remains for Person 4's own test scene. In the hospital `allowMockMechanics = false`, and a test asserts there are no `mock` events.
-- **Recommendation:** merge after review. The CI workflow (`.github/workflows/unity-ci.yml`) was not exercised here.
+- **Recommendation:** merge after review. The CI workflow (`.github/workflows/unity-ci.yml`) was not re-run on the integrated candidate. It triggers only on pushes to `feature/surgery-complete` / `feature/surgery-ai-integration` and on PRs into `feature/surgery-complete`, so the final PR into `master` does not trigger it.

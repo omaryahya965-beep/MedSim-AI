@@ -14,7 +14,7 @@ The totals below come from running the combined project. They are **not** the su
 | Desktop exe journey (`-hospitalSelfTest`) | **all steps passed, 0 exceptions** |
 | PCVR exe with `-desktop` (no headset) | journey passed; OpenXR loader present; `xrCreateInstance` fails without a runtime (expected) |
 | Off-Unity C# harness (PR #2) | **Not run.** It needs the .NET 8 targeting pack, which is not available offline here. |
-| GitHub Actions CI (PR #2 workflow) | Not exercised by this integration |
+| GitHub Actions CI (PR #2 workflow) | Not re-run on the integrated candidate. Person 4 reports one run on their branch (EditMode 167/167, PlayMode 29/29, Windows build), with mock mechanics. |
 
 No test was deleted, skipped or weakened to obtain these results. One assertion in `SurgicalScenarioTests.Tka_IsIndependentFromChestPain` now expects the shared doctor's name ("sara hassan"), because there is deliberately one doctor. The test still forbids clinical-case leakage (Reyes, chest pain, ECG, …) into the surgical scenario.
 
